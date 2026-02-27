@@ -38,6 +38,10 @@
       pointer-events: none;
     }
 
+    body:not(.in-game) #game {
+      pointer-events: none;
+    }
+
     #game {
       width: 100vw;
       height: 100vh;
@@ -213,7 +217,7 @@
 
     .powerups-row {
       display: grid;
-      grid-template-columns: repeat(4, minmax(56px, 1fr));
+      grid-template-columns: repeat(5, minmax(56px, 1fr));
       gap: 6px;
     }
 
@@ -508,7 +512,7 @@
     <section class="control-panel">
       <div class="control-group">
         <label>ANGLE <span id="angle-value">0&deg;</span></label>
-        <input id="angle-slider" type="range" min="1" max="179" step="1" />
+        <input id="angle-slider" type="range" min="-179" max="179" step="1" />
       </div>
       <div class="control-group">
         <label>POWER <span id="power-value">0%</span></label>
@@ -524,6 +528,7 @@
           <button id="sniper-btn" class="power-btn" type="button">SNIPER <span id="sniper-count">0</span></button>
           <button id="teleport-btn" class="power-btn" type="button">TELE <span id="teleport-count">0</span></button>
           <button id="earthquake-btn" class="power-btn" type="button">QUAKE <span id="earthquake-count">0</span></button>
+          <button id="airstrike-btn" class="power-btn" type="button">AIR <span id="airstrike-count">0</span></button>
           <button id="laser-btn" class="power-btn" type="button">LASER <span id="laser-count">0</span></button>
         </div>
       </div>
