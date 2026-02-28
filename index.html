@@ -46,6 +46,8 @@
     #game {
       width: 100vw;
       height: 100vh;
+      width: 100dvw;
+      height: 100dvh;
       display: block;
       background: var(--paper);
       touch-action: none;
@@ -420,7 +422,8 @@
       font-size: 13px;
     }
 
-    #quick-swap-btn,
+    #zoom-out-btn,
+    #zoom-in-btn,
     #tune-btn-inline,
     #tune-btn {
       min-width: 72px;
@@ -497,7 +500,6 @@
 
     body.hud-card .hud-mini-meters,
     body.hud-card .setup-group,
-    body.hud-card #quick-swap-btn,
     body.hud-card #tune-btn-inline {
       display: none;
     }
@@ -753,7 +755,8 @@
         font-size: 13px;
       }
 
-      #quick-swap-btn,
+      #zoom-out-btn,
+      #zoom-in-btn,
       #tune-btn-inline,
       #tune-btn {
         min-width: 66px;
@@ -832,7 +835,8 @@
         min-width: 108px;
       }
 
-      #quick-swap-btn,
+      #zoom-out-btn,
+      #zoom-in-btn,
       #tune-btn-inline,
       #tune-btn {
         min-width: 62px;
@@ -990,10 +994,12 @@
       font-size: 20px !important;
     }
 
-    #quick-swap-btn {
+    .zoom-btn {
+      min-width: 64px !important;
       min-height: 54px !important;
       padding: 10px 14px !important;
-      font-size: 18px !important;
+      font-size: 24px !important;
+      line-height: 1 !important;
     }
 
     .status-pill {
@@ -1023,9 +1029,10 @@
         font-size: 16px !important;
       }
 
-      #quick-swap-btn {
+      .zoom-btn {
+        min-width: 52px !important;
         min-height: 48px !important;
-        font-size: 14px !important;
+        font-size: 20px !important;
       }
 
       .status-pill {
@@ -1034,6 +1041,43 @@
 
       .powerup-menu {
         bottom: 108px !important;
+      }
+    }
+
+    @media (orientation: landscape) and (max-width: 980px) {
+      .pause-map-btn {
+        top: max(8px, env(safe-area-inset-top));
+        left: max(8px, env(safe-area-inset-left));
+      }
+
+      .turn-counter {
+        top: max(8px, env(safe-area-inset-top));
+        font-size: 16px;
+        padding: 6px 12px;
+      }
+
+      .bottom-ui {
+        bottom: max(8px, env(safe-area-inset-bottom)) !important;
+      }
+    }
+
+    @media (orientation: landscape) and (max-height: 500px) {
+      #fire-btn {
+        min-width: 112px !important;
+        min-height: 48px !important;
+        font-size: 20px !important;
+      }
+
+      .cam-pan-btn {
+        min-width: 40px !important;
+        min-height: 40px !important;
+        font-size: 16px !important;
+      }
+
+      #powerup-menu-btn,
+      .zoom-btn {
+        min-height: 42px !important;
+        font-size: 14px !important;
       }
     }
   </style>
@@ -1167,7 +1211,8 @@
       </div>
       <div class="utility-actions">
         <button id="powerup-menu-btn" type="button">POWERS</button>
-        <button id="quick-swap-btn" type="button">SWAP</button>
+        <button id="zoom-out-btn" class="zoom-btn" type="button" aria-label="Zoom out">-</button>
+        <button id="zoom-in-btn" class="zoom-btn" type="button" aria-label="Zoom in">+</button>
       </div>
     </section>
   </div>
@@ -1185,8 +1230,6 @@
       <button id="laser-btn" class="power-btn" type="button">LASER <span id="laser-count">0</span></button>
     </div>
   </section>
-
-  <div class="status-pill" id="status-pill">Ready</div>
 
   <script>
 (() => {
@@ -1216,7 +1259,8 @@
     laserBtn: document.getElementById("laser-btn"),
     laserCount: document.getElementById("laser-count"),
     powerupMenuBtn: document.getElementById("powerup-menu-btn"),
-    quickSwapBtn: document.getElementById("quick-swap-btn"),
+    zoomOutBtn: document.getElementById("zoom-out-btn"),
+    zoomInBtn: document.getElementById("zoom-in-btn"),
     tuneBtnInline: document.getElementById("tune-btn-inline"),
     tuneBtn: document.getElementById("tune-btn"),
     hudMiniMeters: document.getElementById("hud-mini-meters"),
@@ -1330,7 +1374,12 @@
   const MAX_BURSTS = 10;
   const EDGE_LOOK_MARGIN = 115;
   const EDGE_LOOK_MAX = 460;
-  const CAMERA_BUTTON_PAN_SPEED = 740;
+  const CAMERA_BUTTON_PAN_SPEED = 560;
+  const CAMERA_BUTTON_TAP_NUDGE = 96;
+  const CAMERA_BUTTON_HOLD_DELAY_MS = 140;
+  const CAMERA_ZOOM_STEP = 0.1;
+  const CAMERA_ZOOM_HOLD_DELAY_MS = 170;
+  const CAMERA_ZOOM_HOLD_INTERVAL_MS = 90;
   const CAMERA_MAX_ZOOM = 1.65;
   const MAX_POWERUPS_ON_MAP = 3;
   const DRAG_POWER_DISTANCE = 230;
@@ -1547,12 +1596,20 @@
     state.cameraLookX = 0;
   }
 
-  function nudgeCamera(dir) {
+  function nudgeCamera(dir, distance = CAMERA_BUTTON_TAP_NUDGE) {
     if (state.phase === "menu" || state.phase === "paused") {
       return;
     }
     state.cameraManualMode = true;
-    state.cameraX = clampCamera(state.cameraX + clamp(Math.sign(dir), -1, 1) * 170);
+    state.cameraX = clampCamera(state.cameraX + clamp(Math.sign(dir), -1, 1) * Math.max(24, distance));
+  }
+
+  function nudgeCameraZoom(dir) {
+    if (state.phase === "menu" || state.phase === "paused") {
+      return;
+    }
+    const nextZoom = (state.cameraZoom || 1) + clamp(Math.sign(dir), -1, 1) * CAMERA_ZOOM_STEP;
+    setCameraZoom(nextZoom, true);
   }
 
   function setPowerupMenuOpen(open) {
@@ -2984,6 +3041,14 @@
   function confirmDrawnMapAndStart() {
     if (state.phase !== "draw_map") {
       return;
+    }
+    if (state.drawMap.drawing) {
+      if (pointer.initialized) {
+        appendDrawPoint(screenToWorldX(pointer.x), screenToWorldY(pointer.y));
+      }
+      state.drawMap.drawing = false;
+      state.drawMap.pointerId = null;
+      tryFinalizeDrawMap();
     }
     if (!state.drawMap.ready || !state.drawMap.surface) {
       setStatus("Draw a continuous line from one edge to the other first");
@@ -6110,17 +6175,17 @@
     }
     if (ui.fireBtn) {
       ui.fireBtn.textContent = isDrawPhase ? "USE MAP" : "FIRE";
-      ui.fireBtn.disabled = isDrawPhase ? !state.drawMap.ready : !canControl;
+      ui.fireBtn.disabled = isDrawPhase ? (!state.drawMap.ready && !state.drawMap.drawing) : !canControl;
     }
     if (ui.powerupMenuBtn) {
       ui.powerupMenuBtn.disabled = isDrawPhase || !canControl;
     }
-    if (ui.quickSwapBtn) {
-      ui.quickSwapBtn.disabled = isDrawPhase || !canControl;
-      const cycle = getShotTypeCycleForTank(active);
-      const selectedType = cycle.includes(state.selectedShotType) ? state.selectedShotType : "normal";
-      const shotLabel = getShotLabel(selectedType);
-      ui.quickSwapBtn.textContent = `SWAP ${shotLabel}`;
+    const canUseZoomButtons = state.phase !== "menu" && state.phase !== "paused";
+    if (ui.zoomOutBtn) {
+      ui.zoomOutBtn.disabled = !canUseZoomButtons;
+    }
+    if (ui.zoomInBtn) {
+      ui.zoomInBtn.disabled = !canUseZoomButtons;
     }
     if (ui.tuneBtn) {
       ui.tuneBtn.disabled = isDrawPhase || !canControl;
@@ -6370,16 +6435,10 @@
         state.drawMap.ready = false;
         state.drawMap.surface = null;
         appendDrawPoint(screenToWorldX(pointer.x), screenToWorldY(pointer.y));
-        if (canvas.setPointerCapture) {
-          canvas.setPointerCapture(event.pointerId);
-        }
         setStatus("Drawing... click again to stop at the opposite edge");
       } else {
         appendDrawPoint(screenToWorldX(pointer.x), screenToWorldY(pointer.y));
         state.drawMap.drawing = false;
-        if (canvas.releasePointerCapture && state.drawMap.pointerId !== null && canvas.hasPointerCapture(state.drawMap.pointerId)) {
-          canvas.releasePointerCapture(state.drawMap.pointerId);
-        }
         state.drawMap.pointerId = null;
         tryFinalizeDrawMap();
       }
@@ -6527,11 +6586,82 @@
     });
   }
 
-  if (ui.quickSwapBtn) {
-    ui.quickSwapBtn.addEventListener("click", () => {
-      cycleQuickShotType();
+  const bindZoomButton = (btn, dir) => {
+    if (!btn) {
+      return;
+    }
+
+    let activePointerId = null;
+    let holdTimer = null;
+    let holdInterval = null;
+    let holdActive = false;
+
+    const clearHold = () => {
+      if (holdTimer !== null) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+      if (holdInterval !== null) {
+        clearInterval(holdInterval);
+        holdInterval = null;
+      }
+    };
+
+    const finishInteraction = (event, canceled = false) => {
+      if (activePointerId === null || (event && event.pointerId != null && event.pointerId !== activePointerId)) {
+        return;
+      }
+      clearHold();
+      if (!holdActive && !canceled) {
+        nudgeCameraZoom(dir);
+      }
+      holdActive = false;
+      activePointerId = null;
+    };
+
+    btn.addEventListener("pointerdown", (event) => {
+      if (event.pointerType === "mouse" && event.button !== 0) {
+        return;
+      }
+      activePointerId = event.pointerId;
+      holdActive = false;
+      clearHold();
+      holdTimer = setTimeout(() => {
+        holdActive = true;
+        nudgeCameraZoom(dir);
+        holdInterval = setInterval(() => {
+          nudgeCameraZoom(dir);
+        }, CAMERA_ZOOM_HOLD_INTERVAL_MS);
+      }, CAMERA_ZOOM_HOLD_DELAY_MS);
+      if (btn.setPointerCapture) {
+        btn.setPointerCapture(event.pointerId);
+      }
+      event.preventDefault();
     });
-  }
+
+    btn.addEventListener("pointerup", (event) => {
+      finishInteraction(event, false);
+    });
+    btn.addEventListener("pointercancel", (event) => {
+      finishInteraction(event, true);
+    });
+    btn.addEventListener("pointerleave", (event) => {
+      finishInteraction(event, false);
+    });
+    btn.addEventListener("lostpointercapture", (event) => {
+      finishInteraction(event, true);
+    });
+    window.addEventListener("blur", () => {
+      if (activePointerId === null) {
+        return;
+      }
+      clearHold();
+      holdActive = false;
+      activePointerId = null;
+    });
+  };
+  bindZoomButton(ui.zoomOutBtn, -1);
+  bindZoomButton(ui.zoomInBtn, 1);
 
   if (ui.weaponCardBtn) {
     let holdTimer = null;
@@ -6741,30 +6871,63 @@
     if (!btn) {
       return;
     }
+
+    let activePointerId = null;
+    let holdTimer = null;
+    let holdActive = false;
+
+    const clearHoldTimer = () => {
+      if (holdTimer !== null) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+    };
+
+    const finishInteraction = (event, canceled = false) => {
+      if (activePointerId === null || (event && event.pointerId != null && event.pointerId !== activePointerId)) {
+        return;
+      }
+      clearHoldTimer();
+
+      if (holdActive) {
+        if (state.cameraButtonPanDir === dir) {
+          setCameraButtonPanDir(0);
+        }
+      } else if (!canceled) {
+        nudgeCamera(dir, CAMERA_BUTTON_TAP_NUDGE);
+      }
+
+      holdActive = false;
+      activePointerId = null;
+    };
+
     btn.addEventListener("pointerdown", (event) => {
       if (event.pointerType === "mouse" && event.button !== 0) {
         return;
       }
-      setCameraButtonPanDir(dir);
+      activePointerId = event.pointerId;
+      holdActive = false;
+      clearHoldTimer();
+      holdTimer = setTimeout(() => {
+        holdActive = true;
+        setCameraButtonPanDir(dir);
+      }, CAMERA_BUTTON_HOLD_DELAY_MS);
+      if (btn.setPointerCapture) {
+        btn.setPointerCapture(event.pointerId);
+      }
       event.preventDefault();
     });
-    btn.addEventListener("pointerup", () => {
-      if (state.cameraButtonPanDir === dir) {
-        setCameraButtonPanDir(0);
-      }
+    btn.addEventListener("pointerup", (event) => {
+      finishInteraction(event, false);
     });
-    btn.addEventListener("pointercancel", () => {
-      if (state.cameraButtonPanDir === dir) {
-        setCameraButtonPanDir(0);
-      }
+    btn.addEventListener("pointercancel", (event) => {
+      finishInteraction(event, true);
     });
-    btn.addEventListener("pointerleave", () => {
-      if (state.cameraButtonPanDir === dir) {
-        setCameraButtonPanDir(0);
-      }
+    btn.addEventListener("pointerleave", (event) => {
+      finishInteraction(event, false);
     });
-    btn.addEventListener("click", () => {
-      nudgeCamera(dir);
+    btn.addEventListener("lostpointercapture", (event) => {
+      finishInteraction(event, true);
     });
   };
   bindCameraPanButton(ui.panLeftBtn, -1);
