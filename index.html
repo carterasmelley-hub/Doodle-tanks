@@ -598,6 +598,9 @@
       cursor: pointer;
       background: #ffffff;
       color: #000000;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
     }
 
     .pause-map-btn {
@@ -1277,6 +1280,7 @@
 (() => {
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
 
   const ui = {
     turnCounter: document.getElementById("turn-counter"),
@@ -1607,6 +1611,7 @@
     aimAssistEnd: null,
     turnCounter: 1,
     turnsIntoRound: 0,
+    blockFireUntil: 0,
     quakePendingTime: 0,
     quakeSource: null,
     audioCtx: null,
@@ -1618,11 +1623,13 @@
   craterFillCanvas.width = MAX_WORLD_W;
   craterFillCanvas.height = WORLD_H;
   const craterFillCtx = craterFillCanvas.getContext("2d");
+  craterFillCtx.imageSmoothingEnabled = false;
 
   const craterEdgeCanvas = document.createElement("canvas");
   craterEdgeCanvas.width = MAX_WORLD_W;
   craterEdgeCanvas.height = WORLD_H;
   const craterEdgeCtx = craterEdgeCanvas.getContext("2d");
+  craterEdgeCtx.imageSmoothingEnabled = false;
 
   const pointer = {
     x: 0,
@@ -1846,7 +1853,13 @@
     const gameplayBottom = getGameplayBottomY();
     const fitX = canvas.width / Math.max(1, state.worldW);
     const fitY = gameplayBottom / WORLD_H;
-    return clamp(Math.min(fitX, fitY), 0.22, 1);
+    let minZoom = clamp(Math.min(fitX, fitY), 0.22, 1);
+    if (isMobilePointerDevice() && state.phase !== "menu") {
+      const configured = getConfiguredMapZoom();
+      const mobileFloor = configured - 0.02;
+      minZoom = Math.max(minZoom, mobileFloor);
+    }
+    return minZoom;
   }
 
   function clampCameraZoom(zoom) {
@@ -3237,6 +3250,7 @@
       return;
     }
     state.customSurfaceY = state.drawMap.surface.slice();
+    state.blockFireUntil = performance.now() + 380;
     launchMatchSession();
   }
 
@@ -4253,6 +4267,9 @@
   }
 
   function fireActiveTank() {
+    if (performance.now() < (state.blockFireUntil || 0)) {
+      return;
+    }
     const tank = getActiveTank();
     if (!tank || !tank.alive) {
       return;
@@ -5978,12 +5995,13 @@
       const midIndex = Math.max(0, Math.min(tank.lastShotPath.length - 1, Math.floor(tank.lastShotPath.length * 0.56)));
       const labelPoint = tank.lastShotPath[midIndex] || tank.lastShotPath[tank.lastShotPath.length - 1];
       const labelText = `${Math.round(tank.lastShotAngleDeg)}\u00b0 ${Math.round(tank.lastShotPowerPct)}%`;
+      const ghostFontSize = isMobilePointerDevice() ? 16 : 14;
       ctx.fillStyle = "rgba(0, 0, 0, 0.24)";
-      ctx.font = "700 12px 'Comic Sans MS', 'Trebuchet MS', sans-serif";
+      ctx.font = `700 ${ghostFontSize}px 'Comic Sans MS', 'Trebuchet MS', sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       const lx = clamp(labelPoint.x - state.cameraX + 6, 30, canvas.width - 30);
-      const ly = clamp(labelPoint.y - 12, 16, getGameplayBottomY() - 14);
+      const ly = clamp(labelPoint.y - (isMobilePointerDevice() ? 16 : 12), 16, getGameplayBottomY() - 14);
       ctx.fillText(labelText, lx, ly);
     }
 
@@ -6068,57 +6086,7 @@
   }
 
   function drawMobileAimLensOverlay() {
-    if (!isMobilePointerDevice() || !aimDrag.active || !isPlayerTurn() || !pointer.initialized) {
-      if (state.aimAssistEnd) {
-        state.aimAssistEnd = null;
-      }
-      return;
-    }
-
-    const r = 44;
-    const sourceHalf = 24;
-    const offsetX = pointer.x < canvas.width * 0.5 ? 82 : -82;
-    const cx = clamp(pointer.x + offsetX, r + 8, canvas.width - r - 8);
-    const cy = clamp(pointer.y - 78, r + 8, getGameplayBottomY() - r - 8);
-    const sx = clamp(pointer.x - sourceHalf, 0, Math.max(0, canvas.width - sourceHalf * 2));
-    const sy = clamp(pointer.y - sourceHalf, 0, Math.max(0, getGameplayBottomY() - sourceHalf * 2));
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, TAU);
-    ctx.clip();
-    ctx.fillStyle = "rgba(255, 255, 255, 0.96)";
-    ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
-    ctx.drawImage(canvas, sx, sy, sourceHalf * 2, sourceHalf * 2, cx - r, cy - r, r * 2, r * 2);
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(cx - r * 0.32, cy);
-    ctx.lineTo(cx + r * 0.32, cy);
-    ctx.moveTo(cx, cy - r * 0.32);
-    ctx.lineTo(cx, cy + r * 0.32);
-    ctx.stroke();
-    ctx.restore();
-
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.82)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, TAU);
-    ctx.stroke();
-
-    if (state.aimAssistEnd) {
-      const tx = worldToScreenX(state.aimAssistEnd.x);
-      const ty = worldToScreenY(state.aimAssistEnd.y);
-      const lx = clamp(tx, cx - r + 6, cx + r - 6);
-      const ly = clamp(ty, cy - r + 6, cy + r - 6);
-      ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-      ctx.strokeStyle = "rgba(0, 0, 0, 0.82)";
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.arc(lx, ly, 4.6, 0, TAU);
-      ctx.fill();
-      ctx.stroke();
-    }
+    return;
   }
 
   function drawTrajectoryPreview(tank) {
@@ -6226,20 +6194,25 @@
       const angleText = `${Math.round(getTrueShotAngleDeg(tank))}\u00b0`;
       const powerText = `${powerToPercent(tank.power)}%`;
       const text = `${angleText} ${powerText}`;
-      ctx.font = "700 12px 'Comic Sans MS', 'Trebuchet MS', sans-serif";
-      const textW = Math.max(58, Math.ceil(ctx.measureText(text).width + 14));
-      const drawX = clamp(tipX - textW * 0.5, 8, canvas.width - textW - 8);
-      const drawY = clamp(tipY - 34, 12, getGameplayBottomY() - 28);
+      const mobileAimReadout = isMobilePointerDevice();
+      const fontSize = mobileAimReadout ? 19 : 12;
+      const bubbleH = mobileAimReadout ? 34 : 22;
+      const bubblePad = mobileAimReadout ? 24 : 14;
+      const sideOffset = mobileAimReadout ? (pointer.x < canvas.width * 0.5 ? 42 : -42) : 0;
+      ctx.font = `700 ${fontSize}px 'Comic Sans MS', 'Trebuchet MS', sans-serif`;
+      const textW = Math.max(mobileAimReadout ? 112 : 58, Math.ceil(ctx.measureText(text).width + bubblePad));
+      const drawX = clamp(tipX + sideOffset - textW * 0.5, 8, canvas.width - textW - 8);
+      const drawY = clamp(tipY - (mobileAimReadout ? 56 : 34), 12, getGameplayBottomY() - bubbleH - 6);
       ctx.fillStyle = "rgba(255, 255, 255, 0.94)";
       ctx.strokeStyle = "rgba(0, 0, 0, 0.74)";
-      ctx.lineWidth = 1.5;
-      pathRoundedRect(ctx, drawX, drawY, textW, 22, 8);
+      ctx.lineWidth = mobileAimReadout ? 2.2 : 1.5;
+      pathRoundedRect(ctx, drawX, drawY, textW, bubbleH, mobileAimReadout ? 11 : 8);
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = "#000000";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(text, drawX + textW * 0.5, drawY + 11);
+      ctx.fillText(text, drawX + textW * 0.5, drawY + bubbleH * 0.5);
     }
 
     drawDriveHintBubble(tank);
@@ -6667,6 +6640,7 @@
   function tick(ts) {
     const dt = clamp((ts - lastTs) / 1000, 0, 0.033);
     lastTs = ts;
+    ctx.imageSmoothingEnabled = false;
 
     if (state.phase === "menu") {
       updateMenuDemo(dt);
@@ -6743,7 +6717,6 @@
       drawParticles();
       ctx.restore();
       drawMapEditorHud();
-      drawMobileAimLensOverlay();
       drawGameOverBanner();
     }
 
@@ -6991,12 +6964,12 @@
     }
 
     let suppressClick = false;
-    let suppressTimer = null;
+    let suppressResetTimer = null;
 
     const clearTapState = () => {
-      if (suppressTimer !== null) {
-        clearTimeout(suppressTimer);
-        suppressTimer = null;
+      if (suppressResetTimer !== null) {
+        clearTimeout(suppressResetTimer);
+        suppressResetTimer = null;
       }
       suppressClick = false;
       btn.classList.remove("tap-active");
@@ -7020,24 +6993,25 @@
       suppressClick = true;
       btn.classList.add("tap-active");
       fireTap();
-      if (suppressTimer !== null) {
-        clearTimeout(suppressTimer);
-      }
-      suppressTimer = setTimeout(() => {
-        suppressClick = false;
-        btn.classList.remove("tap-active");
-      }, 260);
       event.preventDefault();
     });
 
     btn.addEventListener("pointerup", () => {
       btn.classList.remove("tap-active");
+      if (suppressResetTimer !== null) {
+        clearTimeout(suppressResetTimer);
+      }
+      suppressResetTimer = setTimeout(() => {
+        suppressClick = false;
+        suppressResetTimer = null;
+      }, 420);
     });
     btn.addEventListener("pointercancel", clearTapState);
     btn.addEventListener("lostpointercapture", clearTapState);
 
     btn.addEventListener("click", (event) => {
       if (suppressClick) {
+        suppressClick = false;
         event.preventDefault();
         return;
       }
