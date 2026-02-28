@@ -170,8 +170,8 @@
       border: 2px solid var(--card-border);
       border-radius: 10px;
       background: var(--card);
-      padding: 8px 14px;
-      font-size: 18px;
+      padding: 6px 12px;
+      font-size: 15px;
       font-weight: 700;
       letter-spacing: 0.06em;
       pointer-events: none;
@@ -347,21 +347,39 @@
 
     .powerups-row {
       display: grid;
-      grid-template-columns: repeat(5, minmax(56px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
       gap: 6px;
     }
 
     .power-btn {
-      padding: 6px 8px;
-      font-size: 10px;
-      letter-spacing: 0.03em;
+      min-height: 46px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      letter-spacing: 0.02em;
       border-width: 2px;
       line-height: 1.1;
+      transition: transform 0.08s ease, background-color 0.1s ease, box-shadow 0.1s ease;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .power-btn.active {
       background: #1f1f1f;
       color: #ffffff;
+      box-shadow: 0 0 0 1px #000000 inset;
+    }
+
+    .power-btn:active,
+    .power-btn.tap-active {
+      transform: translateY(1px) scale(0.98);
+      background: #efefef;
+    }
+
+    .power-btn span {
+      display: inline-block;
+      margin-left: 4px;
+      min-width: 1.3em;
+      text-align: center;
     }
 
     .camera-actions {
@@ -420,6 +438,18 @@
       min-width: 116px;
       padding: 9px 12px;
       font-size: 13px;
+    }
+
+    #powerup-menu-btn.active {
+      background: #1f1f1f;
+      color: #ffffff;
+    }
+
+    #fire-btn:active,
+    #fire-btn.tap-active,
+    #powerup-menu-btn:active,
+    #powerup-menu-btn.tap-active {
+      transform: translateY(1px) scale(0.985);
     }
 
     #zoom-out-btn,
@@ -775,12 +805,13 @@
 
       .powerups-row {
         gap: 4px;
-        grid-template-columns: repeat(5, minmax(44px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
       }
 
       .power-btn {
-        padding: 4px 5px;
-        font-size: 9px;
+        min-height: 44px;
+        padding: 6px 7px;
+        font-size: 10px;
       }
     }
 
@@ -857,12 +888,13 @@
       }
 
       .powerups-row {
-        grid-template-columns: repeat(5, minmax(36px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(36px, 1fr));
       }
 
       .power-btn {
-        padding: 3px;
-        font-size: 8px;
+        min-height: 42px;
+        padding: 6px;
+        font-size: 9px;
       }
     }
 
@@ -918,7 +950,7 @@
       }
 
       .powerups-row {
-        grid-template-columns: repeat(3, minmax(42px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(42px, 1fr));
       }
 
       .status-pill {
@@ -938,7 +970,7 @@
       display: flex !important;
       justify-content: center !important;
       align-items: center !important;
-      pointer-events: none;
+      pointer-events: auto;
     }
 
     .control-panel {
@@ -1138,6 +1170,14 @@
           </select>
         </div>
         <div class="menu-field">
+          <label for="turn-mode-select">TURN STYLE</label>
+          <select id="turn-mode-select">
+            <option value="classic" selected>Classic turns</option>
+            <option value="simultaneous">Simultaneous turns</option>
+            <option value="mismatched">Mismatched turns</option>
+          </select>
+        </div>
+        <div class="menu-field">
           <label for="health-select">MAX HEALTH</label>
           <select id="health-select">
             <option value="50">50</option>
@@ -1224,9 +1264,11 @@
     </div>
     <div class="powerups-row">
       <button id="sniper-btn" class="power-btn" type="button">SNIPER <span id="sniper-count">0</span></button>
+      <button id="dig-btn" class="power-btn" type="button">DIG <span id="dig-count">0</span></button>
+      <button id="build-btn" class="power-btn" type="button">BUILD <span id="build-count">0</span></button>
       <button id="teleport-btn" class="power-btn" type="button">TELE <span id="teleport-count">0</span></button>
       <button id="earthquake-btn" class="power-btn" type="button">QUAKE <span id="earthquake-count">0</span></button>
-      <button id="airstrike-btn" class="power-btn" type="button">AIR <span id="airstrike-count">0</span></button>
+      <button id="airstrike-btn" class="power-btn" type="button">DOUBLE <span id="airstrike-count">0</span></button>
       <button id="laser-btn" class="power-btn" type="button">LASER <span id="laser-count">0</span></button>
     </div>
   </section>
@@ -1250,6 +1292,10 @@
     moveFill: document.getElementById("move-fill"),
     sniperBtn: document.getElementById("sniper-btn"),
     sniperCount: document.getElementById("sniper-count"),
+    digBtn: document.getElementById("dig-btn"),
+    digCount: document.getElementById("dig-count"),
+    buildBtn: document.getElementById("build-btn"),
+    buildCount: document.getElementById("build-count"),
     teleportBtn: document.getElementById("teleport-btn"),
     teleportCount: document.getElementById("teleport-count"),
     earthquakeBtn: document.getElementById("earthquake-btn"),
@@ -1300,6 +1346,7 @@
     playerCountSelect: document.getElementById("player-count-select"),
     enemyCountSelect: document.getElementById("enemy-count-select"),
     aiDifficultySelect: document.getElementById("ai-difficulty-select"),
+    turnModeSelect: document.getElementById("turn-mode-select"),
     healthSelect: document.getElementById("health-select"),
     mapSourceBtn: document.getElementById("map-source-btn"),
     terrainModeBtn: document.getElementById("terrain-mode-btn"),
@@ -1361,6 +1408,8 @@
   const AIRSTRIKE_DROP_SPEED = 560;
   const AIRSTRIKE_DROP_RADIUS = 24;
   const AIRSTRIKE_DROP_DAMAGE = 80;
+  const DIG_TERRAIN_MULT = 3;
+  const BUILD_RADIUS = 36;
   const FLARE_ROLL_FRICTION = 6.8;
   const FLARE_ROLL_SLOPE_ACCEL = 560;
   const FLARE_ARM_SPEED = 13;
@@ -1377,9 +1426,9 @@
   const CAMERA_BUTTON_PAN_SPEED = 560;
   const CAMERA_BUTTON_TAP_NUDGE = 96;
   const CAMERA_BUTTON_HOLD_DELAY_MS = 140;
-  const CAMERA_ZOOM_STEP = 0.1;
+  const CAMERA_ZOOM_STEP = 0.06;
   const CAMERA_ZOOM_HOLD_DELAY_MS = 170;
-  const CAMERA_ZOOM_HOLD_INTERVAL_MS = 90;
+  const CAMERA_ZOOM_HOLD_INTERVAL_MS = 120;
   const CAMERA_MAX_ZOOM = 1.65;
   const MAX_POWERUPS_ON_MAP = 3;
   const DRAG_POWER_DISTANCE = 230;
@@ -1417,6 +1466,7 @@
   const TEAM_LABELS = ["P1", "P2", "P3", "P4"];
   const MAP_SOURCE_ORDER = ["random", "drawn"];
   const TERRAIN_MODE_ORDER = ["flat", "hilly", "mountain"];
+  const TURN_MODE_ORDER = ["classic", "simultaneous", "mismatched"];
   const TERRAIN_STYLE = {
     flat: { amp: 0.45, rough: 0.58, base: 0.61, label: "FLAT" },
     hilly: { amp: 1, rough: 1, base: 0.56, label: "HILLY" },
@@ -1475,7 +1525,7 @@
     }
   };
 
-  const POWERUP_TYPES = ["sniper", "teleport", "earthquake", "airstrike", "laser", "health"];
+  const POWERUP_TYPES = ["sniper", "dig", "build", "teleport", "earthquake", "airstrike", "laser", "health"];
   const HEALTH_POWERUP_AMOUNT = 28;
   const EARTHQUAKE_SMOOTH_PASSES = 8;
   const EARTHQUAKE_EROSION_PASSES = 9;
@@ -1491,6 +1541,7 @@
       playerCount: 1,
       enemyCount: 3,
       aiDifficulty: "normal",
+      turnMode: "classic",
       maxHealth: DEFAULT_MAX_HP,
       mapSource: "random",
       terrainMode: "hilly"
@@ -1553,6 +1604,7 @@
     screenShakeX: 0,
     screenShakeY: 0,
     driveHint: null,
+    aimAssistEnd: null,
     turnCounter: 1,
     turnsIntoRound: 0,
     quakePendingTime: 0,
@@ -1668,6 +1720,12 @@
     if ((tank.powerups?.sniper || 0) > 0) {
       cycle.push("sniper");
     }
+    if ((tank.powerups?.dig || 0) > 0) {
+      cycle.push("dig");
+    }
+    if ((tank.powerups?.build || 0) > 0) {
+      cycle.push("build");
+    }
     if ((tank.powerups?.airstrike || 0) > 0) {
       cycle.push("airstrike");
     }
@@ -1681,8 +1739,14 @@
     if (shotType === "sniper") {
       return "SNIPER";
     }
+    if (shotType === "dig") {
+      return "DIG";
+    }
+    if (shotType === "build") {
+      return "BUILD";
+    }
     if (shotType === "airstrike") {
-      return "AIRSTRIKE";
+      return "DOUBLE STRIKE";
     }
     if (shotType === "laser") {
       return "LASER";
@@ -1699,6 +1763,12 @@
     }
     if (shotType === "sniper") {
       return `${tank.powerups?.sniper || 0}`;
+    }
+    if (shotType === "dig") {
+      return `${tank.powerups?.dig || 0}`;
+    }
+    if (shotType === "build") {
+      return `${tank.powerups?.build || 0}`;
     }
     if (shotType === "airstrike") {
       return `${tank.powerups?.airstrike || 0}`;
@@ -1801,8 +1871,39 @@
     return screenX / Math.max(0.001, state.cameraZoom || 1) + state.cameraX;
   }
 
+  function isMobilePointerDevice() {
+    return Boolean(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+  }
+
+  function getWorldRenderYOffset() {
+    const zoom = Math.max(0.001, state.cameraZoom || 1);
+    if (zoom >= 1 || !isMobilePointerDevice() || state.phase === "menu") {
+      return 0;
+    }
+    const gameplayBottom = getGameplayBottomY();
+    let focusY = WORLD_H * 0.58;
+    const active = getActiveTank();
+    if (active) {
+      focusY = supportY(active.x);
+    } else if (Array.isArray(state.surfaceY) && state.surfaceY.length) {
+      focusY = state.surfaceY[Math.floor(state.surfaceY.length * 0.5)] || focusY;
+    }
+    const desiredScreenY = clamp(gameplayBottom * 0.72, 220, gameplayBottom - 56);
+    return clamp(desiredScreenY - focusY * zoom, 0, gameplayBottom * 0.46);
+  }
+
+  function worldToScreenX(worldX) {
+    return (worldX - state.cameraX) * Math.max(0.001, state.cameraZoom || 1);
+  }
+
+  function worldToScreenY(worldY) {
+    const zoom = Math.max(0.001, state.cameraZoom || 1);
+    return worldY * zoom + getWorldRenderYOffset();
+  }
+
   function screenToWorldY(screenY) {
-    return screenY / Math.max(0.001, state.cameraZoom || 1);
+    const zoom = Math.max(0.001, state.cameraZoom || 1);
+    return (screenY - getWorldRenderYOffset()) / zoom;
   }
 
   if (ui.powerSlider) {
@@ -1826,6 +1927,8 @@
       return;
     }
     tank.powerups.sniper = Math.max(tank.powerups.sniper || 0, DEV_POWERUP_CHARGES);
+    tank.powerups.dig = Math.max(tank.powerups.dig || 0, DEV_POWERUP_CHARGES);
+    tank.powerups.build = Math.max(tank.powerups.build || 0, DEV_POWERUP_CHARGES);
     tank.powerups.teleport = Math.max(tank.powerups.teleport || 0, DEV_POWERUP_CHARGES);
     tank.powerups.earthquake = Math.max(tank.powerups.earthquake || 0, DEV_POWERUP_CHARGES);
     tank.powerups.airstrike = Math.max(tank.powerups.airstrike || 0, DEV_POWERUP_CHARGES);
@@ -2145,6 +2248,7 @@
       state.screenShakeX = 0;
       state.screenShakeY = 0;
       state.driveHint = null;
+      state.aimAssistEnd = null;
       return;
     }
 
@@ -2268,6 +2372,7 @@
     next.humanPlayers = clamp(Number(next.humanPlayers || 1), 1, 4);
     next.playerCount = clamp(Number(next.playerCount || 1), 1, 4);
     next.enemyCount = clampAiTeamsForHumans(next.enemyCount, next.humanPlayers);
+    next.turnMode = TURN_MODE_ORDER.includes(next.turnMode) ? next.turnMode : "classic";
     return next;
   }
 
@@ -2311,6 +2416,7 @@
     const playerCount = clamp(Number(ui.playerCountSelect?.value || 1), 1, 4);
     const enemyCount = clamp(Number(ui.enemyCountSelect?.value || maxAiTeams), minAiTeams, maxAiTeams);
     const aiDifficulty = ui.aiDifficultySelect?.value || "normal";
+    const turnMode = ui.turnModeSelect?.value || "classic";
     const maxHealth = clamp(Number(ui.healthSelect?.value || DEFAULT_MAX_HP), MIN_CONFIG_HP, MAX_CONFIG_HP);
     return normalizeTeamConfig({
       humanPlayers,
@@ -2318,6 +2424,7 @@
       playerCount,
       enemyCount,
       aiDifficulty: AI_PRESETS[aiDifficulty] ? aiDifficulty : "normal",
+      turnMode: TURN_MODE_ORDER.includes(turnMode) ? turnMode : "classic",
       maxHealth,
       mapSource: getMapSourceMode(),
       terrainMode: getTerrainMode()
@@ -2389,6 +2496,9 @@
     if (ui.aiDifficultySelect) {
       ui.aiDifficultySelect.value = state.config.aiDifficulty;
     }
+    if (ui.turnModeSelect) {
+      ui.turnModeSelect.value = state.config.turnMode || "classic";
+    }
     if (ui.healthSelect) {
       ui.healthSelect.value = `${getMaxHp()}`;
     }
@@ -2429,6 +2539,73 @@
       });
     }
     return teams;
+  }
+
+  function getTurnMode() {
+    return TURN_MODE_ORDER.includes(state.config.turnMode) ? state.config.turnMode : "classic";
+  }
+
+  function compareTankSlotThenId(a, b) {
+    if ((a.teamSlot || 0) !== (b.teamSlot || 0)) {
+      return (a.teamSlot || 0) - (b.teamSlot || 0);
+    }
+    return a.id - b.id;
+  }
+
+  function getAliveTurnOrderIds() {
+    const alive = state.tanks.filter((tank) => tank.alive);
+    if (!alive.length) {
+      return [];
+    }
+
+    const mode = getTurnMode();
+    if (mode === "classic") {
+      return alive.slice().sort((a, b) => a.id - b.id).map((tank) => tank.id);
+    }
+
+    if (mode === "mismatched") {
+      const humans = alive.filter((tank) => tank.controller === "human").sort(compareTankSlotThenId);
+      const ais = alive.filter((tank) => tank.controller === "ai").sort(compareTankSlotThenId);
+      if (!humans.length || !ais.length) {
+        return alive.slice().sort((a, b) => a.id - b.id).map((tank) => tank.id);
+      }
+      const order = [];
+      const maxLen = Math.max(humans.length, ais.length);
+      for (let i = 0; i < maxLen; i += 1) {
+        if (humans[i]) {
+          order.push(humans[i].id);
+        }
+        if (ais[i]) {
+          order.push(ais[i].id);
+        }
+      }
+      return order;
+    }
+
+    // "Simultaneous": first tank slot from every team acts before second slot, etc.
+    const teamsInOrder = state.teams.map((team) => team.id);
+    const tanksByTeam = new Map();
+    let maxSlot = 0;
+    for (const teamId of teamsInOrder) {
+      const list = alive.filter((tank) => tank.team === teamId).sort(compareTankSlotThenId);
+      tanksByTeam.set(teamId, list);
+      if (list.length > 0) {
+        maxSlot = Math.max(maxSlot, list[list.length - 1].teamSlot || 0);
+      }
+    }
+
+    const order = [];
+    for (let slot = 0; slot <= maxSlot; slot += 1) {
+      for (const teamId of teamsInOrder) {
+        const list = tanksByTeam.get(teamId) || [];
+        const tank = list.find((item) => (item.teamSlot || 0) === slot);
+        if (tank) {
+          order.push(tank.id);
+        }
+      }
+    }
+
+    return order.length ? order : alive.slice().sort((a, b) => a.id - b.id).map((tank) => tank.id);
   }
 
   function getAiPreset() {
@@ -2550,7 +2727,7 @@
     return max * 0.5;
   }
 
-  function makeTank({ id, name, team, x, color, controller, teamName }) {
+  function makeTank({ id, name, team, x, color, controller, teamName, teamSlot = 0 }) {
     return {
       id,
       name,
@@ -2568,12 +2745,15 @@
       hp: getMaxHp(),
       alive: true,
       tilt: 0,
+      teamSlot,
       lastShotPath: [],
       lastShotEnd: null,
       lastShotAngleDeg: null,
       lastShotPowerPct: null,
       powerups: {
         sniper: 0,
+        dig: 0,
+        build: 0,
         teleport: 0,
         earthquake: 0,
         airstrike: 0,
@@ -2777,6 +2957,7 @@
     state.screenShakeX = 0;
     state.screenShakeY = 0;
     state.driveHint = null;
+    state.aimAssistEnd = null;
     state.turnCounter = 1;
     state.turnsIntoRound = 0;
     keys.clear();
@@ -2849,6 +3030,7 @@
     state.screenShakeX = 0;
     state.screenShakeY = 0;
     state.driveHint = null;
+    state.aimAssistEnd = null;
     keys.clear();
     setStatus("Draw one continuous line from left edge to right edge");
     enterInGameShell();
@@ -3421,6 +3603,7 @@
             team: team.id,
             teamName: team.name,
             controller: team.controller,
+            teamSlot: i,
             x: teamSpawns[i],
             color: team.color
           })
@@ -3473,6 +3656,7 @@
     state.screenShakeX = 0;
     state.screenShakeY = 0;
     state.driveHint = null;
+    state.aimAssistEnd = null;
     state.turnCounter = 1;
     state.turnsIntoRound = 0;
     state.lastImpact = { x: state.worldW * 0.5, y: WORLD_H * 0.5 };
@@ -3488,6 +3672,12 @@
     }
     if (Math.random() < 0.35) {
       spawnPowerUp();
+    }
+
+    const initialTurnOrder = getAliveTurnOrderIds();
+    if (initialTurnOrder.length > 0) {
+      const idx = state.tanks.findIndex((tank) => tank.id === initialTurnOrder[0]);
+      state.activeIndex = idx >= 0 ? idx : 0;
     }
 
     configureTurn();
@@ -3567,37 +3757,34 @@
       return;
     }
 
+    const order = getAliveTurnOrderIds();
+    if (!order.length) {
+      return;
+    }
+
     let scheduledRoundQuake = false;
-    const aliveCount = state.tanks.filter((tank) => tank.alive).length;
-    if (aliveCount > 0) {
-      state.turnsIntoRound += 1;
-      if (state.turnsIntoRound >= aliveCount) {
-        state.turnsIntoRound = 0;
-        state.turnCounter += 1;
-        if (state.turnCounter % 5 === 0) {
-          if (state.quakePendingTime <= 0) {
-            state.quakeSource = "round";
-          }
-          state.quakePendingTime = Math.max(state.quakePendingTime, EARTHQUAKE_SHAKE_TIME);
-          startScreenShake(EARTHQUAKE_SHAKE_TIME, EARTHQUAKE_SHAKE_AMP);
-          playEarthquakeRumble(EARTHQUAKE_SHAKE_TIME);
-          scheduledRoundQuake = true;
+    const currentId = getActiveTank()?.id;
+    const currentIdx = order.indexOf(currentId);
+    const nextOrderIdx = currentIdx < 0 ? 0 : (currentIdx + 1) % order.length;
+    const wrapped = currentIdx >= 0 && nextOrderIdx <= currentIdx;
+
+    if (wrapped) {
+      state.turnCounter += 1;
+      if (state.turnCounter % 5 === 0) {
+        if (state.quakePendingTime <= 0) {
+          state.quakeSource = "round";
         }
+        state.quakePendingTime = Math.max(state.quakePendingTime, EARTHQUAKE_SHAKE_TIME);
+        startScreenShake(EARTHQUAKE_SHAKE_TIME, EARTHQUAKE_SHAKE_AMP);
+        playEarthquakeRumble(EARTHQUAKE_SHAKE_TIME);
+        scheduledRoundQuake = true;
       }
     }
 
-    let next = state.activeIndex;
-    let guard = 0;
-    do {
-      next = (next + 1) % state.tanks.length;
-      guard += 1;
-    } while (!state.tanks[next].alive && guard < state.tanks.length + 1);
-
-    state.activeIndex = next;
+    const nextTankId = order[nextOrderIdx];
+    const nextTankIdx = state.tanks.findIndex((tank) => tank.id === nextTankId);
+    state.activeIndex = nextTankIdx >= 0 ? nextTankIdx : state.activeIndex;
     configureTurn();
-    if (scheduledRoundQuake) {
-      setStatus(`Turn ${state.turnCounter}: earthquake rumbling...`);
-    }
   }
 
   function isPlayerTurn() {
@@ -4097,12 +4284,20 @@
       shotType = "sniper";
       consumePowerUp(tank, "sniper");
     }
+    if (state.selectedShotType === "dig" && (tank.powerups.dig || 0) > 0) {
+      shotType = "dig";
+      consumePowerUp(tank, "dig");
+    }
+    if (state.selectedShotType === "build" && (tank.powerups.build || 0) > 0) {
+      shotType = "build";
+      consumePowerUp(tank, "build");
+    }
     if (state.selectedShotType === "laser" && (tank.powerups.laser || 0) > 0) {
       executeLaserShot(tank);
       return;
     }
     if (state.selectedShotType === "airstrike" && (tank.powerups.airstrike || 0) > 0) {
-      shotType = "airstrike_flare";
+      shotType = "airstrike_double";
       consumePowerUp(tank, "airstrike");
     }
 
@@ -4128,15 +4323,19 @@
     state.selectedShotType = "normal";
     clearAbilityMode();
     state.rangefinderHint = null;
-    setStatus(shotType === "airstrike_flare" ? `${tank.name} fired a flare` : `${tank.name} fired`);
+    setStatus(shotType === "airstrike_double" ? `${tank.name} fired double shot` : `${tank.name} fired`);
   }
 
   function explode(ix, iy, radius, maxDamage, options = {}) {
     const deferResolve = Boolean(options.deferResolve);
+    const terrainScale = Math.max(0, Number(options.terrainScale || 1));
+    const visualStyle = options.visualStyle || "normal";
+    const skipParticles = Boolean(options.skipParticles);
+    const playSoundFx = options.playSound !== false;
     state.lastImpact.x = ix;
     state.lastImpact.y = iy;
 
-    const carveRadius = radius * TERRAIN_CARVE_SCALE;
+    const carveRadius = radius * TERRAIN_CARVE_SCALE * terrainScale;
     stampImpactCrater(ix, iy, carveRadius);
 
     for (const tank of state.tanks) {
@@ -4167,21 +4366,23 @@
     }
 
     const fx = state.settings.fxIntensity;
-    const particleCount = Math.round(16 + fx * 34);
-    for (let i = 0; i < particleCount; i += 1) {
-      const a = Math.random() * TAU;
-      const speed = rand(28, 148 + fx * 70);
-      const ttl = rand(0.28, 0.78);
-      state.particles.push({
-        x: ix,
-        y: iy,
-        vx: Math.cos(a) * speed,
-        vy: Math.sin(a) * speed - rand(6, 24),
-        life: ttl,
-        ttl,
-        size: rand(1.2, 3.8),
-        tone: Math.random() < 0.5 ? "255, 111, 35" : "0, 0, 0"
-      });
+    if (!skipParticles && visualStyle !== "dig") {
+      const particleCount = Math.round(16 + fx * 34);
+      for (let i = 0; i < particleCount; i += 1) {
+        const a = Math.random() * TAU;
+        const speed = rand(28, 148 + fx * 70);
+        const ttl = rand(0.28, 0.78);
+        state.particles.push({
+          x: ix,
+          y: iy,
+          vx: Math.cos(a) * speed,
+          vy: Math.sin(a) * speed - rand(6, 24),
+          life: ttl,
+          ttl,
+          size: rand(1.2, 3.8),
+          tone: Math.random() < 0.5 ? "255, 111, 35" : "0, 0, 0"
+        });
+      }
     }
 
     state.bursts.push({
@@ -4190,28 +4391,145 @@
       life: 0.6,
       ttl: 0.6,
       radius: radius * (0.95 + fx * 0.7),
-      seed: Math.random() * 1000
+      seed: Math.random() * 1000,
+      style: visualStyle
     });
     if (state.bursts.length > MAX_BURSTS) {
       state.bursts.shift();
     }
 
-    startScreenShake(0.22 + radius * 0.003, 2.6 + radius * 0.055);
-    playExplosionSound(0.8 + maxDamage / 120);
+    startScreenShake(0.22 + radius * 0.003, visualStyle === "dig" ? 1.9 + radius * 0.03 : 2.6 + radius * 0.055);
+    if (playSoundFx) {
+      playExplosionSound(0.8 + maxDamage / 120);
+    }
 
     if (!deferResolve) {
       beginResolvePhase();
     }
   }
 
+  function clearVoidCircle(cx, cy, radius) {
+    const minX = clamp(Math.floor(cx - radius), 0, state.worldW - 1);
+    const maxX = clamp(Math.ceil(cx + radius), 0, state.worldW - 1);
+    const minY = clamp(Math.floor(cy - radius), 0, WORLD_H - 1);
+    const maxY = clamp(Math.ceil(cy + radius), 0, WORLD_H - 1);
+    const r2 = radius * radius;
+
+    for (let y = minY; y <= maxY; y += 1) {
+      const row = y * MAX_WORLD_W;
+      const dy = y - cy;
+      for (let x = minX; x <= maxX; x += 1) {
+        const dx = x - cx;
+        if (dx * dx + dy * dy <= r2) {
+          state.voidMask[row + x] = 0;
+        }
+      }
+    }
+
+    state.craters = state.craters.filter((crater) => {
+      const dist = Math.hypot(crater.x - cx, crater.y - cy);
+      return dist > crater.r + radius * 0.58;
+    });
+    rebuildVoidMaskFromCraters();
+    state.craterLayersDirty = true;
+  }
+
+  function pushTankOutsideBuild(ix, tank, radius) {
+    const dir = tank.x >= ix ? 1 : -1;
+    const escapeA = findNearestTankSafeX(tank.x + dir * (radius + TANK_W * 1.2), 320);
+    tank.x = clamp(escapeA, TANK_W * 0.6, state.worldW - TANK_W * 0.6);
+    placeTankOnGround(tank);
+    tank.vx = 0;
+    tank.vy = 0;
+    if (!tankCollidesTerrain(tank)) {
+      return;
+    }
+
+    const escapeB = findNearestTankSafeX(tank.x - dir * (radius + TANK_W * 1.35), 360);
+    tank.x = clamp(escapeB, TANK_W * 0.6, state.worldW - TANK_W * 0.6);
+    placeTankOnGround(tank);
+    tank.vx = 0;
+    tank.vy = 0;
+  }
+
+  function applyBuildImpact(ix, iy, ownerId) {
+    const radius = BUILD_RADIUS;
+    const minX = clamp(Math.floor(ix - radius), 0, state.worldW - 1);
+    const maxX = clamp(Math.ceil(ix + radius), 0, state.worldW - 1);
+    const r2 = radius * radius;
+
+    for (let x = minX; x <= maxX; x += 1) {
+      const dx = x - ix;
+      const inside = r2 - dx * dx;
+      if (inside <= 0) {
+        continue;
+      }
+      const dy = Math.sqrt(inside);
+      const topY = clamp(Math.round(iy - dy), 0, WORLD_H - 1);
+      state.surfaceY[x] = Math.min(state.surfaceY[x], topY);
+    }
+
+    for (let pass = 0; pass < 3; pass += 1) {
+      for (let x = minX + 1; x < maxX; x += 1) {
+        state.surfaceY[x] = (state.surfaceY[x - 1] + state.surfaceY[x] * 2 + state.surfaceY[x + 1]) * 0.25;
+      }
+    }
+    const minSurfaceY = Math.round(WORLD_H * TERRAIN_SURFACE_MIN_FRAC);
+    const maxSurfaceY = Math.round(WORLD_H * TERRAIN_SURFACE_MAX_FRAC);
+    const builtSurface = state.surfaceY.map((yy) => clamp(Math.round(yy), minSurfaceY, maxSurfaceY));
+    state.surfaceY = relaxSurfaceForMobility(builtSurface, 2);
+
+    // Clear crater void masks around the build impact so new terrain merges as solid mass.
+    clearVoidCircle(ix, iy + radius * 0.15, radius * 1.08);
+
+    for (const tank of state.tanks) {
+      if (!tank.alive) {
+        continue;
+      }
+      const dist = Math.hypot(tank.x - ix, tank.y - iy);
+      if (dist <= radius + TANK_W * 0.62 || tankCollidesTerrain(tank)) {
+        pushTankOutsideBuild(ix, tank, radius);
+      }
+    }
+
+    state.lastImpact.x = ix;
+    state.lastImpact.y = supportY(ix);
+    state.bursts.push({
+      x: ix,
+      y: iy,
+      life: 0.6,
+      ttl: 0.6,
+      radius: radius * 1.22,
+      seed: Math.random() * 1000,
+      style: "build"
+    });
+    if (state.bursts.length > MAX_BURSTS) {
+      state.bursts.shift();
+    }
+    playExplosionSound(0.72);
+    startScreenShake(0.16, 2.1);
+  }
+
+  function spawnFollowupAirstrike(ownerId, x) {
+    state.airstrikeDrops = [
+      {
+        x: clamp(x, 0, state.worldW - 1),
+        y: -22,
+        py: -22,
+        vy: AIRSTRIKE_DROP_SPEED * 1.04,
+        ownerId,
+        radius: 4,
+        delay: 0
+      }
+    ];
+  }
+
   function updateProjectile(dt) {
     const p = state.projectile;
-    const flare = state.activeFlare;
-    if ((!p || !p.active) && state.airstrikeDrops.length === 0 && !flare) {
+    if ((!p || !p.active) && state.airstrikeDrops.length === 0) {
       return;
     }
     if (!p || !p.active) {
-      updateActiveFlare(dt);
       if (state.airstrikeDrops.length > 0) {
         updateAirstrikeDrops(dt);
       }
@@ -4250,8 +4568,22 @@
         finalizeShotPath(p.ownerId, hit.x, hit.y);
         p.active = false;
         state.projectile = null;
-        if (p.shotType === "airstrike_flare") {
-          beginRollingFlare(p.ownerId, hit.x, hit.y, p.vx);
+        if (p.shotType === "airstrike_double") {
+          explode(hit.x, hit.y, EXPLOSION_RADIUS, EXPLOSION_DAMAGE, { deferResolve: true });
+          spawnFollowupAirstrike(p.ownerId, hit.x);
+          setStatus("Second strike incoming");
+          return;
+        }
+        if (p.shotType === "dig") {
+          explode(hit.x, hit.y, EXPLOSION_RADIUS, EXPLOSION_DAMAGE, {
+            terrainScale: DIG_TERRAIN_MULT,
+            visualStyle: "dig"
+          });
+          return;
+        }
+        if (p.shotType === "build") {
+          applyBuildImpact(hit.x, hit.y, p.ownerId);
+          beginResolvePhase("Build impact");
           return;
         }
         explode(hit.x, hit.y, EXPLOSION_RADIUS, EXPLOSION_DAMAGE);
@@ -4295,6 +4627,7 @@
       state.driveHint.life -= dt;
       if (state.driveHint.life <= 0) {
         state.driveHint = null;
+        state.aimAssistEnd = null;
       }
     }
 
@@ -4509,29 +4842,43 @@
 
   function activatePowerUp(type) {
     if (!isPlayerTurn()) {
-      return;
+      return false;
     }
     const tank = getActiveTank();
     if (!tank || !tank.powerups) {
-      return;
+      return false;
     }
     if ((tank.powerups[type] || 0) <= 0) {
       setStatus(`No ${type.toUpperCase()} charge`);
-      return;
+      return false;
     }
 
     if (type === "sniper") {
       state.selectedShotType = state.selectedShotType === "sniper" ? "normal" : "sniper";
       clearAbilityMode();
       setStatus(state.selectedShotType === "sniper" ? "Sniper shot ready" : "Normal shot selected");
-      return;
+      return true;
+    }
+
+    if (type === "dig") {
+      state.selectedShotType = state.selectedShotType === "dig" ? "normal" : "dig";
+      clearAbilityMode();
+      setStatus(state.selectedShotType === "dig" ? "Dig shot ready" : "Normal shot selected");
+      return true;
+    }
+
+    if (type === "build") {
+      state.selectedShotType = state.selectedShotType === "build" ? "normal" : "build";
+      clearAbilityMode();
+      setStatus(state.selectedShotType === "build" ? "Build shot ready" : "Normal shot selected");
+      return true;
     }
 
     if (type === "airstrike") {
       state.selectedShotType = state.selectedShotType === "airstrike" ? "normal" : "airstrike";
       clearAbilityMode();
-      setStatus(state.selectedShotType === "airstrike" ? "Flare airstrike ready" : "Normal shot selected");
-      return;
+      setStatus(state.selectedShotType === "airstrike" ? "Double shot ready" : "Normal shot selected");
+      return true;
     }
 
     state.selectedShotType = "normal";
@@ -4539,16 +4886,16 @@
       state.abilityMode = "teleport_target";
       state.rangefinderPendingTargetId = null;
       setStatus("Teleport: click terrain location");
-      return;
+      return true;
     }
 
     if (type === "earthquake") {
       if (state.quakePendingTime > 0) {
         setStatus("Earthquake already rumbling");
-        return;
+        return false;
       }
       if (!consumePowerUp(tank, "earthquake")) {
-        return;
+        return false;
       }
       clearAbilityMode();
       state.selectedShotType = "normal";
@@ -4557,14 +4904,17 @@
       startScreenShake(EARTHQUAKE_SHAKE_TIME, EARTHQUAKE_SHAKE_AMP);
       playEarthquakeRumble(EARTHQUAKE_SHAKE_TIME);
       setStatus("Earthquake rumbling...");
-      return;
+      return true;
     }
 
     if (type === "laser") {
       state.selectedShotType = state.selectedShotType === "laser" ? "normal" : "laser";
       clearAbilityMode();
       setStatus(state.selectedShotType === "laser" ? "Laser shot ready" : "Normal shot selected");
+      return true;
     }
+
+    return false;
   }
 
   function teleportTankToX(tank, worldX) {
@@ -4739,7 +5089,7 @@
       }
     }
 
-    if (state.phase === "projectile" && !state.projectile && !state.activeFlare && state.airstrikeDrops.length === 0) {
+    if (state.phase === "projectile" && !state.projectile && state.airstrikeDrops.length === 0) {
       beginResolvePhase("Airstrike complete");
     }
   }
@@ -4941,6 +5291,10 @@
         value = 210;
       } else if (p.type === "airstrike") {
         value = 188;
+      } else if (p.type === "dig") {
+        value = 182;
+      } else if (p.type === "build") {
+        value = 154;
       } else if (p.type === "sniper") {
         value = 164;
       } else if (p.type === "teleport") {
@@ -4995,12 +5349,26 @@
       }
     }
 
+    if ((aiTank.powerups.dig || 0) > 0) {
+      const blockedLine = evaluateAiShot(aiTank, target, shotPlan.angle, shotPlan.power) > 28;
+      if (blockedLine && Math.random() < (aiPreset.sniperChance || 0.5) * 0.5) {
+        return { shotType: "dig", angle: shotPlan.angle, power: shotPlan.power };
+      }
+    }
+
+    if ((aiTank.powerups.build || 0) > 0) {
+      const lowHp = aiTank.hp <= Math.round(getMaxHp() * 0.35);
+      if (lowHp && Math.random() < (aiPreset.quakeChance || 0.2) * 0.75) {
+        return { shotType: "build", angle: shotPlan.angle, power: shotPlan.power };
+      }
+    }
+
     if ((aiTank.powerups.airstrike || 0) > 0) {
       const hard = state.config.aiDifficulty === "hard";
-      const shouldUseFlare =
+      const shouldUseAirstrike =
         Math.random() < aiPreset.airstrikeChance &&
         (shotPlan.score > (hard ? 16 : 28) || target.hp <= Math.round(getMaxHp() * 0.45));
-      if (shouldUseFlare) {
+      if (shouldUseAirstrike) {
         return { shotType: "airstrike", angle: shotPlan.angle, power: shotPlan.power };
       }
     }
@@ -5699,8 +6067,65 @@
     ctx.restore();
   }
 
+  function drawMobileAimLensOverlay() {
+    if (!isMobilePointerDevice() || !aimDrag.active || !isPlayerTurn() || !pointer.initialized) {
+      if (state.aimAssistEnd) {
+        state.aimAssistEnd = null;
+      }
+      return;
+    }
+
+    const r = 44;
+    const sourceHalf = 24;
+    const offsetX = pointer.x < canvas.width * 0.5 ? 82 : -82;
+    const cx = clamp(pointer.x + offsetX, r + 8, canvas.width - r - 8);
+    const cy = clamp(pointer.y - 78, r + 8, getGameplayBottomY() - r - 8);
+    const sx = clamp(pointer.x - sourceHalf, 0, Math.max(0, canvas.width - sourceHalf * 2));
+    const sy = clamp(pointer.y - sourceHalf, 0, Math.max(0, getGameplayBottomY() - sourceHalf * 2));
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, TAU);
+    ctx.clip();
+    ctx.fillStyle = "rgba(255, 255, 255, 0.96)";
+    ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+    ctx.drawImage(canvas, sx, sy, sourceHalf * 2, sourceHalf * 2, cx - r, cy - r, r * 2, r * 2);
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 0.32, cy);
+    ctx.lineTo(cx + r * 0.32, cy);
+    ctx.moveTo(cx, cy - r * 0.32);
+    ctx.lineTo(cx, cy + r * 0.32);
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.82)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, TAU);
+    ctx.stroke();
+
+    if (state.aimAssistEnd) {
+      const tx = worldToScreenX(state.aimAssistEnd.x);
+      const ty = worldToScreenY(state.aimAssistEnd.y);
+      const lx = clamp(tx, cx - r + 6, cx + r - 6);
+      const ly = clamp(ty, cy - r + 6, cy + r - 6);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.82)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(lx, ly, 4.6, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+
   function drawTrajectoryPreview(tank) {
     if (!isPlayerTurn() || getActiveTank() !== tank) {
+      if (state.aimAssistEnd && state.aimAssistEnd.tankId === tank.id) {
+        state.aimAssistEnd = null;
+      }
       return;
     }
 
@@ -5713,6 +6138,8 @@
       Array.isArray(state.rangefinderHint.path) &&
       state.rangefinderHint.path.length > 1;
     if (hasRangefinderPath) {
+      const lastPoint = state.rangefinderHint.path[state.rangefinderHint.path.length - 1];
+      state.aimAssistEnd = lastPoint ? { x: lastPoint.x, y: lastPoint.y, tankId: tank.id } : null;
       return;
     }
 
@@ -5736,6 +6163,7 @@
       ctx.arc(hit.x - state.cameraX, hit.y, 6, 0, TAU);
       ctx.fill();
       ctx.stroke();
+      state.aimAssistEnd = { x: hit.x, y: hit.y, tankId: tank.id };
       ctx.restore();
       return;
     }
@@ -5790,6 +6218,7 @@
     ctx.arc(endX - state.cameraX, endY, 6, 0, TAU);
     ctx.fill();
     ctx.stroke();
+    state.aimAssistEnd = { x: endX, y: endY, tankId: tank.id };
 
     if (aimDrag.active && isPlayerTurn() && getActiveTank() === tank) {
       const tipX = muzzle.baseX + Math.cos(muzzle.rad) * 32 - state.cameraX;
@@ -5892,45 +6321,13 @@
   function drawProjectile() {
     if (state.projectile && state.projectile.active) {
       const p = state.projectile;
-      const flare = p.shotType === "airstrike_flare";
-      ctx.fillStyle = flare ? "#f97316" : "#808080";
+      ctx.fillStyle = p.shotType === "airstrike_double" ? "#6b7280" : "#808080";
       ctx.strokeStyle = "#000000";
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.arc(p.x - state.cameraX, p.y, p.radius + 1.2, 0, TAU);
       ctx.fill();
       ctx.stroke();
-    }
-
-    if (state.activeFlare) {
-      const flare = state.activeFlare;
-      const x = flare.x - state.cameraX;
-      const flicker = 0.7 + Math.sin(performance.now() * 0.024) * 0.3;
-      ctx.save();
-      ctx.fillStyle = "#ff7a1a";
-      ctx.strokeStyle = "#000000";
-      ctx.lineWidth = 2.2;
-      ctx.beginPath();
-      ctx.arc(x, flare.y, flare.radius, 0, TAU);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.globalAlpha = 0.42 * flicker;
-      ctx.fillStyle = "#ffb347";
-      ctx.beginPath();
-      ctx.arc(x, flare.y - 2.4, flare.radius * 1.4, 0, TAU);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-
-      if (flare.armed) {
-        ctx.strokeStyle = "rgba(255, 75, 0, 0.85)";
-        ctx.lineWidth = 1.8;
-        ctx.beginPath();
-        ctx.moveTo(x - 1.2, flare.y - flare.radius - 1.2);
-        ctx.lineTo(x + rand(-0.8, 0.8), flare.y - flare.radius - 9.2);
-        ctx.stroke();
-      }
-      ctx.restore();
     }
 
     if (!state.airstrikeDrops.length) {
@@ -5983,19 +6380,31 @@
       const t = 1 - clamp(burst.life / burst.ttl, 0, 1);
       const alpha = (1 - t) * fx;
       const ringR = burst.radius * (0.34 + t * 0.96);
+      const style = burst.style || "normal";
 
       ctx.save();
-      ctx.lineWidth = 2 + (1 - t) * 4;
-      ctx.strokeStyle = `rgba(255, 120, 40, ${0.5 * alpha})`;
+      ctx.lineWidth = style === "dig" ? 2.2 + (1 - t) * 2.2 : 2 + (1 - t) * 4;
+      if (style === "dig") {
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.88 * alpha})`;
+      } else if (style === "build") {
+        ctx.strokeStyle = `rgba(120, 120, 120, ${0.46 * alpha})`;
+      } else {
+        ctx.strokeStyle = `rgba(255, 120, 40, ${0.5 * alpha})`;
+      }
       ctx.beginPath();
       ctx.arc(burst.x - state.cameraX, burst.y, ringR, 0, TAU);
       ctx.stroke();
 
-      ctx.strokeStyle = `rgba(20, 20, 20, ${0.45 * alpha})`;
+      ctx.strokeStyle = style === "dig" ? `rgba(255, 255, 255, ${0.36 * alpha})` : `rgba(20, 20, 20, ${0.45 * alpha})`;
       ctx.lineWidth = 1.4;
       ctx.beginPath();
       ctx.arc(burst.x - state.cameraX, burst.y, ringR * 0.76, 0, TAU);
       ctx.stroke();
+
+      if (style === "dig" || style === "build") {
+        ctx.restore();
+        continue;
+      }
 
       const sparkCount = Math.round(22 + fx * 58);
       for (let i = 0; i < sparkCount; i += 1) {
@@ -6061,18 +6470,7 @@
     const active = getActiveTank();
     const isDrawPhase = state.phase === "draw_map";
     if (ui.turnCounter) {
-      let counterText = isDrawPhase ? "DRAW MAP" : `TURN ${state.turnCounter}`;
-      if (!isDrawPhase && active) {
-        counterText += ` • ${active.name}`;
-      }
-      if (state.phase === "paused") {
-        counterText += " (PAUSED)";
-      } else if (state.phase === "gameover") {
-        counterText += " (GAME OVER)";
-      } else if (state.quakePendingTime > 0) {
-        counterText += " (QUAKE)";
-      }
-      ui.turnCounter.textContent = counterText;
+      ui.turnCounter.textContent = `TURN ${Math.max(1, state.turnCounter)}`;
     }
 
     if (active) {
@@ -6175,10 +6573,11 @@
     }
     if (ui.fireBtn) {
       ui.fireBtn.textContent = isDrawPhase ? "USE MAP" : "FIRE";
-      ui.fireBtn.disabled = isDrawPhase ? (!state.drawMap.ready && !state.drawMap.drawing) : !canControl;
+      ui.fireBtn.disabled = state.phase === "menu" || state.phase === "paused" ? true : (!isDrawPhase && !canControl);
     }
     if (ui.powerupMenuBtn) {
       ui.powerupMenuBtn.disabled = isDrawPhase || !canControl;
+      ui.powerupMenuBtn.classList.toggle("active", state.selectedShotType !== "normal" || state.abilityMode === "teleport_target");
     }
     const canUseZoomButtons = state.phase !== "menu" && state.phase !== "paused";
     if (ui.zoomOutBtn) {
@@ -6201,13 +6600,22 @@
     }
 
     const sniperCount = active?.powerups?.sniper || 0;
+    const digCount = active?.powerups?.dig || 0;
+    const buildCount = active?.powerups?.build || 0;
     const teleCount = active?.powerups?.teleport || 0;
     const quakeCount = active?.powerups?.earthquake || 0;
     const airstrikeCount = active?.powerups?.airstrike || 0;
     const laserCount = active?.powerups?.laser || 0;
+    const hasUnlimitedPowers = Boolean(active && state.settings.devMode && active.controller === "human");
 
     if (ui.sniperCount) {
       ui.sniperCount.textContent = `${sniperCount}`;
+    }
+    if (ui.digCount) {
+      ui.digCount.textContent = `${digCount}`;
+    }
+    if (ui.buildCount) {
+      ui.buildCount.textContent = `${buildCount}`;
     }
     if (ui.teleportCount) {
       ui.teleportCount.textContent = `${teleCount}`;
@@ -6223,23 +6631,31 @@
     }
 
     if (ui.sniperBtn) {
-      ui.sniperBtn.disabled = isDrawPhase || !canControl;
+      ui.sniperBtn.disabled = isDrawPhase || !canControl || (!hasUnlimitedPowers && sniperCount <= 0);
       ui.sniperBtn.classList.toggle("active", state.selectedShotType === "sniper");
     }
+    if (ui.digBtn) {
+      ui.digBtn.disabled = isDrawPhase || !canControl || (!hasUnlimitedPowers && digCount <= 0);
+      ui.digBtn.classList.toggle("active", state.selectedShotType === "dig");
+    }
+    if (ui.buildBtn) {
+      ui.buildBtn.disabled = isDrawPhase || !canControl || (!hasUnlimitedPowers && buildCount <= 0);
+      ui.buildBtn.classList.toggle("active", state.selectedShotType === "build");
+    }
     if (ui.teleportBtn) {
-      ui.teleportBtn.disabled = isDrawPhase || !canControl;
+      ui.teleportBtn.disabled = isDrawPhase || !canControl || (!hasUnlimitedPowers && teleCount <= 0);
       ui.teleportBtn.classList.toggle("active", state.abilityMode === "teleport_target");
     }
     if (ui.earthquakeBtn) {
-      ui.earthquakeBtn.disabled = isDrawPhase || !canControl;
+      ui.earthquakeBtn.disabled = isDrawPhase || !canControl || (!hasUnlimitedPowers && quakeCount <= 0);
       ui.earthquakeBtn.classList.toggle("active", false);
     }
     if (ui.airstrikeBtn) {
-      ui.airstrikeBtn.disabled = isDrawPhase || !canControl;
+      ui.airstrikeBtn.disabled = isDrawPhase || !canControl || (!hasUnlimitedPowers && airstrikeCount <= 0);
       ui.airstrikeBtn.classList.toggle("active", state.selectedShotType === "airstrike");
     }
     if (ui.laserBtn) {
-      ui.laserBtn.disabled = isDrawPhase || !canControl;
+      ui.laserBtn.disabled = isDrawPhase || !canControl || (!hasUnlimitedPowers && laserCount <= 0);
       ui.laserBtn.classList.toggle("active", state.selectedShotType === "laser");
     }
 
@@ -6310,6 +6726,8 @@
       drawBackground();
       ctx.save();
       const zoom = Math.max(0.001, state.cameraZoom || 1);
+      const worldYOffset = getWorldRenderYOffset();
+      ctx.translate(0, worldYOffset);
       ctx.scale(zoom, zoom);
       drawTerrain();
       drawMapEditorWorldOverlay();
@@ -6325,6 +6743,7 @@
       drawParticles();
       ctx.restore();
       drawMapEditorHud();
+      drawMobileAimLensOverlay();
       drawGameOverBanner();
     }
 
@@ -6566,25 +6985,81 @@
     nudgeActiveAim(0, -AIM_NUDGE_POWER_STEP);
   });
 
-  if (ui.fireBtn) {
-    ui.fireBtn.addEventListener("click", () => {
-      ensureAudio();
-      if (state.phase === "draw_map") {
-        confirmDrawnMapAndStart();
-        return;
-      }
-      fireActiveTank();
-    });
-  }
+  const bindResponsiveTapButton = (btn, onTap) => {
+    if (!btn || typeof onTap !== "function") {
+      return;
+    }
 
-  if (ui.powerupMenuBtn) {
-    ui.powerupMenuBtn.addEventListener("click", () => {
-      if (state.phase === "menu" || state.phase === "paused") {
+    let suppressClick = false;
+    let suppressTimer = null;
+
+    const clearTapState = () => {
+      if (suppressTimer !== null) {
+        clearTimeout(suppressTimer);
+        suppressTimer = null;
+      }
+      suppressClick = false;
+      btn.classList.remove("tap-active");
+    };
+
+    const fireTap = () => {
+      if (btn.disabled) {
         return;
       }
-      togglePowerupMenu();
+      ensureAudio();
+      onTap();
+    };
+
+    btn.addEventListener("pointerdown", (event) => {
+      if (event.pointerType === "mouse" && event.button !== 0) {
+        return;
+      }
+      if (btn.disabled) {
+        return;
+      }
+      suppressClick = true;
+      btn.classList.add("tap-active");
+      fireTap();
+      if (suppressTimer !== null) {
+        clearTimeout(suppressTimer);
+      }
+      suppressTimer = setTimeout(() => {
+        suppressClick = false;
+        btn.classList.remove("tap-active");
+      }, 260);
+      event.preventDefault();
     });
-  }
+
+    btn.addEventListener("pointerup", () => {
+      btn.classList.remove("tap-active");
+    });
+    btn.addEventListener("pointercancel", clearTapState);
+    btn.addEventListener("lostpointercapture", clearTapState);
+
+    btn.addEventListener("click", (event) => {
+      if (suppressClick) {
+        event.preventDefault();
+        return;
+      }
+      fireTap();
+    });
+  };
+
+  const triggerFireOrUseMap = () => {
+    if (state.phase === "draw_map") {
+      confirmDrawnMapAndStart();
+      return;
+    }
+    fireActiveTank();
+  };
+  bindResponsiveTapButton(ui.fireBtn, triggerFireOrUseMap);
+
+  bindResponsiveTapButton(ui.powerupMenuBtn, () => {
+    if (state.phase === "menu" || state.phase === "paused") {
+      return;
+    }
+    togglePowerupMenu();
+  });
 
   const bindZoomButton = (btn, dir) => {
     if (!btn) {
@@ -6779,40 +7254,22 @@
     });
   }
 
-  if (ui.sniperBtn) {
-    ui.sniperBtn.addEventListener("click", () => {
-      activatePowerUp("sniper");
-      setPowerupMenuOpen(false);
+  const bindPowerupPickerButton = (btn, type) => {
+    bindResponsiveTapButton(btn, () => {
+      const activated = activatePowerUp(type);
+      if (activated) {
+        setPowerupMenuOpen(false);
+      }
     });
-  }
+  };
 
-  if (ui.teleportBtn) {
-    ui.teleportBtn.addEventListener("click", () => {
-      activatePowerUp("teleport");
-      setPowerupMenuOpen(false);
-    });
-  }
-
-  if (ui.earthquakeBtn) {
-    ui.earthquakeBtn.addEventListener("click", () => {
-      activatePowerUp("earthquake");
-      setPowerupMenuOpen(false);
-    });
-  }
-
-  if (ui.airstrikeBtn) {
-    ui.airstrikeBtn.addEventListener("click", () => {
-      activatePowerUp("airstrike");
-      setPowerupMenuOpen(false);
-    });
-  }
-
-  if (ui.laserBtn) {
-    ui.laserBtn.addEventListener("click", () => {
-      activatePowerUp("laser");
-      setPowerupMenuOpen(false);
-    });
-  }
+  bindPowerupPickerButton(ui.sniperBtn, "sniper");
+  bindPowerupPickerButton(ui.digBtn, "dig");
+  bindPowerupPickerButton(ui.buildBtn, "build");
+  bindPowerupPickerButton(ui.teleportBtn, "teleport");
+  bindPowerupPickerButton(ui.earthquakeBtn, "earthquake");
+  bindPowerupPickerButton(ui.airstrikeBtn, "airstrike");
+  bindPowerupPickerButton(ui.laserBtn, "laser");
 
   if (ui.startBtn) {
     ui.startBtn.addEventListener("click", () => {
@@ -6828,6 +7285,7 @@
         playerCount: 1,
         enemyCount: 3,
         aiDifficulty: "normal",
+        turnMode: "classic",
         maxHealth: DEFAULT_MAX_HP,
         mapSource: "random",
         terrainMode: "hilly"
