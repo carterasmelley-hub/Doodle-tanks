@@ -95,17 +95,19 @@
       background: transparent;
       padding: 0;
       box-shadow: none;
+      margin-top: -28px;
     }
 
     .main-menu-card h1 {
-      margin: 0 0 10px;
+      margin: 0 0 8px;
       font-size: clamp(56px, 9.5vw, 108px);
       line-height: 0.95;
       letter-spacing: 0.05em;
+      font-family: "Marker Felt", "Chalkduster", "Noteworthy", "Bradley Hand", "Comic Sans MS", cursive;
     }
 
     .main-menu-card p {
-      margin: 0 0 16px;
+      margin: 0 0 14px;
       font-size: 15px;
       font-weight: 700;
     }
@@ -179,7 +181,8 @@
       right: 10px;
       bottom: 10px;
       z-index: 6;
-      display: block;
+      display: grid;
+      gap: 6px;
     }
 
     .control-panel {
@@ -188,7 +191,14 @@
       border-radius: 10px;
       padding: 8px 10px;
       display: grid;
-      grid-template-columns: repeat(3, minmax(92px, 120px)) 1fr auto;
+      grid-template-columns: auto auto auto auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .setup-group {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(92px, 120px));
       gap: 8px;
       align-items: end;
     }
@@ -208,6 +218,116 @@
 
     .control-group.compact {
       min-width: 0;
+    }
+
+    .hud-mini-meters {
+      display: none;
+      align-items: center;
+      gap: 7px;
+      background: var(--card);
+      border: 2px solid var(--card-border);
+      border-radius: 10px;
+      padding: 6px 8px;
+    }
+
+    .mini-meter {
+      display: grid;
+      grid-template-columns: max-content 1fr max-content;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .mini-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .mini-track {
+      height: 7px;
+      border: 1.5px solid #000000;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      min-width: 56px;
+    }
+
+    .mini-fill {
+      height: 100%;
+      width: 0%;
+      background: #000000;
+    }
+
+    .mini-value {
+      font-size: 11px;
+      font-weight: 700;
+      min-width: 38px;
+      text-align: right;
+    }
+
+    .tune-drawer {
+      display: grid;
+      gap: 6px;
+      background: var(--card);
+      border: 2px solid var(--card-border);
+      border-radius: 10px;
+      padding: 8px;
+    }
+
+    .tune-drawer.hidden {
+      display: none;
+    }
+
+    .tune-row {
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .tune-row label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .tune-row input[type="range"] {
+      width: 100%;
+    }
+
+    .aim-value-row {
+      display: inline-grid;
+      grid-template-columns: max-content max-content;
+      gap: 3px;
+      align-items: center;
+      justify-content: start;
+    }
+
+    .nudge-stack {
+      display: grid;
+      grid-template-rows: repeat(2, 1fr);
+      gap: 1px;
+    }
+
+    .nudge-btn {
+      min-width: 20px;
+      width: 20px;
+      height: 16px;
+      padding: 0;
+      border-width: 1.5px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .bottom-ui button {
+      touch-action: manipulation;
+      min-height: 38px;
+      min-width: 38px;
     }
 
     .powerups {
@@ -246,7 +366,16 @@
       display: grid;
       grid-auto-flow: column;
       grid-auto-columns: max-content;
-      gap: 8px;
+      gap: 6px;
+      align-self: center;
+      justify-self: center;
+    }
+
+    .action-center {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: max-content;
+      gap: 6px;
       align-self: center;
       justify-self: center;
     }
@@ -261,11 +390,139 @@
     }
 
     .cam-pan-btn {
-      min-width: 40px;
-      padding: 10px 12px;
+      min-width: 42px;
+      padding: 9px 10px;
       font-size: 18px;
       line-height: 1;
       letter-spacing: 0;
+    }
+
+    .cam-pan-btn.hidden-pan {
+      display: none;
+    }
+
+    .weapon-card-btn {
+      display: none;
+      min-width: 150px;
+      padding: 9px 12px;
+      font-size: 12px;
+    }
+
+    #fire-btn {
+      min-width: 82px;
+      padding: 9px 12px;
+      font-size: 14px;
+    }
+
+    #powerup-menu-btn {
+      min-width: 116px;
+      padding: 9px 12px;
+      font-size: 13px;
+    }
+
+    #quick-swap-btn,
+    #tune-btn-inline,
+    #tune-btn {
+      min-width: 72px;
+      padding: 9px 10px;
+      font-size: 12px;
+    }
+
+    body.hud-onehand .setup-group {
+      display: none;
+    }
+
+    body.hud-onehand .hud-mini-meters {
+      display: grid;
+      grid-template-columns: auto 1fr 1fr;
+    }
+
+    body.hud-onehand #tune-btn-inline {
+      display: none;
+    }
+
+    body.hud-onehand .control-panel {
+      grid-template-columns: auto 1fr auto;
+    }
+
+    body.hud-onehand .camera-actions {
+      justify-self: start;
+    }
+
+    body.hud-onehand .action-center {
+      justify-self: center;
+    }
+
+    body.hud-onehand .utility-actions {
+      justify-self: end;
+    }
+
+    body.hud-split .hud-mini-meters {
+      display: none;
+    }
+
+    body.hud-split #tune-btn-inline {
+      display: none;
+    }
+
+    body.hud-split .control-panel {
+      grid-template-columns: auto auto auto;
+      grid-template-areas:
+        "camera action utility"
+        "setup setup setup";
+      align-items: center;
+      row-gap: 7px;
+    }
+
+    body.hud-split .camera-actions {
+      grid-area: camera;
+      justify-self: start;
+    }
+
+    body.hud-split .action-center {
+      grid-area: action;
+      justify-self: center;
+    }
+
+    body.hud-split .utility-actions {
+      grid-area: utility;
+      justify-self: end;
+    }
+
+    body.hud-split .setup-group {
+      grid-area: setup;
+      justify-self: center;
+      grid-template-columns: repeat(3, minmax(102px, 128px));
+    }
+
+    body.hud-card .hud-mini-meters,
+    body.hud-card .setup-group,
+    body.hud-card #quick-swap-btn,
+    body.hud-card #tune-btn-inline {
+      display: none;
+    }
+
+    body.hud-card .control-panel {
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+    }
+
+    body.hud-card .camera-actions {
+      justify-self: start;
+    }
+
+    body.hud-card .action-center {
+      justify-self: center;
+    }
+
+    body.hud-card .weapon-card-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    body.hud-card .utility-actions {
+      justify-self: end;
     }
 
     .powerup-menu {
@@ -416,8 +673,12 @@
 
     @media (max-width: 1200px) {
       .control-panel {
-        grid-template-columns: repeat(3, minmax(88px, 112px)) 1fr auto;
+        grid-template-columns: auto auto auto auto;
         gap: 8px;
+      }
+
+      .setup-group {
+        grid-template-columns: repeat(3, minmax(82px, 106px));
       }
 
       .powerup-menu {
@@ -436,7 +697,11 @@
         padding: 6px 7px;
         border-radius: 9px;
         gap: 5px;
-        grid-template-columns: repeat(3, minmax(74px, 96px)) 1fr auto;
+        grid-template-columns: auto auto auto auto;
+      }
+
+      .setup-group {
+        grid-template-columns: repeat(3, minmax(72px, 94px));
       }
 
       .control-group label {
@@ -448,22 +713,50 @@
         font-size: 15px;
       }
 
+      .nudge-btn {
+        min-width: 24px;
+        width: 24px;
+        height: 18px;
+        font-size: 12px;
+      }
+
       .camera-actions,
       .utility-actions {
         gap: 5px;
         align-self: center;
       }
 
+      .action-center {
+        gap: 5px;
+      }
+
       .bottom-ui button {
-        padding: 6px 8px;
-        font-size: 10px;
+        min-height: 42px;
+        min-width: 42px;
+        padding: 8px 10px;
+        font-size: 12px;
         border-radius: 7px;
       }
 
       .cam-pan-btn {
-        min-width: 28px;
-        padding: 6px;
+        min-width: 44px;
+        padding: 8px 10px;
+        font-size: 16px;
+      }
+
+      #fire-btn {
+        min-width: 74px;
+      }
+
+      #powerup-menu-btn {
+        min-width: 116px;
         font-size: 13px;
+      }
+
+      #quick-swap-btn,
+      #tune-btn-inline,
+      #tune-btn {
+        min-width: 66px;
       }
 
       .status-pill {
@@ -496,7 +789,11 @@
 
       .control-panel {
         gap: 4px;
-        grid-template-columns: repeat(3, minmax(60px, 80px)) 1fr auto;
+        grid-template-columns: auto auto auto auto;
+      }
+
+      .setup-group {
+        grid-template-columns: repeat(3, minmax(58px, 78px));
       }
 
       .control-group label {
@@ -507,15 +804,44 @@
         font-size: 13px;
       }
 
+      .nudge-btn {
+        min-width: 22px;
+        width: 22px;
+        height: 17px;
+        font-size: 11px;
+      }
+
       .bottom-ui button {
-        padding: 5px 6px;
-        font-size: 9px;
+        min-height: 40px;
+        min-width: 40px;
+        padding: 7px 8px;
+        font-size: 11px;
       }
 
       .cam-pan-btn {
-        min-width: 24px;
-        padding: 5px;
-        font-size: 11px;
+        min-width: 42px;
+        padding: 7px 8px;
+        font-size: 15px;
+      }
+
+      #fire-btn {
+        min-width: 70px;
+      }
+
+      #powerup-menu-btn {
+        min-width: 108px;
+      }
+
+      #quick-swap-btn,
+      #tune-btn-inline,
+      #tune-btn {
+        min-width: 62px;
+        font-size: 10px;
+      }
+
+      .weapon-card-btn {
+        min-width: 120px;
+        font-size: 10px;
       }
 
       .status-pill {
@@ -538,11 +864,53 @@
 
     @media (max-width: 620px) {
       .control-panel {
-        grid-template-columns: repeat(2, minmax(58px, 1fr)) 1fr auto;
+        grid-template-columns: 1fr;
+        gap: 6px;
       }
 
-      .camera-actions {
-        grid-column: 1 / -1;
+      .setup-group {
+        justify-content: center;
+        grid-template-columns: repeat(3, minmax(70px, 1fr));
+      }
+
+      .camera-actions,
+      .action-center,
+      .utility-actions {
+        justify-self: center;
+      }
+
+      .bottom-ui button {
+        min-height: 46px;
+        min-width: 46px;
+      }
+
+      #fire-btn {
+        min-width: 88px;
+      }
+
+      #powerup-menu-btn {
+        min-width: 122px;
+      }
+
+      body.hud-onehand .control-panel,
+      body.hud-card .control-panel {
+        grid-template-columns: auto 1fr auto;
+      }
+
+      body.hud-split .control-panel {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "action"
+          "camera"
+          "utility"
+          "setup";
+      }
+
+      body.hud-split .camera-actions,
+      body.hud-split .action-center,
+      body.hud-split .utility-actions,
+      body.hud-split .setup-group {
+        justify-self: center;
       }
 
       .powerups-row {
@@ -555,6 +923,117 @@
 
       .powerup-menu {
         bottom: 92px;
+      }
+    }
+
+    /* Locked classic HUD layout */
+    .bottom-ui {
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 12px !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      pointer-events: none;
+    }
+
+    .control-panel {
+      width: max-content;
+      max-width: calc(100vw - 20px);
+      pointer-events: auto;
+      background: transparent !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      padding: 0 !important;
+      display: grid !important;
+      grid-template-columns: 1fr !important;
+      gap: 8px !important;
+      justify-items: center;
+    }
+
+    .action-center {
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      gap: 8px !important;
+      justify-self: center;
+    }
+
+    .utility-actions {
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      gap: 10px !important;
+      justify-self: center;
+    }
+
+    #fire-btn {
+      min-width: 148px !important;
+      min-height: 60px !important;
+      padding: 10px 20px !important;
+      font-size: 28px !important;
+      line-height: 1 !important;
+    }
+
+    .cam-pan-btn {
+      min-width: 52px !important;
+      min-height: 52px !important;
+      padding: 8px 10px !important;
+      font-size: 22px !important;
+      line-height: 1 !important;
+    }
+
+    #powerup-menu-btn {
+      min-width: 136px !important;
+      min-height: 54px !important;
+      padding: 10px 14px !important;
+      font-size: 20px !important;
+    }
+
+    #quick-swap-btn {
+      min-height: 54px !important;
+      padding: 10px 14px !important;
+      font-size: 18px !important;
+    }
+
+    .status-pill {
+      bottom: 124px !important;
+    }
+
+    .powerup-menu {
+      bottom: 124px !important;
+    }
+
+    @media (max-width: 620px) {
+      #fire-btn {
+        min-width: 126px !important;
+        min-height: 52px !important;
+        font-size: 22px !important;
+      }
+
+      .cam-pan-btn {
+        min-width: 46px !important;
+        min-height: 46px !important;
+        font-size: 18px !important;
+      }
+
+      #powerup-menu-btn {
+        min-width: 116px !important;
+        min-height: 48px !important;
+        font-size: 16px !important;
+      }
+
+      #quick-swap-btn {
+        min-height: 48px !important;
+        font-size: 14px !important;
+      }
+
+      .status-pill {
+        bottom: 108px !important;
+      }
+
+      .powerup-menu {
+        bottom: 108px !important;
       }
     }
   </style>
@@ -681,25 +1160,14 @@
 
   <div class="bottom-ui" id="bottom-ui">
     <section class="control-panel">
-      <div class="control-group compact">
-        <label>ANGLE</label>
-        <div class="control-value" id="angle-value">0&deg;</div>
-      </div>
-      <div class="control-group compact">
-        <label>POWER</label>
-        <div class="control-value" id="power-value">0%</div>
-      </div>
-      <div class="control-group compact">
-        <label>GAS</label>
-        <div class="control-value" id="move-value">0%</div>
-      </div>
-      <div class="camera-actions">
+      <div class="action-center">
         <button id="pan-left-btn" class="cam-pan-btn" type="button" aria-label="Pan left">&larr;</button>
         <button id="fire-btn" type="button">FIRE</button>
         <button id="pan-right-btn" class="cam-pan-btn" type="button" aria-label="Pan right">&rarr;</button>
       </div>
       <div class="utility-actions">
         <button id="powerup-menu-btn" type="button">POWERS</button>
+        <button id="quick-swap-btn" type="button">SWAP</button>
       </div>
     </section>
   </div>
@@ -731,6 +1199,10 @@
     powerSlider: document.getElementById("power-slider"),
     angleValue: document.getElementById("angle-value"),
     powerValue: document.getElementById("power-value"),
+    angleUpBtn: document.getElementById("angle-up-btn"),
+    angleDownBtn: document.getElementById("angle-down-btn"),
+    powerUpBtn: document.getElementById("power-up-btn"),
+    powerDownBtn: document.getElementById("power-down-btn"),
     moveValue: document.getElementById("move-value"),
     moveFill: document.getElementById("move-fill"),
     sniperBtn: document.getElementById("sniper-btn"),
@@ -744,6 +1216,16 @@
     laserBtn: document.getElementById("laser-btn"),
     laserCount: document.getElementById("laser-count"),
     powerupMenuBtn: document.getElementById("powerup-menu-btn"),
+    quickSwapBtn: document.getElementById("quick-swap-btn"),
+    tuneBtnInline: document.getElementById("tune-btn-inline"),
+    tuneBtn: document.getElementById("tune-btn"),
+    hudMiniMeters: document.getElementById("hud-mini-meters"),
+    tuneDrawer: document.getElementById("tune-drawer"),
+    weaponCardBtn: document.getElementById("weapon-card-btn"),
+    miniPowerFill: document.getElementById("mini-power-fill"),
+    miniPowerText: document.getElementById("mini-power-text"),
+    miniGasFill: document.getElementById("mini-gas-fill"),
+    miniGasText: document.getElementById("mini-gas-text"),
     powerupMenu: document.getElementById("powerup-menu"),
     powerupCloseBtn: document.getElementById("powerup-close-btn"),
     panLeftBtn: document.getElementById("pan-left-btn"),
@@ -783,6 +1265,7 @@
     fxIntensityValue: document.getElementById("fx-intensity-value"),
     devModeToggle: document.getElementById("dev-mode-toggle"),
     devModeValue: document.getElementById("dev-mode-value"),
+    hudLayoutSelect: document.getElementById("hud-layout-select"),
     bottomUi: document.getElementById("bottom-ui")
   };
 
@@ -819,6 +1302,8 @@
   const MIN_POWER = 150;
   const MAX_POWER = 620;
   const DEFAULT_SHOT_POWER = 430;
+  const AIM_NUDGE_ANGLE_STEP = 1;
+  const AIM_NUDGE_POWER_STEP = (MAX_POWER - MIN_POWER) / 100;
 
   const MAX_MOVE_PER_TURN = 92;
   const DRIVE_SPEED = 62;
@@ -963,7 +1448,8 @@
     },
     settings: {
       fxIntensity: 0.7,
-      devMode: false
+      devMode: false,
+      hudLayout: "classic"
     },
     menuView: "main",
     pauseFromPhase: null,
@@ -1017,6 +1503,7 @@
     screenShakeAmp: 0,
     screenShakeX: 0,
     screenShakeY: 0,
+    driveHint: null,
     turnCounter: 1,
     turnsIntoRound: 0,
     quakePendingTime: 0,
@@ -1081,6 +1568,141 @@
     }
     const open = ui.powerupMenu.classList.contains("hidden");
     setPowerupMenuOpen(open);
+  }
+
+  function getHudLayout() {
+    return "classic";
+  }
+
+  function setHudLayout() {
+    const next = "classic";
+    state.settings.hudLayout = "classic";
+    if (ui.hudLayoutSelect) {
+      ui.hudLayoutSelect.value = next;
+    }
+
+    document.body.classList.remove("hud-classic", "hud-onehand", "hud-split", "hud-card");
+    document.body.classList.add(`hud-${next}`);
+  }
+
+  function setTuneDrawerOpen(open) {
+    if (!ui.tuneDrawer) {
+      return;
+    }
+    const canOpen = isPlayerTurn() && state.phase !== "draw_map";
+    const nextOpen = Boolean(open) && canOpen;
+    ui.tuneDrawer.classList.toggle("hidden", !nextOpen);
+  }
+
+  function toggleTuneDrawer() {
+    if (!ui.tuneDrawer) {
+      return;
+    }
+    const shouldOpen = ui.tuneDrawer.classList.contains("hidden");
+    setTuneDrawerOpen(shouldOpen);
+  }
+
+  function getShotTypeCycleForTank(tank) {
+    if (!tank) {
+      return ["normal"];
+    }
+
+    const cycle = ["normal"];
+    if ((tank.powerups?.sniper || 0) > 0) {
+      cycle.push("sniper");
+    }
+    if ((tank.powerups?.airstrike || 0) > 0) {
+      cycle.push("airstrike");
+    }
+    if ((tank.powerups?.laser || 0) > 0) {
+      cycle.push("laser");
+    }
+    return cycle;
+  }
+
+  function getShotLabel(shotType) {
+    if (shotType === "sniper") {
+      return "SNIPER";
+    }
+    if (shotType === "airstrike") {
+      return "AIRSTRIKE";
+    }
+    if (shotType === "laser") {
+      return "LASER";
+    }
+    return "NORMAL SHOT";
+  }
+
+  function getShotAmmoLabel(tank, shotType) {
+    if (!tank || shotType === "normal") {
+      return "∞";
+    }
+    if (state.settings.devMode && tank.controller === "human") {
+      return "∞";
+    }
+    if (shotType === "sniper") {
+      return `${tank.powerups?.sniper || 0}`;
+    }
+    if (shotType === "airstrike") {
+      return `${tank.powerups?.airstrike || 0}`;
+    }
+    if (shotType === "laser") {
+      return `${tank.powerups?.laser || 0}`;
+    }
+    return "∞";
+  }
+
+  function cycleQuickShotType() {
+    if (!isPlayerTurn()) {
+      return;
+    }
+
+    const tank = getActiveTank();
+    if (!tank) {
+      return;
+    }
+
+    clearAbilityMode();
+    const cycle = getShotTypeCycleForTank(tank);
+    if (cycle.length <= 1) {
+      state.selectedShotType = "normal";
+      setStatus("No special shots ready");
+      updateUi();
+      return;
+    }
+
+    let idx = cycle.indexOf(state.selectedShotType);
+    if (idx < 0) {
+      idx = 0;
+    }
+    const nextType = cycle[(idx + 1) % cycle.length];
+    state.selectedShotType = nextType;
+    state.rangefinderHint = null;
+    setStatus(nextType === "normal" ? "Normal shot selected" : `${getShotLabel(nextType)} ready`);
+    updateUi();
+  }
+
+  function updateWeaponCardUi(activeTank, canControl, isDrawPhase) {
+    if (!ui.weaponCardBtn) {
+      return;
+    }
+    const drawLocked = isDrawPhase || !canControl;
+    ui.weaponCardBtn.disabled = drawLocked;
+
+    if (!activeTank) {
+      ui.weaponCardBtn.textContent = "RANGER SHOT • ∞";
+      return;
+    }
+
+    const cycle = getShotTypeCycleForTank(activeTank);
+    let selected = state.selectedShotType;
+    if (!cycle.includes(selected)) {
+      selected = "normal";
+    }
+
+    const label = getShotLabel(selected);
+    const ammo = getShotAmmoLabel(activeTank, selected);
+    ui.weaponCardBtn.textContent = `${label} • ${ammo}`;
   }
 
   function getCameraViewWidth() {
@@ -1465,6 +2087,7 @@
       state.screenShakeAmp = 0;
       state.screenShakeX = 0;
       state.screenShakeY = 0;
+      state.driveHint = null;
       return;
     }
 
@@ -1574,7 +2197,7 @@
   function getAiTeamBounds(humanPlayers) {
     const humans = clamp(Number(humanPlayers || 1), 1, 4);
     const maxAiTeams = clamp(4 - humans, 0, 3);
-    const minAiTeams = humans === 1 ? maxAiTeams : 0;
+    const minAiTeams = humans === 1 ? Math.min(1, maxAiTeams) : 0;
     return { minAiTeams, maxAiTeams };
   }
 
@@ -1660,7 +2283,7 @@
     }
     if (ui.enemyCountLabel) {
       ui.enemyCountLabel.textContent =
-        minAiTeams === maxAiTeams ? `AI TEAMS (${maxAiTeams})` : `AI TEAMS (0-${maxAiTeams})`;
+        minAiTeams === maxAiTeams ? `AI TEAMS (${maxAiTeams})` : `AI TEAMS (${minAiTeams}-${maxAiTeams})`;
     }
     if (ui.aiDifficultyLabel) {
       ui.aiDifficultyLabel.textContent = aiTeams > 0 ? "AI DIFFICULTY" : "AI DIFFICULTY (OFF)";
@@ -1890,6 +2513,8 @@
       tilt: 0,
       lastShotPath: [],
       lastShotEnd: null,
+      lastShotAngleDeg: null,
+      lastShotPowerPct: null,
       powerups: {
         sniper: 0,
         teleport: 0,
@@ -2094,6 +2719,7 @@
     state.screenShakeAmp = 0;
     state.screenShakeX = 0;
     state.screenShakeY = 0;
+    state.driveHint = null;
     state.turnCounter = 1;
     state.turnsIntoRound = 0;
     keys.clear();
@@ -2165,6 +2791,7 @@
     state.screenShakeAmp = 0;
     state.screenShakeX = 0;
     state.screenShakeY = 0;
+    state.driveHint = null;
     keys.clear();
     setStatus("Draw one continuous line from left edge to right edge");
     enterInGameShell();
@@ -2780,6 +3407,7 @@
     state.screenShakeAmp = 0;
     state.screenShakeX = 0;
     state.screenShakeY = 0;
+    state.driveHint = null;
     state.turnCounter = 1;
     state.turnsIntoRound = 0;
     state.lastImpact = { x: state.worldW * 0.5, y: WORLD_H * 0.5 };
@@ -2933,6 +3561,93 @@
     }
   }
 
+  function nudgeActiveAim(angleDelta = 0, powerDelta = 0) {
+    if (!isPlayerTurn()) {
+      return false;
+    }
+    const tank = getActiveTank();
+    if (!tank) {
+      return false;
+    }
+
+    releaseCameraToPlayer();
+    if (angleDelta !== 0) {
+      tank.angle = clampAimDeg(tank.angle + angleDelta);
+    }
+    if (powerDelta !== 0) {
+      tank.power = clamp(tank.power + powerDelta, MIN_POWER, MAX_POWER);
+    }
+    syncControlsFromActive();
+    return true;
+  }
+
+  function bindAimNudgeButton(btn, onStep) {
+    if (!btn || typeof onStep !== "function") {
+      return;
+    }
+
+    let holdTimeout = null;
+    let holdInterval = null;
+    let activePointerId = null;
+    let suppressClick = false;
+
+    const clearHold = () => {
+      if (holdTimeout !== null) {
+        clearTimeout(holdTimeout);
+        holdTimeout = null;
+      }
+      if (holdInterval !== null) {
+        clearInterval(holdInterval);
+        holdInterval = null;
+      }
+      activePointerId = null;
+    };
+
+    btn.addEventListener("pointerdown", (event) => {
+      if (event.pointerType === "mouse" && event.button !== 0) {
+        return;
+      }
+      clearHold();
+      activePointerId = event.pointerId;
+      suppressClick = true;
+      onStep();
+      holdTimeout = setTimeout(() => {
+        holdInterval = setInterval(() => {
+          onStep();
+        }, 56);
+      }, 190);
+      if (btn.setPointerCapture) {
+        btn.setPointerCapture(event.pointerId);
+      }
+      event.preventDefault();
+    });
+
+    const stopIfActivePointer = (event) => {
+      if (activePointerId === null || event.pointerId !== activePointerId) {
+        return;
+      }
+      clearHold();
+    };
+
+    btn.addEventListener("pointerup", stopIfActivePointer);
+    btn.addEventListener("pointercancel", stopIfActivePointer);
+    btn.addEventListener("pointerleave", stopIfActivePointer);
+    btn.addEventListener("lostpointercapture", () => {
+      clearHold();
+    });
+
+    btn.addEventListener("click", (event) => {
+      if (suppressClick) {
+        suppressClick = false;
+        event.preventDefault();
+        return;
+      }
+      onStep();
+    });
+
+    window.addEventListener("blur", clearHold);
+  }
+
   function tryDriveTank(tank, direction, dt) {
     if (!tank || !tank.alive || direction === 0 || tank.moveRemaining <= 0) {
       return 0;
@@ -2970,6 +3685,14 @@
 
     if (used > 0.01 && tank === getActiveTank() && tank.controller === "human" && state.phase === "aim") {
       releaseCameraToPlayer();
+      state.driveHint = {
+        tankId: tank.id,
+        x: tank.x,
+        y: tank.y - TANK_H * 1.9,
+        text: `GAS ${moveToPercent(tank.moveRemaining)}%`,
+        life: 0.32,
+        ttl: 0.32
+      };
     }
 
     return used;
@@ -3301,6 +4024,9 @@
       return;
     }
 
+    tank.lastShotAngleDeg = Math.round(getTrueShotAngleDeg(tank));
+    tank.lastShotPowerPct = powerToPercent(tank.power);
+
     let shotType = "normal";
     if (state.selectedShotType === "sniper" && (tank.powerups.sniper || 0) > 0) {
       shotType = "sniper";
@@ -3499,6 +4225,13 @@
       cut.life -= dt;
     }
     state.laserCuts = state.laserCuts.filter((cut) => cut.life > 0);
+
+    if (state.driveHint) {
+      state.driveHint.life -= dt;
+      if (state.driveHint.life <= 0) {
+        state.driveHint = null;
+      }
+    }
 
   }
 
@@ -4439,11 +5172,7 @@
   }
 
   function getGameplayBottomY() {
-    if (!ui.bottomUi) {
-      return canvas.height;
-    }
-    const rect = ui.bottomUi.getBoundingClientRect();
-    return clamp(rect.top - 4, 140, canvas.height);
+    return canvas.height;
   }
 
   function updateMenuDemo(dt) {
@@ -4812,6 +5541,19 @@
       ctx.stroke();
     }
 
+    if (tank.lastShotAngleDeg != null && tank.lastShotPowerPct != null) {
+      const midIndex = Math.max(0, Math.min(tank.lastShotPath.length - 1, Math.floor(tank.lastShotPath.length * 0.56)));
+      const labelPoint = tank.lastShotPath[midIndex] || tank.lastShotPath[tank.lastShotPath.length - 1];
+      const labelText = `${Math.round(tank.lastShotAngleDeg)}\u00b0 ${Math.round(tank.lastShotPowerPct)}%`;
+      ctx.fillStyle = "rgba(0, 0, 0, 0.24)";
+      ctx.font = "700 12px 'Comic Sans MS', 'Trebuchet MS', sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const lx = clamp(labelPoint.x - state.cameraX + 6, 30, canvas.width - 30);
+      const ly = clamp(labelPoint.y - 12, 16, getGameplayBottomY() - 14);
+      ctx.fillText(labelText, lx, ly);
+    }
+
     ctx.restore();
   }
 
@@ -4858,6 +5600,37 @@
     ctx.arc(hint.x - state.cameraX, hint.y, 7, 0, TAU);
     ctx.fill();
     ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawDriveHintBubble(tank) {
+    if (!tank || !state.driveHint || state.driveHint.tankId !== tank.id) {
+      return;
+    }
+    if (!isPlayerTurn() || getActiveTank() !== tank) {
+      return;
+    }
+
+    const hint = state.driveHint;
+    const alpha = clamp(hint.life / Math.max(0.001, hint.ttl || 1), 0, 1);
+    const text = hint.text || "GAS";
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = "700 12px 'Comic Sans MS', 'Trebuchet MS', sans-serif";
+    const textW = Math.max(62, Math.ceil(ctx.measureText(text).width + 14));
+    const worldX = hint.x - state.cameraX;
+    const drawX = clamp(worldX - textW * 0.5, 8, canvas.width - textW - 8);
+    const drawY = clamp(hint.y - 26, 10, getGameplayBottomY() - 28);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.78)";
+    ctx.lineWidth = 1.5;
+    pathRoundedRect(ctx, drawX, drawY, textW, 22, 8);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#000000";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, drawX + textW * 0.5, drawY + 11);
     ctx.restore();
   }
 
@@ -4952,6 +5725,30 @@
     ctx.arc(endX - state.cameraX, endY, 6, 0, TAU);
     ctx.fill();
     ctx.stroke();
+
+    if (aimDrag.active && isPlayerTurn() && getActiveTank() === tank) {
+      const tipX = muzzle.baseX + Math.cos(muzzle.rad) * 32 - state.cameraX;
+      const tipY = muzzle.baseY - Math.sin(muzzle.rad) * 32;
+      const angleText = `${Math.round(getTrueShotAngleDeg(tank))}\u00b0`;
+      const powerText = `${powerToPercent(tank.power)}%`;
+      const text = `${angleText} ${powerText}`;
+      ctx.font = "700 12px 'Comic Sans MS', 'Trebuchet MS', sans-serif";
+      const textW = Math.max(58, Math.ceil(ctx.measureText(text).width + 14));
+      const drawX = clamp(tipX - textW * 0.5, 8, canvas.width - textW - 8);
+      const drawY = clamp(tipY - 34, 12, getGameplayBottomY() - 28);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.94)";
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.74)";
+      ctx.lineWidth = 1.5;
+      pathRoundedRect(ctx, drawX, drawY, textW, 22, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#000000";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, drawX + textW * 0.5, drawY + 11);
+    }
+
+    drawDriveHintBubble(tank);
     ctx.restore();
   }
 
@@ -5200,6 +5997,9 @@
     const isDrawPhase = state.phase === "draw_map";
     if (ui.turnCounter) {
       let counterText = isDrawPhase ? "DRAW MAP" : `TURN ${state.turnCounter}`;
+      if (!isDrawPhase && active) {
+        counterText += ` • ${active.name}`;
+      }
       if (state.phase === "paused") {
         counterText += " (PAUSED)";
       } else if (state.phase === "gameover") {
@@ -5220,6 +6020,18 @@
       if (ui.moveValue) {
         ui.moveValue.textContent = `${moveToPercent(active.moveRemaining)}%`;
       }
+      if (ui.miniPowerFill) {
+        ui.miniPowerFill.style.width = `${powerToPercent(active.power)}%`;
+      }
+      if (ui.miniPowerText) {
+        ui.miniPowerText.textContent = `${powerToPercent(active.power)}%`;
+      }
+      if (ui.miniGasFill) {
+        ui.miniGasFill.style.width = `${moveToPercent(active.moveRemaining)}%`;
+      }
+      if (ui.miniGasText) {
+        ui.miniGasText.textContent = `${moveToPercent(active.moveRemaining)}%`;
+      }
     } else if (isDrawPhase) {
       if (ui.angleValue) {
         ui.angleValue.textContent = "--";
@@ -5230,18 +6042,71 @@
       if (ui.moveValue) {
         ui.moveValue.textContent = "--";
       }
+      if (ui.miniPowerFill) {
+        ui.miniPowerFill.style.width = "0%";
+      }
+      if (ui.miniPowerText) {
+        ui.miniPowerText.textContent = "--";
+      }
+      if (ui.miniGasFill) {
+        ui.miniGasFill.style.width = "0%";
+      }
+      if (ui.miniGasText) {
+        ui.miniGasText.textContent = "--";
+      }
     } else {
       if (ui.moveValue) {
         ui.moveValue.textContent = "0%";
       }
+      if (ui.miniPowerFill) {
+        ui.miniPowerFill.style.width = "0%";
+      }
+      if (ui.miniPowerText) {
+        ui.miniPowerText.textContent = "0%";
+      }
+      if (ui.miniGasFill) {
+        ui.miniGasFill.style.width = "0%";
+      }
+      if (ui.miniGasText) {
+        ui.miniGasText.textContent = "0%";
+      }
     }
 
     const canControl = isPlayerTurn();
+    const canShowPanButtons =
+      state.phase !== "menu" &&
+      state.phase !== "paused" &&
+      state.worldW > getCameraViewWidth() + 6;
+
+    if (!canShowPanButtons && state.cameraButtonPanDir !== 0) {
+      setCameraButtonPanDir(0);
+    }
+    if (ui.panLeftBtn) {
+      ui.panLeftBtn.classList.toggle("hidden-pan", !canShowPanButtons);
+      ui.panLeftBtn.disabled = !canShowPanButtons;
+    }
+    if (ui.panRightBtn) {
+      ui.panRightBtn.classList.toggle("hidden-pan", !canShowPanButtons);
+      ui.panRightBtn.disabled = !canShowPanButtons;
+    }
+
     if (ui.angleSlider) {
-      ui.angleSlider.disabled = true;
+      ui.angleSlider.disabled = isDrawPhase || !canControl;
     }
     if (ui.powerSlider) {
-      ui.powerSlider.disabled = true;
+      ui.powerSlider.disabled = isDrawPhase || !canControl;
+    }
+    if (ui.angleUpBtn) {
+      ui.angleUpBtn.disabled = isDrawPhase || !canControl;
+    }
+    if (ui.angleDownBtn) {
+      ui.angleDownBtn.disabled = isDrawPhase || !canControl;
+    }
+    if (ui.powerUpBtn) {
+      ui.powerUpBtn.disabled = isDrawPhase || !canControl;
+    }
+    if (ui.powerDownBtn) {
+      ui.powerDownBtn.disabled = isDrawPhase || !canControl;
     }
     if (ui.fireBtn) {
       ui.fireBtn.textContent = isDrawPhase ? "USE MAP" : "FIRE";
@@ -5249,6 +6114,22 @@
     }
     if (ui.powerupMenuBtn) {
       ui.powerupMenuBtn.disabled = isDrawPhase || !canControl;
+    }
+    if (ui.quickSwapBtn) {
+      ui.quickSwapBtn.disabled = isDrawPhase || !canControl;
+      const cycle = getShotTypeCycleForTank(active);
+      const selectedType = cycle.includes(state.selectedShotType) ? state.selectedShotType : "normal";
+      const shotLabel = getShotLabel(selectedType);
+      ui.quickSwapBtn.textContent = `SWAP ${shotLabel}`;
+    }
+    if (ui.tuneBtn) {
+      ui.tuneBtn.disabled = isDrawPhase || !canControl;
+    }
+    if (ui.tuneBtnInline) {
+      ui.tuneBtnInline.disabled = isDrawPhase || !canControl;
+    }
+    if (isDrawPhase || !canControl) {
+      setTuneDrawerOpen(false);
     }
     if ((isDrawPhase || !canControl) && ui.powerupMenu && !ui.powerupMenu.classList.contains("hidden")) {
       setPowerupMenuOpen(false);
@@ -5296,6 +6177,8 @@
       ui.laserBtn.disabled = isDrawPhase || !canControl;
       ui.laserBtn.classList.toggle("active", state.selectedShotType === "laser");
     }
+
+    updateWeaponCardUi(active, canControl, isDrawPhase);
   }
 
   let lastTs = performance.now();
@@ -5611,6 +6494,19 @@
     });
   }
 
+  bindAimNudgeButton(ui.angleUpBtn, () => {
+    nudgeActiveAim(AIM_NUDGE_ANGLE_STEP, 0);
+  });
+  bindAimNudgeButton(ui.angleDownBtn, () => {
+    nudgeActiveAim(-AIM_NUDGE_ANGLE_STEP, 0);
+  });
+  bindAimNudgeButton(ui.powerUpBtn, () => {
+    nudgeActiveAim(0, AIM_NUDGE_POWER_STEP);
+  });
+  bindAimNudgeButton(ui.powerDownBtn, () => {
+    nudgeActiveAim(0, -AIM_NUDGE_POWER_STEP);
+  });
+
   if (ui.fireBtn) {
     ui.fireBtn.addEventListener("click", () => {
       ensureAudio();
@@ -5628,6 +6524,97 @@
         return;
       }
       togglePowerupMenu();
+    });
+  }
+
+  if (ui.quickSwapBtn) {
+    ui.quickSwapBtn.addEventListener("click", () => {
+      cycleQuickShotType();
+    });
+  }
+
+  if (ui.weaponCardBtn) {
+    let holdTimer = null;
+    let holdTriggered = false;
+    const clearWeaponHold = () => {
+      if (holdTimer !== null) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+    };
+
+    ui.weaponCardBtn.addEventListener("pointerdown", (event) => {
+      if (event.pointerType === "mouse" && event.button !== 0) {
+        return;
+      }
+      holdTriggered = false;
+      clearWeaponHold();
+      holdTimer = setTimeout(() => {
+        holdTriggered = true;
+        if (state.phase === "menu" || state.phase === "paused" || !isPlayerTurn()) {
+          return;
+        }
+        setPowerupMenuOpen(true);
+      }, 360);
+    });
+    ui.weaponCardBtn.addEventListener("pointerup", () => {
+      clearWeaponHold();
+    });
+    ui.weaponCardBtn.addEventListener("pointercancel", () => {
+      clearWeaponHold();
+    });
+    ui.weaponCardBtn.addEventListener("pointerleave", () => {
+      clearWeaponHold();
+    });
+    window.addEventListener("blur", clearWeaponHold);
+
+    ui.weaponCardBtn.addEventListener("click", (event) => {
+      if (holdTriggered) {
+        holdTriggered = false;
+        event.preventDefault();
+        return;
+      }
+      cycleQuickShotType();
+    });
+    ui.weaponCardBtn.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      if (state.phase === "menu" || state.phase === "paused") {
+        return;
+      }
+      if (!isPlayerTurn()) {
+        return;
+      }
+      setPowerupMenuOpen(true);
+    });
+  }
+
+  const bindTuneButton = (btn) => {
+    if (!btn) {
+      return;
+    }
+    btn.addEventListener("click", () => {
+      if (state.phase === "menu" || state.phase === "paused") {
+        return;
+      }
+      toggleTuneDrawer();
+    });
+  };
+  bindTuneButton(ui.tuneBtn);
+  bindTuneButton(ui.tuneBtnInline);
+
+  if (ui.hudMiniMeters) {
+    ui.hudMiniMeters.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) {
+        return;
+      }
+      if (target.closest("#tune-btn")) {
+        return;
+      }
+      if (state.phase === "menu" || state.phase === "paused") {
+        return;
+      }
+      toggleTuneDrawer();
     });
   }
 
@@ -5866,7 +6853,15 @@
     });
   }
 
+  if (ui.hudLayoutSelect) {
+    ui.hudLayoutSelect.addEventListener("change", () => {
+      setHudLayout(ui.hudLayoutSelect.value);
+      updateUi();
+    });
+  }
+
   syncMenuControls();
+  setHudLayout(getHudLayout());
   setFxIntensity(state.settings.fxIntensity);
   setDevMode(state.settings.devMode);
   resize();
