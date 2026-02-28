@@ -33,7 +33,8 @@
     body:not(.in-game) .bottom-ui,
     body:not(.in-game) .status-pill,
     body:not(.in-game) .pause-map-btn,
-    body:not(.in-game) .turn-counter {
+    body:not(.in-game) .turn-counter,
+    body:not(.in-game) .powerup-menu {
       opacity: 0;
       pointer-events: none;
     }
@@ -85,6 +86,34 @@
     .menu-card p {
       margin: 0 0 14px;
       font-size: 14px;
+    }
+
+    .main-menu-card {
+      width: min(560px, calc(100vw - 24px));
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: 0;
+      box-shadow: none;
+    }
+
+    .main-menu-card h1 {
+      margin: 0 0 10px;
+      font-size: clamp(56px, 9.5vw, 108px);
+      line-height: 0.95;
+      letter-spacing: 0.05em;
+    }
+
+    .main-menu-card p {
+      margin: 0 0 16px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .main-menu-card .menu-actions {
+      width: min(340px, calc(100vw - 34px));
+      margin: 0 auto;
+      gap: 10px;
     }
 
     .menu-grid {
@@ -150,57 +179,35 @@
       right: 10px;
       bottom: 10px;
       z-index: 6;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      align-items: end;
+      display: block;
     }
 
     .control-panel {
       background: var(--card);
       border: 2px solid var(--card-border);
       border-radius: 10px;
-      padding: 9px 10px;
+      padding: 8px 10px;
       display: grid;
-      grid-template-columns: repeat(4, minmax(130px, 210px)) 1fr;
-      gap: 10px;
+      grid-template-columns: repeat(3, minmax(92px, 120px)) 1fr auto;
+      gap: 8px;
       align-items: end;
     }
 
     .control-group label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      margin-bottom: 3px;
+      display: block;
+      font-size: 11px;
+      margin-bottom: 2px;
+      letter-spacing: 0.04em;
     }
 
-    .control-group input[type="range"] {
-      width: 100%;
-      accent-color: #333333;
-      height: 20px;
+    .control-value {
+      font-size: 18px;
+      line-height: 1;
+      font-weight: 700;
     }
 
-    .drive-meter {
-      margin-top: 6px;
-      width: 100%;
-      height: 8px;
-      border-radius: 999px;
-      background: rgba(0, 0, 0, 0.18);
-      overflow: hidden;
-    }
-
-    .drive-fill {
-      height: 100%;
-      width: 100%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, #979797, #595959);
-    }
-
-    .help-line {
-      font-size: 12px;
-      align-self: center;
-      text-align: right;
-      line-height: 1.35;
+    .control-group.compact {
+      min-width: 0;
     }
 
     .powerups {
@@ -213,6 +220,7 @@
       font-size: 11px;
       letter-spacing: 0.04em;
       font-weight: 700;
+      line-height: 1;
     }
 
     .powerups-row {
@@ -234,10 +242,60 @@
       color: #ffffff;
     }
 
-    .actions {
+    .camera-actions {
       display: grid;
       grid-auto-flow: column;
+      grid-auto-columns: max-content;
       gap: 8px;
+      align-self: center;
+      justify-self: center;
+    }
+
+    .utility-actions {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: max-content;
+      gap: 8px;
+      align-self: center;
+      justify-self: end;
+    }
+
+    .cam-pan-btn {
+      min-width: 40px;
+      padding: 10px 12px;
+      font-size: 18px;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .powerup-menu {
+      position: fixed;
+      left: 50%;
+      bottom: 74px;
+      transform: translateX(-50%);
+      z-index: 16;
+      width: min(560px, calc(100vw - 24px));
+      border: 2px solid var(--card-border);
+      border-radius: 10px;
+      background: var(--card);
+      padding: 8px 9px;
+      display: grid;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .powerup-menu.hidden {
+      display: none;
+    }
+
+    .powerup-menu-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
     }
 
     button {
@@ -358,36 +416,145 @@
 
     @media (max-width: 1200px) {
       .control-panel {
-        grid-template-columns: repeat(2, minmax(150px, 1fr));
+        grid-template-columns: repeat(3, minmax(88px, 112px)) 1fr auto;
+        gap: 8px;
       }
 
-      .help-line {
-        grid-column: 1 / -1;
-        text-align: left;
+      .powerup-menu {
+        width: min(510px, calc(100vw - 16px));
       }
     }
 
     @media (max-width: 980px) {
       .bottom-ui {
-        flex-basis: 100%;
-        grid-template-columns: 1fr;
+        left: 6px;
+        right: 6px;
+        bottom: 6px;
       }
 
       .control-panel {
-        grid-template-columns: 1fr;
+        padding: 6px 7px;
+        border-radius: 9px;
+        gap: 5px;
+        grid-template-columns: repeat(3, minmax(74px, 96px)) 1fr auto;
       }
 
-      .help-line {
-        text-align: left;
+      .control-group label {
+        font-size: 10px;
+        margin-bottom: 1px;
       }
 
-      .actions {
-        justify-content: stretch;
+      .control-value {
+        font-size: 15px;
+      }
+
+      .camera-actions,
+      .utility-actions {
+        gap: 5px;
+        align-self: center;
+      }
+
+      .bottom-ui button {
+        padding: 6px 8px;
+        font-size: 10px;
+        border-radius: 7px;
+      }
+
+      .cam-pan-btn {
+        min-width: 28px;
+        padding: 6px;
+        font-size: 13px;
       }
 
       .status-pill {
-        bottom: 186px;
-        white-space: normal;
+        bottom: 60px;
+        padding: 5px 10px;
+        font-size: 11px;
+        max-width: calc(100vw - 12px);
+      }
+
+      .powerup-menu {
+        bottom: 62px;
+      }
+
+      .powerups-row {
+        gap: 4px;
+        grid-template-columns: repeat(5, minmax(44px, 1fr));
+      }
+
+      .power-btn {
+        padding: 4px 5px;
+        font-size: 9px;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .camera-actions,
+      .utility-actions {
+        gap: 4px;
+      }
+
+      .control-panel {
+        gap: 4px;
+        grid-template-columns: repeat(3, minmax(60px, 80px)) 1fr auto;
+      }
+
+      .control-group label {
+        font-size: 9px;
+      }
+
+      .control-value {
+        font-size: 13px;
+      }
+
+      .bottom-ui button {
+        padding: 5px 6px;
+        font-size: 9px;
+      }
+
+      .cam-pan-btn {
+        min-width: 24px;
+        padding: 5px;
+        font-size: 11px;
+      }
+
+      .status-pill {
+        bottom: 54px;
+      }
+
+      .powerup-menu {
+        bottom: 58px;
+      }
+
+      .powerups-row {
+        grid-template-columns: repeat(5, minmax(36px, 1fr));
+      }
+
+      .power-btn {
+        padding: 3px;
+        font-size: 8px;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .control-panel {
+        grid-template-columns: repeat(2, minmax(58px, 1fr)) 1fr auto;
+      }
+
+      .camera-actions {
+        grid-column: 1 / -1;
+      }
+
+      .powerups-row {
+        grid-template-columns: repeat(3, minmax(42px, 1fr));
+      }
+
+      .status-pill {
+        bottom: 98px;
+      }
+
+      .powerup-menu {
+        bottom: 92px;
       }
     }
   </style>
@@ -396,7 +563,7 @@
   <canvas id="game"></canvas>
 
   <div class="menu-screen" id="menu-screen">
-    <div class="menu-card" id="main-menu-card">
+    <div class="menu-card main-menu-card" id="main-menu-card">
       <h1>DOODLE TANKS</h1>
       <p>Arc shots, terrain carving, and tank duels.</p>
       <div class="menu-actions">
@@ -433,10 +600,10 @@
         <div class="menu-field">
           <label id="enemy-count-label" for="enemy-count-select">ENEMY TANKS</label>
           <select id="enemy-count-select">
+            <option value="0">0</option>
             <option value="1">1</option>
-            <option value="2" selected>2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
           </select>
         </div>
         <div class="menu-field">
@@ -488,8 +655,8 @@
       </div>
       <div id="pause-help" class="pause-help hidden">
         A/D drive | Drag/touch away from tank to set angle + power<br />
-        Space or FIRE shoots | P or pause button pauses<br />
-        Click power-up circles to use them | R restarts
+        Space or FIRE shoots | Arrow Left/Right pan camera<br />
+        POWERS opens loadout | P or pause button pauses | R restarts
       </div>
     </div>
   </div>
@@ -504,41 +671,52 @@
       <label for="fx-intensity-slider">EXPLOSION FX <span id="fx-intensity-value">70%</span></label>
       <input id="fx-intensity-slider" type="range" min="0" max="100" step="1" value="70" />
     </div>
+    <div class="settings-row">
+      <label for="dev-mode-toggle">DEV MODE <span id="dev-mode-value">OFF</span></label>
+      <input id="dev-mode-toggle" type="checkbox" />
+    </div>
   </section>
 
   <div class="turn-counter" id="turn-counter">TURN 1</div>
 
   <div class="bottom-ui" id="bottom-ui">
     <section class="control-panel">
-      <div class="control-group">
-        <label>ANGLE <span id="angle-value">0&deg;</span></label>
-        <input id="angle-slider" type="range" min="-179" max="179" step="1" />
+      <div class="control-group compact">
+        <label>ANGLE</label>
+        <div class="control-value" id="angle-value">0&deg;</div>
       </div>
-      <div class="control-group">
-        <label>POWER <span id="power-value">0%</span></label>
-        <input id="power-slider" type="range" min="120" max="620" step="1" />
+      <div class="control-group compact">
+        <label>POWER</label>
+        <div class="control-value" id="power-value">0%</div>
       </div>
-      <div class="control-group">
-        <label>MOVE <span id="move-value">0</span></label>
-        <div class="drive-meter"><div class="drive-fill" id="move-fill"></div></div>
+      <div class="control-group compact">
+        <label>GAS</label>
+        <div class="control-value" id="move-value">0%</div>
       </div>
-      <div class="powerups">
-        <div class="powerups-title">POWER UPS</div>
-        <div class="powerups-row">
-          <button id="sniper-btn" class="power-btn" type="button">SNIPER <span id="sniper-count">0</span></button>
-          <button id="teleport-btn" class="power-btn" type="button">TELE <span id="teleport-count">0</span></button>
-          <button id="earthquake-btn" class="power-btn" type="button">QUAKE <span id="earthquake-count">0</span></button>
-          <button id="airstrike-btn" class="power-btn" type="button">AIR <span id="airstrike-count">0</span></button>
-          <button id="laser-btn" class="power-btn" type="button">LASER <span id="laser-count">0</span></button>
-        </div>
+      <div class="camera-actions">
+        <button id="pan-left-btn" class="cam-pan-btn" type="button" aria-label="Pan left">&larr;</button>
+        <button id="fire-btn" type="button">FIRE</button>
+        <button id="pan-right-btn" class="cam-pan-btn" type="button" aria-label="Pan right">&rarr;</button>
       </div>
-      <div class="help-line"></div>
+      <div class="utility-actions">
+        <button id="powerup-menu-btn" type="button">POWERS</button>
+      </div>
     </section>
-
-    <div class="actions">
-      <button id="fire-btn" type="button">FIRE</button>
-    </div>
   </div>
+
+  <section id="powerup-menu" class="powerup-menu hidden">
+    <div class="powerup-menu-head">
+      <span>POWER UPS</span>
+      <button id="powerup-close-btn" type="button">CLOSE</button>
+    </div>
+    <div class="powerups-row">
+      <button id="sniper-btn" class="power-btn" type="button">SNIPER <span id="sniper-count">0</span></button>
+      <button id="teleport-btn" class="power-btn" type="button">TELE <span id="teleport-count">0</span></button>
+      <button id="earthquake-btn" class="power-btn" type="button">QUAKE <span id="earthquake-count">0</span></button>
+      <button id="airstrike-btn" class="power-btn" type="button">AIR <span id="airstrike-count">0</span></button>
+      <button id="laser-btn" class="power-btn" type="button">LASER <span id="laser-count">0</span></button>
+    </div>
+  </section>
 
   <div class="status-pill" id="status-pill">Ready</div>
 
@@ -565,6 +743,11 @@
     airstrikeCount: document.getElementById("airstrike-count"),
     laserBtn: document.getElementById("laser-btn"),
     laserCount: document.getElementById("laser-count"),
+    powerupMenuBtn: document.getElementById("powerup-menu-btn"),
+    powerupMenu: document.getElementById("powerup-menu"),
+    powerupCloseBtn: document.getElementById("powerup-close-btn"),
+    panLeftBtn: document.getElementById("pan-left-btn"),
+    panRightBtn: document.getElementById("pan-right-btn"),
     fireBtn: document.getElementById("fire-btn"),
     statusPill: document.getElementById("status-pill"),
     menuScreen: document.getElementById("menu-screen"),
@@ -598,6 +781,8 @@
     settingsCloseBtn: document.getElementById("settings-close-btn"),
     fxIntensitySlider: document.getElementById("fx-intensity-slider"),
     fxIntensityValue: document.getElementById("fx-intensity-value"),
+    devModeToggle: document.getElementById("dev-mode-toggle"),
+    devModeValue: document.getElementById("dev-mode-value"),
     bottomUi: document.getElementById("bottom-ui")
   };
 
@@ -642,13 +827,26 @@
 
   const EXPLOSION_RADIUS = 34;
   const EXPLOSION_DAMAGE = 90;
+  const AIRSTRIKE_DROP_SPACING = 34;
+  const AIRSTRIKE_DROP_DELAY = 0.1;
+  const AIRSTRIKE_DROP_SPEED = 560;
+  const AIRSTRIKE_DROP_RADIUS = 24;
+  const AIRSTRIKE_DROP_DAMAGE = 80;
+  const FLARE_ROLL_FRICTION = 6.8;
+  const FLARE_ROLL_SLOPE_ACCEL = 560;
+  const FLARE_ARM_SPEED = 13;
+  const FLARE_ARM_SETTLE_TIME = 0.2;
+  const FLARE_BURN_TIME = 0.72;
+  const FLARE_SPARK_RATE = 0.034;
   const MIN_SPLASH_DAMAGE = 10;
   const TERRAIN_CARVE_SCALE = 0.5;
   const CRATER_EDGE_WIDTH = 2.6;
-  const MAX_CRATERS = 180;
+  const MAX_CRATERS = 8000;
   const MAX_BURSTS = 10;
   const EDGE_LOOK_MARGIN = 115;
   const EDGE_LOOK_MAX = 460;
+  const CAMERA_BUTTON_PAN_SPEED = 740;
+  const CAMERA_MAX_ZOOM = 1.65;
   const MAX_POWERUPS_ON_MAP = 3;
   const DRAG_POWER_DISTANCE = 230;
   const DRAG_MIN_DISTANCE = 12;
@@ -663,14 +861,20 @@
   const TERRAIN_SURFACE_MAX_FRAC = 0.73;
   const LASER_DAMAGE = 58;
   const LASER_KNOCKBACK = 130;
-  const LASER_TUNNEL_RADIUS = 5;
+  const LASER_TUNNEL_RADIUS = 6;
+  const DEV_POWERUP_CHARGES = 99;
   const MAX_LASER_CUTS = 36;
   const LASER_CUT_LIFE = 0.42;
 
   const MAP_PRESETS = {
-    small: { width: 1400, amp: 0.96, rough: 0.9, plateau: 0.66, plateauRadius: 92 },
-    normal: { width: 1900, amp: 1.14, rough: 1.04, plateau: 0.62, plateauRadius: 120 },
-    large: { width: 2600, amp: 1.34, rough: 1.2, plateau: 0.59, plateauRadius: 156 }
+    small: { width: 1400, amp: 0.96, rough: 0.9, plateau: 0.66, plateauRadius: 92, yBias: 0 },
+    normal: { width: 1900, amp: 1.14, rough: 1.04, plateau: 0.62, plateauRadius: 120, yBias: 0 },
+    large: { width: 2600, amp: 1.34, rough: 1.2, plateau: 0.64, plateauRadius: 156, yBias: 82 }
+  };
+  const MAP_DEFAULT_ZOOM = {
+    small: 1,
+    normal: 0.75,
+    large: 0.55
   };
 
   const PLAYER_NAMES = ["Ranger", "Viper", "Atlas", "Echo", "Iris", "Nova"];
@@ -751,14 +955,15 @@
       humanPlayers: 1,
       mapSize: DEFAULT_MAP_SIZE,
       playerCount: 1,
-      enemyCount: 2,
+      enemyCount: 3,
       aiDifficulty: "normal",
       maxHealth: DEFAULT_MAX_HP,
       mapSource: "random",
       terrainMode: "hilly"
     },
     settings: {
-      fxIntensity: 0.7
+      fxIntensity: 0.7,
+      devMode: false
     },
     menuView: "main",
     pauseFromPhase: null,
@@ -769,7 +974,10 @@
     particles: [],
     bursts: [],
     cameraX: 0,
+    cameraZoom: 1,
     cameraLookX: 0,
+    cameraButtonPanDir: 0,
+    cameraManualMode: false,
     powerUps: [],
     nextPowerUpId: 1,
     selectedShotType: "normal",
@@ -785,12 +993,15 @@
     lastImpact: { x: MAP_PRESETS[DEFAULT_MAP_SIZE].width * 0.5, y: WORLD_H * 0.5 },
     surfaceY: [],
     craters: [],
+    voidMask: new Uint8Array(MAX_WORLD_W * WORLD_H),
     craterLayersDirty: true,
     currentShotPath: [],
     lastShotPath: [],
     lastShotEnd: null,
     rangefinderHint: null,
     laserCuts: [],
+    airstrikeDrops: [],
+    activeFlare: null,
     customSurfaceY: null,
     drawMap: {
       pointerId: null,
@@ -800,6 +1011,7 @@
       ready: false,
       surface: null
     },
+    menuDemo: null,
     screenShakeTime: 0,
     screenShakeDuration: 0,
     screenShakeAmp: 0,
@@ -808,6 +1020,7 @@
     turnCounter: 1,
     turnsIntoRound: 0,
     quakePendingTime: 0,
+    quakeSource: null,
     audioCtx: null,
     audioMaster: null,
     audioNoiseBuffer: null
@@ -834,6 +1047,85 @@
     pointerId: null
   };
 
+  function setCameraButtonPanDir(dir) {
+    const nextDir = clamp(Math.sign(dir), -1, 1);
+    state.cameraButtonPanDir = nextDir;
+    if (nextDir !== 0) {
+      state.cameraManualMode = true;
+    }
+  }
+
+  function releaseCameraToPlayer() {
+    state.cameraManualMode = false;
+    state.cameraLookX = 0;
+  }
+
+  function nudgeCamera(dir) {
+    if (state.phase === "menu" || state.phase === "paused") {
+      return;
+    }
+    state.cameraManualMode = true;
+    state.cameraX = clampCamera(state.cameraX + clamp(Math.sign(dir), -1, 1) * 170);
+  }
+
+  function setPowerupMenuOpen(open) {
+    if (!ui.powerupMenu) {
+      return;
+    }
+    ui.powerupMenu.classList.toggle("hidden", !open);
+  }
+
+  function togglePowerupMenu() {
+    if (!ui.powerupMenu) {
+      return;
+    }
+    const open = ui.powerupMenu.classList.contains("hidden");
+    setPowerupMenuOpen(open);
+  }
+
+  function getCameraViewWidth() {
+    const zoom = Math.max(0.001, state.cameraZoom || 1);
+    return canvas.width / zoom;
+  }
+
+  function getConfiguredMapZoom() {
+    const key = MAP_PRESETS[state.config.mapSize] ? state.config.mapSize : DEFAULT_MAP_SIZE;
+    return MAP_DEFAULT_ZOOM[key] ?? 1;
+  }
+
+  function getCameraMinZoom() {
+    const gameplayBottom = getGameplayBottomY();
+    const fitX = canvas.width / Math.max(1, state.worldW);
+    const fitY = gameplayBottom / WORLD_H;
+    return clamp(Math.min(fitX, fitY), 0.22, 1);
+  }
+
+  function clampCameraZoom(zoom) {
+    const minZoom = getCameraMinZoom();
+    return clamp(zoom, minZoom, Math.max(minZoom, CAMERA_MAX_ZOOM));
+  }
+
+  function setCameraZoom(nextZoom, preserveCenter = true) {
+    const prevZoom = Math.max(0.001, state.cameraZoom || 1);
+    const prevViewW = canvas.width / prevZoom;
+    const centerX = state.cameraX + prevViewW * 0.5;
+    state.cameraZoom = clampCameraZoom(nextZoom);
+    const nextViewW = getCameraViewWidth();
+    if (preserveCenter) {
+      state.cameraX = clampCamera(centerX - nextViewW * 0.5);
+    } else {
+      state.cameraX = clampCamera(state.cameraX);
+    }
+  }
+
+  function screenToWorldX(screenX) {
+    return screenX / Math.max(0.001, state.cameraZoom || 1) + state.cameraX;
+  }
+
+  function screenToWorldY(screenY) {
+    return screenY / Math.max(0.001, state.cameraZoom || 1);
+  }
+
   if (ui.powerSlider) {
     ui.powerSlider.min = `${MIN_POWER}`;
     ui.powerSlider.max = `${MAX_POWER}`;
@@ -847,6 +1139,33 @@
     }
     if (ui.fxIntensityValue) {
       ui.fxIntensityValue.textContent = `${Math.round(clamped * 100)}%`;
+    }
+  }
+
+  function applyDevModePowerUps(tank) {
+    if (!tank || tank.controller !== "human" || !tank.powerups) {
+      return;
+    }
+    tank.powerups.sniper = Math.max(tank.powerups.sniper || 0, DEV_POWERUP_CHARGES);
+    tank.powerups.teleport = Math.max(tank.powerups.teleport || 0, DEV_POWERUP_CHARGES);
+    tank.powerups.earthquake = Math.max(tank.powerups.earthquake || 0, DEV_POWERUP_CHARGES);
+    tank.powerups.airstrike = Math.max(tank.powerups.airstrike || 0, DEV_POWERUP_CHARGES);
+    tank.powerups.laser = Math.max(tank.powerups.laser || 0, DEV_POWERUP_CHARGES);
+  }
+
+  function setDevMode(enabled) {
+    const next = Boolean(enabled);
+    state.settings.devMode = next;
+    if (ui.devModeToggle) {
+      ui.devModeToggle.checked = next;
+    }
+    if (ui.devModeValue) {
+      ui.devModeValue.textContent = next ? "ON" : "OFF";
+    }
+    if (next) {
+      for (const tank of state.tanks) {
+        applyDevModePowerUps(tank);
+      }
     }
   }
 
@@ -879,6 +1198,96 @@
   function powerToPercent(power) {
     const t = clamp((power - MIN_POWER) / (MAX_POWER - MIN_POWER), 0, 1);
     return Math.round(t * 100);
+  }
+
+  function moveToPercent(moveRemaining) {
+    const t = clamp(moveRemaining / MAX_MOVE_PER_TURN, 0, 1);
+    return Math.round(t * 100);
+  }
+
+  function makeMenuDemoTerrain(worldW) {
+    const heights = new Array(worldW);
+    let h = WORLD_H * 0.64;
+    let slope = 0;
+    for (let x = 0; x < worldW; x += 1) {
+      slope += (Math.random() - 0.5) * 1.08;
+      slope *= 0.945;
+      h += slope;
+      h = clamp(h, WORLD_H * 0.36, WORLD_H * 0.84);
+      heights[x] = h - Math.sin(x * 0.014) * 26 - Math.sin(x * 0.036 + 1.2) * 13;
+    }
+    for (let pass = 0; pass < 6; pass += 1) {
+      for (let x = 1; x < worldW - 1; x += 1) {
+        heights[x] = (heights[x - 1] + heights[x] * 2 + heights[x + 1]) * 0.25;
+      }
+    }
+    return heights.map((yy) => clamp(Math.round(yy), Math.round(WORLD_H * 0.24), Math.round(WORLD_H * 0.86)));
+  }
+
+  function menuDemoSupportY(demo, x) {
+    const worldW = demo.worldW;
+    const xi = clamp(Math.floor(x), 0, worldW - 1);
+    const next = Math.min(worldW - 1, xi + 1);
+    const t = clamp(x - xi, 0, 1);
+    return lerp(demo.surfaceY[xi], demo.surfaceY[next], t);
+  }
+
+  function getMenuDemoTilt(demo, tank) {
+    const leftX = tank.x - TANK_W * 0.43;
+    const rightX = tank.x + TANK_W * 0.43;
+    const leftY = menuDemoSupportY(demo, leftX);
+    const rightY = menuDemoSupportY(demo, rightX);
+    return clamp(Math.atan2(rightY - leftY, rightX - leftX), -MAX_TILT, MAX_TILT);
+  }
+
+  function placeMenuDemoTank(demo, tank) {
+    tank.x = clamp(tank.x, TANK_W * 0.65, demo.worldW - TANK_W * 0.65);
+    tank.y = menuDemoSupportY(demo, tank.x) - TANK_H * 0.5 - 1;
+    tank.tilt = getMenuDemoTilt(demo, tank);
+  }
+
+  function initMenuDemo(force = false) {
+    const worldW = Math.max(900, Math.floor(canvas.width));
+    if (!force && state.menuDemo && state.menuDemo.worldW === worldW) {
+      return state.menuDemo;
+    }
+
+    const demo = {
+      worldW,
+      surfaceY: makeMenuDemoTerrain(worldW),
+      tanks: [
+        {
+          x: worldW * 0.22,
+          y: 0,
+          tilt: 0,
+          angle: 32,
+          hp: 100,
+          color: "#00ff00",
+          alive: true
+        },
+        {
+          x: worldW * 0.78,
+          y: 0,
+          tilt: 0,
+          angle: 148,
+          hp: 100,
+          color: "#ff00ff",
+          alive: true
+        }
+      ],
+      projectile: null,
+      particles: [],
+      bursts: [],
+      shooterIndex: Math.random() < 0.5 ? 0 : 1,
+      fireDelay: rand(0.85, 1.55),
+      respawnTimer: 0
+    };
+
+    for (const tank of demo.tanks) {
+      placeMenuDemoTank(demo, tank);
+    }
+    state.menuDemo = demo;
+    return demo;
   }
 
   function sampleArrayLinear(arr, x) {
@@ -952,6 +1361,63 @@
     const minSurfaceY = Math.round(WORLD_H * TERRAIN_SURFACE_MIN_FRAC);
     const maxSurfaceY = Math.round(WORLD_H * TERRAIN_SURFACE_MAX_FRAC);
     return arr.map((yy) => clamp(Math.round(yy), minSurfaceY, maxSurfaceY));
+  }
+
+  function getPitDepthAtX(surface, x, shoulder = 26) {
+    if (!surface || surface.length < 5) {
+      return 0;
+    }
+    const last = surface.length - 1;
+    const xi = clamp(Math.round(x), 0, last);
+    const center = surface[xi];
+    const left = surface[clamp(xi - shoulder, 0, last)];
+    const right = surface[clamp(xi + shoulder, 0, last)];
+    return center - Math.min(left, right);
+  }
+
+  function findNearestTankSafeX(startX, searchRadius = 260) {
+    if (!state.surfaceY || state.surfaceY.length < 5) {
+      return clamp(startX, TANK_W * 0.6, state.worldW - TANK_W * 0.6);
+    }
+
+    const minX = TANK_W * 0.6;
+    const maxX = state.worldW - TANK_W * 0.6;
+    const start = clamp(startX, minX, maxX);
+    const candidates = [{ x: start, off: 0 }];
+
+    for (let off = 8; off <= searchRadius; off += 8) {
+      candidates.push({ x: clamp(start - off, minX, maxX), off });
+      candidates.push({ x: clamp(start + off, minX, maxX), off });
+    }
+
+    let bestX = start;
+    let bestScore = Number.POSITIVE_INFINITY;
+
+    for (const candidate of candidates) {
+      const x = candidate.x;
+      const pitDepth = getPitDepthAtX(state.surfaceY, x, 28);
+      const leftY = supportY(x - 8);
+      const rightY = supportY(x + 8);
+      const tilt = Math.abs(Math.atan2(rightY - leftY, 16));
+      const centerY = supportY(x);
+      const sideL = centerY - supportY(x - 12);
+      const sideR = centerY - supportY(x + 12);
+      const trapped = pitDepth > 18 && sideL > 9 && sideR > 9;
+
+      const trapPenalty = trapped ? 220 : 0;
+      const slopePenalty = Math.max(0, tilt - MAX_TILT * 0.95) * 180;
+      const pitPenalty = Math.max(0, pitDepth - 10) * 2.4;
+      const score = candidate.off + slopePenalty + pitPenalty + trapPenalty;
+      if (score < bestScore) {
+        bestScore = score;
+        bestX = x;
+      }
+      if (score <= 2) {
+        break;
+      }
+    }
+
+    return bestX;
   }
 
   function ensureAudio() {
@@ -1105,14 +1571,68 @@
     sub.stop(now + len + 0.05);
   }
 
+  function getAiTeamBounds(humanPlayers) {
+    const humans = clamp(Number(humanPlayers || 1), 1, 4);
+    const maxAiTeams = clamp(4 - humans, 0, 3);
+    const minAiTeams = humans === 1 ? maxAiTeams : 0;
+    return { minAiTeams, maxAiTeams };
+  }
+
+  function clampAiTeamsForHumans(aiTeams, humanPlayers) {
+    const bounds = getAiTeamBounds(humanPlayers);
+    return clamp(Number(aiTeams || 0), bounds.minAiTeams, bounds.maxAiTeams);
+  }
+
+  function normalizeTeamConfig(config) {
+    const next = { ...config };
+    next.humanPlayers = clamp(Number(next.humanPlayers || 1), 1, 4);
+    next.playerCount = clamp(Number(next.playerCount || 1), 1, 4);
+    next.enemyCount = clampAiTeamsForHumans(next.enemyCount, next.humanPlayers);
+    return next;
+  }
+
+  function syncEnemyCountOptions(humanPlayers) {
+    if (!ui.enemyCountSelect) {
+      return;
+    }
+
+    const { minAiTeams, maxAiTeams } = getAiTeamBounds(humanPlayers);
+    const existingValues = Array.from(ui.enemyCountSelect.options).map((option) => Number(option.value));
+    let changed = existingValues.length !== maxAiTeams - minAiTeams + 1;
+    if (!changed) {
+      for (let i = 0; i < existingValues.length; i += 1) {
+        if (existingValues[i] !== minAiTeams + i) {
+          changed = true;
+          break;
+        }
+      }
+    }
+
+    if (changed) {
+      ui.enemyCountSelect.innerHTML = "";
+      for (let value = minAiTeams; value <= maxAiTeams; value += 1) {
+        const option = document.createElement("option");
+        option.value = `${value}`;
+        option.textContent = `${value}`;
+        ui.enemyCountSelect.appendChild(option);
+      }
+    }
+
+    const clampedValue = clampAiTeamsForHumans(state.config.enemyCount, humanPlayers);
+    state.config.enemyCount = clampedValue;
+    ui.enemyCountSelect.value = `${clampedValue}`;
+    ui.enemyCountSelect.disabled = minAiTeams === maxAiTeams;
+  }
+
   function getMenuConfig() {
     const humanPlayers = clamp(Number(state.config.humanPlayers || 1), 1, 4);
+    const { minAiTeams, maxAiTeams } = getAiTeamBounds(humanPlayers);
     const mapSize = ui.mapSizeSelect?.value || DEFAULT_MAP_SIZE;
     const playerCount = clamp(Number(ui.playerCountSelect?.value || 1), 1, 4);
-    const enemyCount = clamp(Number(ui.enemyCountSelect?.value || 2), 1, 4);
+    const enemyCount = clamp(Number(ui.enemyCountSelect?.value || maxAiTeams), minAiTeams, maxAiTeams);
     const aiDifficulty = ui.aiDifficultySelect?.value || "normal";
     const maxHealth = clamp(Number(ui.healthSelect?.value || DEFAULT_MAX_HP), MIN_CONFIG_HP, MAX_CONFIG_HP);
-    return {
+    return normalizeTeamConfig({
       humanPlayers,
       mapSize: MAP_PRESETS[mapSize] ? mapSize : DEFAULT_MAP_SIZE,
       playerCount,
@@ -1121,36 +1641,39 @@
       maxHealth,
       mapSource: getMapSourceMode(),
       terrainMode: getTerrainMode()
-    };
+    });
   }
 
   function refreshHumanPlayersUi() {
-    const humanPlayers = clamp(Number(state.config.humanPlayers || 1), 1, 4);
+    state.config = normalizeTeamConfig(state.config);
+    const humanPlayers = state.config.humanPlayers;
+    const { minAiTeams, maxAiTeams } = getAiTeamBounds(humanPlayers);
+    syncEnemyCountOptions(humanPlayers);
+    const aiTeams = state.config.enemyCount;
+
     if (ui.humanPlayersBtn) {
       ui.humanPlayersBtn.textContent = humanPlayers === 1 ? "1 PLAYER" : `${humanPlayers} PLAYERS`;
     }
 
-    const multiplayer = humanPlayers > 1;
     if (ui.playerCountLabel) {
-      ui.playerCountLabel.textContent = multiplayer ? "TANKS / PLAYER" : "PLAYER TANKS";
+      ui.playerCountLabel.textContent = "TANKS / TEAM";
     }
     if (ui.enemyCountLabel) {
-      ui.enemyCountLabel.textContent = multiplayer ? "AI TANKS (OFF)" : "ENEMY TANKS";
-    }
-    if (ui.enemyCountSelect) {
-      ui.enemyCountSelect.disabled = multiplayer;
+      ui.enemyCountLabel.textContent =
+        minAiTeams === maxAiTeams ? `AI TEAMS (${maxAiTeams})` : `AI TEAMS (0-${maxAiTeams})`;
     }
     if (ui.aiDifficultyLabel) {
-      ui.aiDifficultyLabel.textContent = multiplayer ? "AI DIFFICULTY (OFF)" : "AI DIFFICULTY";
+      ui.aiDifficultyLabel.textContent = aiTeams > 0 ? "AI DIFFICULTY" : "AI DIFFICULTY (OFF)";
     }
     if (ui.aiDifficultySelect) {
-      ui.aiDifficultySelect.disabled = multiplayer;
+      ui.aiDifficultySelect.disabled = aiTeams <= 0;
     }
   }
 
   function cycleHumanPlayers() {
     const current = clamp(Number(state.config.humanPlayers || 1), 1, 4);
     state.config.humanPlayers = current >= 4 ? 1 : current + 1;
+    state.config = normalizeTeamConfig(state.config);
     refreshHumanPlayersUi();
   }
 
@@ -1171,6 +1694,7 @@
   }
 
   function syncMenuControls() {
+    state.config = normalizeTeamConfig(state.config);
     refreshHumanPlayersUi();
     refreshMapModeUi();
     if (ui.mapSizeSelect) {
@@ -1191,44 +1715,37 @@
   }
 
   function applyMenuConfig() {
-    state.config = getMenuConfig();
+    state.config = normalizeTeamConfig(getMenuConfig());
     const preset = MAP_PRESETS[state.config.mapSize] || MAP_PRESETS[DEFAULT_MAP_SIZE];
     state.worldW = preset.width;
   }
 
   function getMatchTeamSpecs() {
-    const humanPlayers = clamp(Number(state.config.humanPlayers || 1), 1, 4);
+    const normalized = normalizeTeamConfig(state.config);
+    const humanPlayers = normalized.humanPlayers;
+    const aiTeams = normalized.enemyCount;
     const teams = [];
-
-    if (humanPlayers <= 1) {
-      teams.push({
-        id: "team1",
-        name: "Player",
-        color: TEAM_COLORS[0],
-        controller: "human",
-        tankCount: clamp(state.config.playerCount, 1, 4),
-        slot: 0
-      });
-      teams.push({
-        id: "team2",
-        name: "Enemy",
-        color: TEAM_COLORS[1],
-        controller: "ai",
-        tankCount: clamp(state.config.enemyCount, 1, 4),
-        slot: 1
-      });
-      return teams;
-    }
-
-    const tanksPerPlayer = clamp(state.config.playerCount, 1, 4);
+    const tanksPerTeam = clamp(normalized.playerCount, 1, 4);
     for (let i = 0; i < humanPlayers; i += 1) {
       teams.push({
         id: `team${i + 1}`,
         name: TEAM_LABELS[i] || `P${i + 1}`,
         color: TEAM_COLORS[i] || TEAM_COLORS[TEAM_COLORS.length - 1],
         controller: "human",
-        tankCount: tanksPerPlayer,
+        tankCount: tanksPerTeam,
         slot: i
+      });
+    }
+
+    for (let i = 0; i < aiTeams; i += 1) {
+      const teamIndex = humanPlayers + i;
+      teams.push({
+        id: `team${teamIndex + 1}`,
+        name: `AI ${i + 1}`,
+        color: TEAM_COLORS[teamIndex] || TEAM_COLORS[TEAM_COLORS.length - 1],
+        controller: "ai",
+        tankCount: tanksPerTeam,
+        slot: teamIndex
       });
     }
     return teams;
@@ -1269,6 +1786,22 @@
     return false;
   }
 
+  function rerollMapPowerUps() {
+    const existing = state.powerUps.length;
+    if (existing <= 0) {
+      return 0;
+    }
+
+    state.powerUps = [];
+    let spawned = 0;
+    for (let i = 0; i < existing; i += 1) {
+      if (spawnPowerUp()) {
+        spawned += 1;
+      }
+    }
+    return spawned;
+  }
+
   function setMenuView(view) {
     state.menuView = view === "custom" ? "custom" : "main";
     if (ui.mainMenuCard) {
@@ -1305,6 +1838,7 @@
       if (state.phase === "menu" || state.phase === "paused") {
         return;
       }
+      setPowerupMenuOpen(false);
       state.pauseFromPhase = state.phase;
       state.phase = "paused";
       ui.pauseMenu.classList.remove("hidden");
@@ -1329,7 +1863,7 @@
   }
 
   function clampCamera(x) {
-    const max = state.worldW - canvas.width;
+    const max = state.worldW - getCameraViewWidth();
     if (max >= 0) {
       return clamp(x, 0, max);
     }
@@ -1385,6 +1919,147 @@
     }
   }
 
+  function menuDemoTankAtPoint(demo, x, y, ignoreIndex = -1) {
+    for (let i = 0; i < demo.tanks.length; i += 1) {
+      if (i === ignoreIndex) {
+        continue;
+      }
+      const tank = demo.tanks[i];
+      if (!tank.alive) {
+        continue;
+      }
+      const left = tank.x - TANK_W * 0.58;
+      const right = tank.x + TANK_W * 0.58;
+      const top = tank.y - TANK_H * 1.42;
+      const bottom = tank.y + TANK_H * 0.42;
+      if (x >= left && x <= right && y >= top && y <= bottom) {
+        return { tank, index: i };
+      }
+    }
+    return null;
+  }
+
+  function traceMenuDemoCollision(demo, x0, y0, x1, y1, ignoreIndex = -1) {
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    const dist = Math.hypot(dx, dy);
+    const steps = Math.max(1, Math.ceil(dist / 1.8));
+    for (let i = 1; i <= steps; i += 1) {
+      const t = i / steps;
+      const sx = x0 + dx * t;
+      const sy = y0 + dy * t;
+
+      if (sx < 0 || sx >= demo.worldW || sy >= WORLD_H) {
+        return { kind: "bounds", x: clamp(sx, 0, demo.worldW - 1), y: clamp(sy, 0, WORLD_H - 1) };
+      }
+
+      if (sy >= menuDemoSupportY(demo, sx)) {
+        return { kind: "terrain", x: sx, y: sy };
+      }
+
+      const hitTank = menuDemoTankAtPoint(demo, sx, sy, ignoreIndex);
+      if (hitTank) {
+        return { kind: "tank", x: sx, y: sy, ...hitTank };
+      }
+    }
+    return null;
+  }
+
+  function explodeMenuDemo(demo, x, y) {
+    const radius = 48;
+    for (const tank of demo.tanks) {
+      if (!tank.alive) {
+        continue;
+      }
+      const dist = Math.hypot(tank.x - x, tank.y - y);
+      if (dist > radius) {
+        continue;
+      }
+      const falloff = 1 - dist / radius;
+      const damage = Math.max(10, Math.round(48 * falloff * falloff));
+      tank.hp = Math.max(0, tank.hp - damage);
+      if (tank.hp <= 0) {
+        tank.alive = false;
+      }
+    }
+
+    demo.bursts.push({ x, y, life: 0.42, ttl: 0.42, radius: 34 });
+    if (demo.bursts.length > 6) {
+      demo.bursts.shift();
+    }
+
+    for (let i = 0; i < 14; i += 1) {
+      const a = Math.random() * TAU;
+      const speed = rand(24, 112);
+      const ttl = rand(0.18, 0.48);
+      demo.particles.push({
+        x,
+        y,
+        vx: Math.cos(a) * speed,
+        vy: Math.sin(a) * speed - rand(8, 24),
+        life: ttl,
+        ttl,
+        size: rand(1, 2.8),
+        tone: Math.random() < 0.6 ? "40, 40, 40" : "255, 120, 40"
+      });
+    }
+
+    if (demo.particles.length > 160) {
+      demo.particles.splice(0, demo.particles.length - 160);
+    }
+  }
+
+  function fireMenuDemoShot(demo, shooterIndex) {
+    const shooter = demo.tanks[shooterIndex];
+    const target = demo.tanks[1 - shooterIndex];
+    if (!shooter || !target || !shooter.alive || !target.alive) {
+      return false;
+    }
+
+    const dx = target.x - shooter.x;
+    const targetRight = dx >= 0;
+    const angle = targetRight ? rand(24, 68) : rand(112, 156);
+    const dist = Math.abs(dx);
+    const power = clamp(dist * 1.18 + rand(180, 260), 220, 560);
+    shooter.angle = angle;
+    shooter.tilt = getMenuDemoTilt(demo, shooter);
+
+    const rad = degToRad(clampAimDeg(angle));
+    const mountX = TURRET_X + TURRET_W * 0.5;
+    const mountY = TURRET_Y + TURRET_H * 0.52;
+    const cosT = Math.cos(shooter.tilt);
+    const sinT = Math.sin(shooter.tilt);
+    const baseX = shooter.x + mountX * cosT - mountY * sinT;
+    const baseY = shooter.y + mountX * sinT + mountY * cosT;
+
+    demo.projectile = {
+      ownerIndex: shooterIndex,
+      x: baseX + Math.cos(rad) * BARREL_LEN,
+      y: baseY - Math.sin(rad) * BARREL_LEN,
+      vx: Math.cos(rad) * power,
+      vy: -Math.sin(rad) * power,
+      radius: 3.2
+    };
+    return true;
+  }
+
+  function resetMenuDemoDuel(demo) {
+    demo.tanks[0].alive = true;
+    demo.tanks[1].alive = true;
+    demo.tanks[0].hp = 100;
+    demo.tanks[1].hp = 100;
+    demo.tanks[0].x = demo.worldW * 0.22;
+    demo.tanks[1].x = demo.worldW * 0.78;
+    demo.tanks[0].angle = 32;
+    demo.tanks[1].angle = 148;
+    placeMenuDemoTank(demo, demo.tanks[0]);
+    placeMenuDemoTank(demo, demo.tanks[1]);
+    demo.projectile = null;
+    demo.fireDelay = rand(0.65, 1.1);
+    demo.respawnTimer = 0;
+    demo.shooterIndex = Math.random() < 0.5 ? 0 : 1;
+  }
+
   function openMenu() {
     state.phase = "menu";
     state.pauseFromPhase = null;
@@ -1392,6 +2067,9 @@
     state.particles = [];
     state.bursts = [];
     state.powerUps = [];
+    clearCraterState();
+    state.cameraButtonPanDir = 0;
+    state.cameraManualMode = false;
     state.cameraLookX = 0;
     state.selectedShotType = "normal";
     clearAbilityMode();
@@ -1399,6 +2077,8 @@
     state.currentShotPath = [];
     state.rangefinderHint = null;
     state.laserCuts = [];
+    state.airstrikeDrops = [];
+    state.activeFlare = null;
     state.customSurfaceY = null;
     state.drawMap.pointerId = null;
     state.drawMap.drawing = false;
@@ -1406,7 +2086,9 @@
     state.drawMap.previewPoints = [];
     state.drawMap.ready = false;
     state.drawMap.surface = null;
+    setPowerupMenuOpen(false);
     state.quakePendingTime = 0;
+    state.quakeSource = null;
     state.screenShakeTime = 0;
     state.screenShakeDuration = 0;
     state.screenShakeAmp = 0;
@@ -1424,6 +2106,7 @@
     setSettingsOpen(false);
     setMenuView("main");
     syncMenuControls();
+    initMenuDemo(false);
     setStatus("Select a match");
   }
 
@@ -1452,13 +2135,14 @@
     state.particles = [];
     state.bursts = [];
     state.powerUps = [];
-    state.craters = [];
-    state.craterLayersDirty = true;
+    clearCraterState();
     state.currentShotPath = [];
     state.lastShotPath = [];
     state.lastShotEnd = null;
     state.rangefinderHint = null;
     state.laserCuts = [];
+    state.airstrikeDrops = [];
+    state.activeFlare = null;
     state.abilityMode = null;
     state.selectedShotType = "normal";
     state.drawMap.pointerId = null;
@@ -1467,9 +2151,14 @@
     state.drawMap.previewPoints = [];
     state.drawMap.ready = false;
     state.drawMap.surface = null;
+    setPowerupMenuOpen(false);
     state.quakePendingTime = 0;
+    state.quakeSource = null;
+    state.cameraButtonPanDir = 0;
+    state.cameraManualMode = false;
     state.surfaceY = new Array(state.worldW).fill(Math.round(WORLD_H * 0.62));
-    state.cameraX = clampCamera(state.worldW * 0.5 - canvas.width * 0.5);
+    setCameraZoom(getConfiguredMapZoom(), false);
+    state.cameraX = clampCamera(state.worldW * 0.5 - getCameraViewWidth() * 0.5);
     state.cameraLookX = 0;
     state.screenShakeTime = 0;
     state.screenShakeDuration = 0;
@@ -1495,6 +2184,10 @@
   function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    setCameraZoom(state.cameraZoom || 1, false);
+    if (state.phase === "menu") {
+      initMenuDemo(true);
+    }
     if (!pointer.initialized) {
       pointer.x = canvas.width * 0.5;
       pointer.y = canvas.height * 0.5;
@@ -1545,8 +2238,7 @@
     state.drawMap.surface = null;
     state.customSurfaceY = null;
     state.surfaceY = new Array(state.worldW).fill(Math.round(WORLD_H * 0.62));
-    state.craters = [];
-    state.craterLayersDirty = true;
+    clearCraterState();
   }
 
   function appendDrawPoint(worldX, worldY) {
@@ -1657,8 +2349,7 @@
     state.drawMap.surface = built;
     state.drawMap.ready = true;
     state.surfaceY = built.slice();
-    state.craters = [];
-    state.craterLayersDirty = true;
+    clearCraterState();
     setStatus("Map ready: press USE MAP or Space");
     return true;
   }
@@ -1698,6 +2389,14 @@
           h -
           Math.sin(x * 0.0028) * (114 * preset.amp * style.amp) -
           Math.sin(x * 0.0089 + 1.1) * (54 * preset.amp * style.amp);
+      }
+
+      if (preset.yBias) {
+        const minY = WORLD_H * 0.14;
+        const maxY = WORLD_H * 0.74;
+        for (let x = 0; x < worldW; x += 1) {
+          heights[x] = clamp(heights[x] + preset.yBias, minY, maxY);
+        }
       }
     }
 
@@ -1740,8 +2439,7 @@
     }
 
     state.surfaceY = relaxSurfaceForMobility(heights.map((yy) => clamp(Math.floor(yy), 0, WORLD_H - 1)), useDrawnMap ? 1 : 3);
-    state.craters = [];
-    state.craterLayersDirty = true;
+    clearCraterState();
 
     return spawnByTeam;
   }
@@ -1760,13 +2458,51 @@
     };
   }
 
+  function clearCraterState() {
+    state.craters = [];
+    state.voidMask.fill(0);
+    craterFillCtx.clearRect(0, 0, MAX_WORLD_W, WORLD_H);
+    craterEdgeCtx.clearRect(0, 0, MAX_WORLD_W, WORLD_H);
+    state.craterLayersDirty = false;
+  }
+
+  function stampVoidMaskCircle(crater) {
+    const minX = clamp(Math.floor(crater.minX), 0, state.worldW - 1);
+    const maxX = clamp(Math.ceil(crater.maxX), 0, state.worldW - 1);
+    const minY = clamp(Math.floor(crater.minY), 0, WORLD_H - 1);
+    const maxY = clamp(Math.ceil(crater.maxY), 0, WORLD_H - 1);
+    const r2 = crater.r2;
+
+    for (let y = minY; y <= maxY; y += 1) {
+      const row = y * MAX_WORLD_W;
+      const dy = y - crater.y;
+      for (let x = minX; x <= maxX; x += 1) {
+        const dx = x - crater.x;
+        if (dx * dx + dy * dy <= r2) {
+          state.voidMask[row + x] = 1;
+        }
+      }
+    }
+  }
+
+  function rebuildVoidMaskFromCraters() {
+    state.voidMask.fill(0);
+    for (const crater of state.craters) {
+      stampVoidMaskCircle(crater);
+    }
+  }
+
   function pushCraterStamp(x, y, r) {
     const cx = clamp(x, 0, state.worldW - 1);
     const cy = clamp(y, 0, WORLD_H - 1);
-    state.craters.push(makeCraterStamp(cx, cy, r));
+    const crater = makeCraterStamp(cx, cy, r);
+    state.craters.push(crater);
+    stampVoidMaskCircle(crater);
     if (state.craters.length > MAX_CRATERS) {
       state.craters.splice(0, state.craters.length - MAX_CRATERS);
+      rebuildVoidMaskFromCraters();
     }
+    state.craterLayersDirty = true;
   }
 
   function stampImpactCrater(ix, iy, radius) {
@@ -1789,17 +2525,12 @@
   }
 
   function isVoidAt(x, y) {
-    for (const crater of state.craters) {
-      if (x < crater.minX || x > crater.maxX || y < crater.minY || y > crater.maxY) {
-        continue;
-      }
-      const dx = x - crater.x;
-      const dy = y - crater.y;
-      if (dx * dx + dy * dy <= crater.r2) {
-        return true;
-      }
+    const xi = Math.floor(x);
+    const yi = Math.floor(y);
+    if (xi < 0 || xi >= state.worldW || yi < 0 || yi >= WORLD_H) {
+      return false;
     }
-    return false;
+    return state.voidMask[yi * MAX_WORLD_W + xi] === 1;
   }
 
   function supportY(x) {
@@ -1895,7 +2626,8 @@
   }
 
   function updateTankTilt(tank, dt) {
-    const target = hasGroundUnderTank(tank) ? getTankTiltTarget(tank) : 0;
+    const nearGround = hasGroundUnderTank(tank) || Math.abs(tank.y + TANK_H * 0.5 + 1 - supportY(tank.x)) <= 30;
+    const target = nearGround ? getTankTiltTarget(tank) : 0;
     const next = lerp(tank.tilt, target, clamp(dt * 10, 0, 1));
     tank.tilt = Math.abs(next - target) < 0.002 ? target : next;
   }
@@ -1908,13 +2640,18 @@
   function hasGroundUnderTank(tank) {
     const footY = tank.y + TANK_H * 0.5 + 1;
     let contacts = 0;
-    for (let sx = -TANK_W * 0.4; sx <= TANK_W * 0.4; sx += 4) {
+    let closestGap = Number.POSITIVE_INFINITY;
+    for (let sx = -TANK_W * 0.44; sx <= TANK_W * 0.44; sx += 3) {
       const groundY = supportY(tank.x + sx);
-      if (footY >= groundY - 2 && footY <= groundY + 8) {
+      const gap = footY - groundY;
+      if (Math.abs(gap) < closestGap) {
+        closestGap = Math.abs(gap);
+      }
+      if (gap >= -12 && gap <= 24) {
         contacts += 1;
       }
     }
-    return contacts > 0;
+    return contacts >= 2 || closestGap <= 8;
   }
 
   function tankCollidesTerrain(tank) {
@@ -2022,6 +2759,8 @@
     state.lastShotEnd = null;
     state.rangefinderHint = null;
     state.laserCuts = [];
+    state.airstrikeDrops = [];
+    state.activeFlare = null;
     state.drawMap.pointerId = null;
     state.drawMap.drawing = false;
     state.drawMap.points = [];
@@ -2035,6 +2774,7 @@
     state.aiPlan = null;
     state.aiMoveDir = 0;
     state.quakePendingTime = 0;
+    state.quakeSource = null;
     state.screenShakeTime = 0;
     state.screenShakeDuration = 0;
     state.screenShakeAmp = 0;
@@ -2043,7 +2783,11 @@
     state.turnCounter = 1;
     state.turnsIntoRound = 0;
     state.lastImpact = { x: state.worldW * 0.5, y: WORLD_H * 0.5 };
-    state.cameraX = clampCamera(state.tanks[0].x - canvas.width * 0.5);
+    setPowerupMenuOpen(false);
+    setCameraZoom(getConfiguredMapZoom(), false);
+    state.cameraX = clampCamera(state.tanks[0].x - getCameraViewWidth() * 0.5);
+    state.cameraButtonPanDir = 0;
+    state.cameraManualMode = false;
     state.cameraLookX = 0;
 
     if (Math.random() < 0.8) {
@@ -2098,6 +2842,9 @@
     tank.vx = 0;
     tank.vy = 0;
     tank.moveRemaining = MAX_MOVE_PER_TURN;
+    if (state.settings.devMode && tank.controller === "human") {
+      applyDevModePowerUps(tank);
+    }
     state.aiTimer = 0;
     state.aiPlan = null;
     state.aiMoveDir = 0;
@@ -2114,6 +2861,7 @@
     state.resolveTimeout = 0;
     state.selectedShotType = "normal";
     clearAbilityMode();
+    setPowerupMenuOpen(false);
     state.rangefinderHint = null;
     if (Math.random() < 0.42) {
       spawnPowerUp();
@@ -2134,6 +2882,9 @@
         state.turnsIntoRound = 0;
         state.turnCounter += 1;
         if (state.turnCounter % 5 === 0) {
+          if (state.quakePendingTime <= 0) {
+            state.quakeSource = "round";
+          }
           state.quakePendingTime = Math.max(state.quakePendingTime, EARTHQUAKE_SHAKE_TIME);
           startScreenShake(EARTHQUAKE_SHAKE_TIME, EARTHQUAKE_SHAKE_AMP);
           playEarthquakeRumble(EARTHQUAKE_SHAKE_TIME);
@@ -2217,6 +2968,10 @@
       tank.vx = 0;
     }
 
+    if (used > 0.01 && tank === getActiveTank() && tank.controller === "human" && state.phase === "aim") {
+      releaseCameraToPlayer();
+    }
+
     return used;
   }
 
@@ -2243,6 +2998,7 @@
 
     const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
     if (Number.isFinite(angle)) {
+      releaseCameraToPlayer();
       tank.angle = clampAimDeg(angle);
       const powerT = clamp((dist - DRAG_MIN_DISTANCE) / (DRAG_POWER_DISTANCE - DRAG_MIN_DISTANCE), 0, 1);
       tank.power = clamp(lerp(MIN_POWER, MAX_POWER, powerT), MIN_POWER, MAX_POWER);
@@ -2384,6 +3140,9 @@
     if (!tank || !tank.powerups || (tank.powerups[type] || 0) <= 0) {
       return false;
     }
+    if (state.settings.devMode && tank.controller === "human") {
+      return true;
+    }
     tank.powerups[type] -= 1;
     return true;
   }
@@ -2467,12 +3226,11 @@
       smoothSrc = next;
     }
 
-    state.surfaceY = relaxSurfaceForMobility(smoothSrc, 3);
+    state.surfaceY = relaxSurfaceForMobility(smoothSrc, 5);
 
     // Quake packs loose earth into voids: clear all crater masks in-place.
-    state.craters = [];
+    clearCraterState();
     state.laserCuts = [];
-    state.craterLayersDirty = true;
     state.lastImpact.x = clamp(epicenterX, 0, state.worldW - 1);
     state.lastImpact.y = supportY(state.lastImpact.x);
 
@@ -2480,7 +3238,8 @@
       if (!tank.alive) {
         continue;
       }
-      tank.x = clamp(tank.x, TANK_W * 0.6, state.worldW - TANK_W * 0.6);
+      const safeX = findNearestTankSafeX(tank.x);
+      tank.x = clamp(safeX, TANK_W * 0.6, state.worldW - TANK_W * 0.6);
       tank.y = supportY(tank.x) - TANK_H * 0.5 - 1;
       tank.vx = 0;
       tank.vy = 0;
@@ -2498,7 +3257,21 @@
       return;
     }
 
+    const source = state.quakeSource;
+    state.quakeSource = null;
     applyEarthquake();
+    if (source === "round") {
+      const moved = rerollMapPowerUps();
+      if (moved > 0) {
+        setStatus("Earthquake reshaped terrain and moved power-ups");
+      } else {
+        setStatus("Earthquake reshaped terrain");
+      }
+      startScreenShake(0.22, 4.8);
+      playExplosionSound(1.12);
+      return;
+    }
+
     startScreenShake(0.22, 4.8);
     playExplosionSound(1.12);
     setStatus("Earthquake reshaped terrain");
@@ -2524,8 +3297,6 @@
     if (tank.controller === "human" && state.abilityMode) {
       if (state.abilityMode === "teleport_target") {
         setStatus("Teleport: click terrain");
-      } else if (state.abilityMode === "airstrike_target") {
-        setStatus("Airstrike: click an enemy tank");
       }
       return;
     }
@@ -2538,6 +3309,10 @@
     if (state.selectedShotType === "laser" && (tank.powerups.laser || 0) > 0) {
       executeLaserShot(tank);
       return;
+    }
+    if (state.selectedShotType === "airstrike" && (tank.powerups.airstrike || 0) > 0) {
+      shotType = "airstrike_flare";
+      consumePowerUp(tank, "airstrike");
     }
 
     const muzzle = getMuzzleData(tank);
@@ -2562,16 +3337,16 @@
     state.selectedShotType = "normal";
     clearAbilityMode();
     state.rangefinderHint = null;
-    setStatus(`${tank.name} fired`);
+    setStatus(shotType === "airstrike_flare" ? `${tank.name} fired a flare` : `${tank.name} fired`);
   }
 
-  function explode(ix, iy, radius, maxDamage) {
+  function explode(ix, iy, radius, maxDamage, options = {}) {
+    const deferResolve = Boolean(options.deferResolve);
     state.lastImpact.x = ix;
     state.lastImpact.y = iy;
 
     const carveRadius = radius * TERRAIN_CARVE_SCALE;
     stampImpactCrater(ix, iy, carveRadius);
-    state.craterLayersDirty = true;
 
     for (const tank of state.tanks) {
       if (!tank.alive) {
@@ -2633,15 +3408,22 @@
     startScreenShake(0.22 + radius * 0.003, 2.6 + radius * 0.055);
     playExplosionSound(0.8 + maxDamage / 120);
 
-    state.phase = "resolving";
-    state.settleTimer = 0;
-    state.resolveTimeout = 0;
-    checkGameOver();
+    if (!deferResolve) {
+      beginResolvePhase();
+    }
   }
 
   function updateProjectile(dt) {
     const p = state.projectile;
+    const flare = state.activeFlare;
+    if ((!p || !p.active) && state.airstrikeDrops.length === 0 && !flare) {
+      return;
+    }
     if (!p || !p.active) {
+      updateActiveFlare(dt);
+      if (state.airstrikeDrops.length > 0) {
+        updateAirstrikeDrops(dt);
+      }
       return;
     }
 
@@ -2677,6 +3459,10 @@
         finalizeShotPath(p.ownerId, hit.x, hit.y);
         p.active = false;
         state.projectile = null;
+        if (p.shotType === "airstrike_flare") {
+          beginRollingFlare(p.ownerId, hit.x, hit.y, p.vx);
+          return;
+        }
         explode(hit.x, hit.y, EXPLOSION_RADIUS, EXPLOSION_DAMAGE);
         return;
       }
@@ -2686,10 +3472,12 @@
       finalizeShotPath(p.ownerId, clamp(p.x, 0, state.worldW - 1), clamp(p.y, 0, WORLD_H - 1));
       p.active = false;
       state.projectile = null;
-      state.phase = "resolving";
-      state.settleTimer = 0;
-      state.resolveTimeout = 0;
-      setStatus("Missed");
+      beginResolvePhase("Missed");
+      return;
+    }
+
+    if (state.airstrikeDrops.length > 0) {
+      updateAirstrikeDrops(dt);
     }
   }
 
@@ -2941,18 +3729,18 @@
       return;
     }
 
+    if (type === "airstrike") {
+      state.selectedShotType = state.selectedShotType === "airstrike" ? "normal" : "airstrike";
+      clearAbilityMode();
+      setStatus(state.selectedShotType === "airstrike" ? "Flare airstrike ready" : "Normal shot selected");
+      return;
+    }
+
     state.selectedShotType = "normal";
     if (type === "teleport") {
       state.abilityMode = "teleport_target";
       state.rangefinderPendingTargetId = null;
       setStatus("Teleport: click terrain location");
-      return;
-    }
-
-    if (type === "airstrike") {
-      state.abilityMode = "airstrike_target";
-      state.rangefinderPendingTargetId = null;
-      setStatus("Airstrike: click an enemy tank");
       return;
     }
 
@@ -2966,6 +3754,7 @@
       }
       clearAbilityMode();
       state.selectedShotType = "normal";
+      state.quakeSource = "powerup";
       state.quakePendingTime = EARTHQUAKE_SHAKE_TIME;
       startScreenShake(EARTHQUAKE_SHAKE_TIME, EARTHQUAKE_SHAKE_AMP);
       playEarthquakeRumble(EARTHQUAKE_SHAKE_TIME);
@@ -3005,60 +3794,156 @@
     if (!teleportTankToX(tank, worldX)) {
       return false;
     }
+    releaseCameraToPlayer();
     clearAbilityMode();
     setStatus("Teleported");
     return true;
   }
 
-  function launchAirstrike(shooter, targetTank) {
-    if (!shooter || !targetTank || !targetTank.alive) {
-      return false;
-    }
-
-    const targetX = clamp(targetTank.x + rand(-10, 10), 0, state.worldW - 1);
-    const spawnX = clamp(targetX + rand(-16, 16), 0, state.worldW - 1);
-    const spawnY = -16;
-    const vx = clamp((targetX - spawnX) * 1.15, -140, 140);
-    const vy = 320;
-
-    state.projectile = {
-      x: spawnX,
-      y: spawnY,
-      px: spawnX,
-      py: spawnY,
-      vx,
-      vy,
-      ownerId: shooter.id,
-      radius: 4,
-      active: true,
-      shotType: "airstrike"
-    };
-
-    state.currentShotPath = [{ x: spawnX, y: spawnY }];
-    state.phase = "projectile";
+  function beginResolvePhase(statusText = "") {
+    state.phase = "resolving";
     state.settleTimer = 0;
     state.resolveTimeout = 0;
-    state.selectedShotType = "normal";
-    clearAbilityMode();
-    state.rangefinderHint = null;
-    setStatus(`${shooter.name} called AIRSTRIKE on ${targetTank.name}`);
-    return true;
+    state.activeFlare = null;
+    if (statusText) {
+      setStatus(statusText);
+    }
+    checkGameOver();
   }
 
-  function tryAirstrikeTarget(worldX, worldY) {
-    const shooter = getActiveTank();
-    if (!shooter || !isPlayerTurn()) {
-      return false;
+  function emitFlareSparks(flare, dt) {
+    if (!flare) {
+      return;
     }
-    const target = tankAtWorldPoint(worldX, worldY);
-    if (!target || !target.alive || target.team === shooter.team) {
-      setStatus("Airstrike: click an enemy tank");
-      return false;
+
+    flare.sparkTimer += dt;
+    while (flare.sparkTimer >= FLARE_SPARK_RATE) {
+      flare.sparkTimer -= FLARE_SPARK_RATE;
+      const ttl = rand(0.18, 0.42);
+      state.particles.push({
+        x: flare.x + rand(-2.2, 2.2),
+        y: flare.y - rand(1.8, 5.4),
+        vx: rand(-14, 14) + flare.vx * 0.1,
+        vy: rand(-74, -26),
+        life: ttl,
+        ttl,
+        size: rand(1.1, 2.3),
+        tone: Math.random() < 0.65 ? "255, 125, 24" : "255, 218, 128"
+      });
     }
-    if (!consumePowerUp(shooter, "airstrike")) {
-      return false;
+  }
+
+  function beginRollingFlare(ownerId, impactX, impactY, incomingVx = 0) {
+    const x = clamp(impactX, 0, state.worldW - 1);
+    const groundY = supportY(x);
+    const initialVx = clamp(incomingVx * 0.34, -140, 140);
+
+    state.activeFlare = {
+      ownerId,
+      x,
+      y: Math.min(groundY - 3, impactY),
+      vx: initialVx,
+      radius: 4.8,
+      settleTime: 0,
+      burnTime: FLARE_BURN_TIME,
+      armed: false,
+      sparkTimer: 0
+    };
+    setStatus("Flare rolling...");
+  }
+
+  function updateActiveFlare(dt) {
+    const flare = state.activeFlare;
+    if (!flare) {
+      return;
     }
-    return launchAirstrike(shooter, target);
+
+    const slope = supportY(flare.x + 2) - supportY(flare.x - 2);
+    if (!flare.armed) {
+      flare.vx += clamp(slope * FLARE_ROLL_SLOPE_ACCEL * dt, -86 * dt, 86 * dt);
+      flare.x = clamp(flare.x + flare.vx * dt, 0, state.worldW - 1);
+      flare.vx *= Math.max(0, 1 - FLARE_ROLL_FRICTION * dt);
+      flare.y = supportY(flare.x) - flare.radius;
+
+      if (Math.abs(flare.vx) <= FLARE_ARM_SPEED) {
+        flare.settleTime += dt;
+      } else {
+        flare.settleTime = 0;
+      }
+
+      if (flare.settleTime >= FLARE_ARM_SETTLE_TIME) {
+        flare.armed = true;
+        flare.burnTime = FLARE_BURN_TIME;
+        flare.vx = 0;
+        setStatus("Flare burning...");
+      }
+    } else {
+      flare.y = supportY(flare.x) - flare.radius;
+      flare.burnTime = Math.max(0, flare.burnTime - dt);
+      if (flare.burnTime <= 0) {
+        const strikeX = flare.x;
+        const ownerId = flare.ownerId;
+        state.activeFlare = null;
+        triggerFlareAirstrike(ownerId, strikeX);
+        return;
+      }
+    }
+
+    emitFlareSparks(flare, dt);
+  }
+
+  function triggerFlareAirstrike(ownerId, flareX) {
+    state.activeFlare = null;
+    const centerX = clamp(flareX, 0, state.worldW - 1);
+    const xs = [centerX, centerX - AIRSTRIKE_DROP_SPACING, centerX + AIRSTRIKE_DROP_SPACING];
+    state.airstrikeDrops = xs.map((rawX, index) => ({
+      x: clamp(rawX, 0, state.worldW - 1),
+      y: -22,
+      py: -22,
+      vy: AIRSTRIKE_DROP_SPEED,
+      ownerId,
+      radius: 4,
+      delay: index === 0 ? 0 : AIRSTRIKE_DROP_DELAY
+    }));
+    setStatus("Flare marked: airstrike incoming");
+  }
+
+  function updateAirstrikeDrops(dt) {
+    if (!state.airstrikeDrops.length) {
+      return;
+    }
+
+    for (let i = state.airstrikeDrops.length - 1; i >= 0; i -= 1) {
+      const drop = state.airstrikeDrops[i];
+      if (drop.delay > 0) {
+        drop.delay = Math.max(0, drop.delay - dt);
+        continue;
+      }
+
+      drop.py = drop.y;
+      drop.y += drop.vy * dt;
+      const hit = traceCollision(drop.x, drop.py, drop.x, drop.y, drop.ownerId);
+      if (hit) {
+        if (hit.kind === "powerup" && hit.powerup) {
+          grantPowerUp(drop.ownerId, hit.powerup.type);
+          state.powerUps = state.powerUps.filter((pp) => pp.id !== hit.powerup.id);
+          drop.y = hit.y + 2;
+          drop.py = drop.y;
+          continue;
+        }
+        explode(hit.x, hit.y, AIRSTRIKE_DROP_RADIUS, AIRSTRIKE_DROP_DAMAGE, { deferResolve: true });
+        state.airstrikeDrops.splice(i, 1);
+        continue;
+      }
+
+      if (drop.y > WORLD_H + 32) {
+        state.airstrikeDrops.splice(i, 1);
+      }
+    }
+
+    if (state.phase === "projectile" && !state.projectile && !state.activeFlare && state.airstrikeDrops.length === 0) {
+      beginResolvePhase("Airstrike complete");
+    }
   }
 
   function traceLaserBeam(ownerId, x0, y0, rad) {
@@ -3104,14 +3989,13 @@
     const dx = x1 - x0;
     const dy = y1 - y0;
     const dist = Math.hypot(dx, dy);
-    const steps = Math.max(1, Math.ceil(dist / 2.8));
+    const steps = Math.max(1, Math.ceil(dist / 1.5));
     for (let i = 0; i <= steps; i += 1) {
       const t = i / steps;
       const x = x0 + dx * t;
       const y = y0 + dy * t;
       pushCraterStamp(x, y, radius);
     }
-    state.craterLayersDirty = true;
   }
 
   function executeLaserShot(shooter) {
@@ -3313,22 +4197,22 @@
       }
     }
 
+    if ((aiTank.powerups.airstrike || 0) > 0) {
+      const hard = state.config.aiDifficulty === "hard";
+      const shouldUseFlare =
+        Math.random() < aiPreset.airstrikeChance &&
+        (shotPlan.score > (hard ? 16 : 28) || target.hp <= Math.round(getMaxHp() * 0.45));
+      if (shouldUseFlare) {
+        return { shotType: "airstrike", angle: shotPlan.angle, power: shotPlan.power };
+      }
+    }
+
     return { shotType: "normal" };
   }
 
   function aiTryUseSupportPowerUps(aiTank, target, aiPlan, aiPreset) {
     if (!aiTank || !aiTank.alive) {
       return false;
-    }
-
-    if (target && (aiTank.powerups.airstrike || 0) > 0) {
-      const shouldAirstrike =
-        Math.random() < aiPreset.airstrikeChance &&
-        (aiPlan?.score > (state.config.aiDifficulty === "hard" ? 12 : 26) || target.hp <= Math.round(getMaxHp() * 0.45));
-      if (shouldAirstrike && consumePowerUp(aiTank, "airstrike")) {
-        launchAirstrike(aiTank, target);
-        return true;
-      }
     }
 
     if (target && (aiTank.powerups.teleport || 0) > 0) {
@@ -3346,6 +4230,7 @@
     if ((aiTank.powerups.earthquake || 0) > 0 && state.quakePendingTime <= 0) {
       const badShot = aiPlan && aiPlan.score > (state.config.aiDifficulty === "hard" ? 58 : 86);
       if (badShot && Math.random() < aiPreset.quakeChance && consumePowerUp(aiTank, "earthquake")) {
+        state.quakeSource = "powerup";
         state.quakePendingTime = EARTHQUAKE_SHAKE_TIME;
         startScreenShake(EARTHQUAKE_SHAKE_TIME, EARTHQUAKE_SHAKE_AMP);
         playEarthquakeRumble(EARTHQUAKE_SHAKE_TIME);
@@ -3499,6 +4384,20 @@
         const panSpeed = 260 + 980 * t * t;
         state.cameraX = clampCamera(state.cameraX + dir * panSpeed * dt);
       }
+      if (state.cameraButtonPanDir !== 0) {
+        state.cameraX = clampCamera(state.cameraX + state.cameraButtonPanDir * CAMERA_BUTTON_PAN_SPEED * dt);
+      }
+      state.cameraLookX = 0;
+      return;
+    }
+
+    if (state.cameraButtonPanDir !== 0) {
+      state.cameraX = clampCamera(state.cameraX + state.cameraButtonPanDir * CAMERA_BUTTON_PAN_SPEED * dt);
+      state.cameraManualMode = true;
+    }
+
+    if (state.cameraManualMode) {
+      state.cameraX = clampCamera(state.cameraX);
       state.cameraLookX = 0;
       return;
     }
@@ -3509,6 +4408,10 @@
       targetX = getActiveTank().x;
     } else if (state.phase === "projectile" && state.projectile) {
       targetX = state.projectile.x;
+    } else if (state.phase === "projectile" && state.activeFlare) {
+      targetX = state.activeFlare.x;
+    } else if (state.phase === "projectile" && state.airstrikeDrops.length > 0) {
+      targetX = state.airstrikeDrops[0].x;
     } else if (state.phase === "resolving") {
       targetX = state.lastImpact.x;
     } else if (state.phase === "gameover") {
@@ -3529,7 +4432,7 @@
     }
 
     state.cameraLookX = lerp(state.cameraLookX, edgeLookTarget, clamp(dt * 6.4, 0, 1));
-    const desired = targetX + state.cameraLookX - canvas.width * 0.5;
+    const desired = targetX + state.cameraLookX - getCameraViewWidth() * 0.5;
     const smooth = 1 - Math.pow(0.001, dt);
     state.cameraX = lerp(state.cameraX, desired, smooth);
     state.cameraX = clampCamera(state.cameraX);
@@ -3541,6 +4444,81 @@
     }
     const rect = ui.bottomUi.getBoundingClientRect();
     return clamp(rect.top - 4, 140, canvas.height);
+  }
+
+  function updateMenuDemo(dt) {
+    const demo = initMenuDemo(false);
+    if (!demo) {
+      return;
+    }
+
+    for (const tank of demo.tanks) {
+      if (tank.alive) {
+        placeMenuDemoTank(demo, tank);
+      }
+    }
+
+    if (demo.projectile) {
+      const p = demo.projectile;
+      let substeps = Math.ceil((Math.abs(p.vx) + Math.abs(p.vy)) * dt / 90);
+      substeps = clamp(substeps, 1, 10);
+      const sdt = dt / substeps;
+
+      for (let i = 0; i < substeps; i += 1) {
+        const px = p.x;
+        const py = p.y;
+        p.vy += GRAVITY * sdt;
+        p.x += p.vx * sdt;
+        p.y += p.vy * sdt;
+
+        const hit = traceMenuDemoCollision(demo, px, py, p.x, p.y, p.ownerIndex);
+        if (hit) {
+          explodeMenuDemo(demo, hit.x, hit.y);
+          demo.projectile = null;
+          demo.fireDelay = rand(0.7, 1.25);
+          demo.shooterIndex = 1 - p.ownerIndex;
+          break;
+        }
+      }
+
+      if (demo.projectile && (p.x < -30 || p.x > demo.worldW + 30 || p.y > WORLD_H + 30)) {
+        demo.projectile = null;
+        demo.fireDelay = rand(0.55, 1.05);
+        demo.shooterIndex = 1 - p.ownerIndex;
+      }
+    } else {
+      const alive = demo.tanks.filter((tank) => tank.alive);
+      if (alive.length < 2) {
+        demo.respawnTimer += dt;
+        if (demo.respawnTimer >= 1.4) {
+          resetMenuDemoDuel(demo);
+        }
+      } else {
+        demo.fireDelay -= dt;
+        if (demo.fireDelay <= 0) {
+          const fired = fireMenuDemoShot(demo, demo.shooterIndex);
+          if (fired) {
+            demo.fireDelay = rand(0.85, 1.45);
+          } else {
+            demo.shooterIndex = 1 - demo.shooterIndex;
+            demo.fireDelay = rand(0.35, 0.75);
+          }
+        }
+      }
+    }
+
+    for (const burst of demo.bursts) {
+      burst.life -= dt;
+    }
+    demo.bursts = demo.bursts.filter((b) => b.life > 0);
+
+    for (const particle of demo.particles) {
+      particle.vy += GRAVITY * 0.4 * dt;
+      particle.x += particle.vx * dt;
+      particle.y += particle.vy * dt;
+      particle.life -= dt;
+    }
+    demo.particles = demo.particles.filter((p) => p.life > 0);
   }
 
   function drawBackground() {
@@ -3568,6 +4546,113 @@
     ctx.lineTo(marginX, canvas.height);
     ctx.stroke();
     ctx.restore();
+  }
+
+  function drawMenuDemoTank(demo, tank) {
+    if (!tank.alive) {
+      return;
+    }
+    const bodyTilt = tank.tilt || 0;
+    const worldGunRad = degToRad(clampAimDeg(tank.angle));
+    const localGunRad = worldGunRad + bodyTilt;
+
+    ctx.save();
+    ctx.translate(tank.x, tank.y);
+    ctx.rotate(bodyTilt);
+
+    ctx.beginPath();
+    ctx.moveTo(-HULL_BOTTOM_HALF, HULL_BOTTOM_Y);
+    ctx.lineTo(HULL_BOTTOM_HALF, HULL_BOTTOM_Y);
+    ctx.lineTo(HULL_TOP_HALF, HULL_TOP_Y);
+    ctx.lineTo(-HULL_TOP_HALF, HULL_TOP_Y);
+    ctx.closePath();
+    ctx.fillStyle = tank.color;
+    ctx.fill();
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = tank.color;
+    ctx.fillRect(TURRET_X, TURRET_Y, TURRET_W, TURRET_H);
+    ctx.strokeRect(TURRET_X, TURRET_Y, TURRET_W, TURRET_H);
+
+    const mountX = TURRET_X + TURRET_W * 0.5;
+    const mountY = TURRET_Y + TURRET_H * 0.52;
+    ctx.save();
+    ctx.translate(mountX, mountY);
+    ctx.rotate(-localGunRad);
+    pathRoundedRect(ctx, -BARREL_OVERLAP, -1.2, BARREL_LEN + BARREL_OVERLAP, 2.4, 0.6);
+    ctx.fillStyle = tank.color;
+    ctx.fill();
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 1.7;
+    ctx.stroke();
+    ctx.restore();
+    ctx.restore();
+  }
+
+  function drawMenuDemoBackground() {
+    const demo = initMenuDemo(false);
+    if (!demo) {
+      drawBackground();
+      return;
+    }
+
+    drawBackground();
+
+    ctx.save();
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.95)";
+    ctx.lineWidth = 4;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(0, demo.surfaceY[0]);
+    for (let x = 1; x < demo.worldW; x += 2) {
+      ctx.lineTo(x, demo.surfaceY[x]);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    for (const tank of demo.tanks) {
+      drawMenuDemoTank(demo, tank);
+    }
+
+    if (demo.projectile) {
+      const p = demo.projectile;
+      ctx.fillStyle = "#707070";
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius + 1, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    for (const burst of demo.bursts) {
+      const t = 1 - clamp(burst.life / burst.ttl, 0, 1);
+      const ringR = burst.radius * (0.3 + t * 0.9);
+      ctx.save();
+      ctx.strokeStyle = `rgba(255, 120, 40, ${(1 - t) * 0.4})`;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.arc(burst.x, burst.y, ringR, 0, TAU);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    for (const particle of demo.particles) {
+      const alpha = clamp(particle.life / particle.ttl, 0, 1);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = `rgba(${particle.tone || "30, 30, 30"}, 0.9)`;
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size, 0, TAU);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // Dim the demo so UI/cards remain primary.
+    ctx.fillStyle = "rgba(255, 255, 255, 0.34)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
   function drawTerrain() {
@@ -3646,13 +4731,13 @@
     ctx.restore();
   }
 
-  function drawMapEditorOverlay() {
+  function drawMapEditorWorldOverlay() {
     if (state.phase !== "draw_map") {
       return;
     }
 
     const edgeBand = Math.max(18, state.worldW * 0.03);
-    const bottom = getGameplayBottomY();
+    const bottom = getGameplayBottomY() / Math.max(0.001, state.cameraZoom || 1);
     const drawPoints = state.drawMap.ready ? state.drawMap.previewPoints : state.drawMap.points;
 
     ctx.save();
@@ -3672,7 +4757,14 @@
       }
       ctx.stroke();
     }
+    ctx.restore();
+  }
 
+  function drawMapEditorHud() {
+    if (state.phase !== "draw_map") {
+      return;
+    }
+    ctx.save();
     ctx.fillStyle = "rgba(255, 255, 255, 0.94)";
     ctx.strokeStyle = "#000000";
     ctx.lineWidth = 2;
@@ -3936,18 +5028,75 @@
   }
 
   function drawProjectile() {
-    if (!state.projectile || !state.projectile.active) {
+    if (state.projectile && state.projectile.active) {
+      const p = state.projectile;
+      const flare = p.shotType === "airstrike_flare";
+      ctx.fillStyle = flare ? "#f97316" : "#808080";
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(p.x - state.cameraX, p.y, p.radius + 1.2, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    if (state.activeFlare) {
+      const flare = state.activeFlare;
+      const x = flare.x - state.cameraX;
+      const flicker = 0.7 + Math.sin(performance.now() * 0.024) * 0.3;
+      ctx.save();
+      ctx.fillStyle = "#ff7a1a";
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.arc(x, flare.y, flare.radius, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.globalAlpha = 0.42 * flicker;
+      ctx.fillStyle = "#ffb347";
+      ctx.beginPath();
+      ctx.arc(x, flare.y - 2.4, flare.radius * 1.4, 0, TAU);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      if (flare.armed) {
+        ctx.strokeStyle = "rgba(255, 75, 0, 0.85)";
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(x - 1.2, flare.y - flare.radius - 1.2);
+        ctx.lineTo(x + rand(-0.8, 0.8), flare.y - flare.radius - 9.2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    if (!state.airstrikeDrops.length) {
       return;
     }
 
-    const p = state.projectile;
-    ctx.fillStyle = "#808080";
-    ctx.strokeStyle = "#000000";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(p.x - state.cameraX, p.y, p.radius + 1.2, 0, TAU);
-    ctx.fill();
-    ctx.stroke();
+    for (const drop of state.airstrikeDrops) {
+      if (drop.delay > 0) {
+        continue;
+      }
+      const x = drop.x - state.cameraX;
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.34)";
+      ctx.lineWidth = 1.4;
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, Math.max(0, drop.y - 12));
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = "#5f5f5f";
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.arc(x, drop.y, drop.radius, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+    }
   }
 
   function drawPowerUps() {
@@ -4069,10 +5218,7 @@
         ui.powerValue.textContent = `${powerToPercent(active.power)}%`;
       }
       if (ui.moveValue) {
-        ui.moveValue.textContent = `${Math.round(active.moveRemaining)} px`;
-      }
-      if (ui.moveFill) {
-        ui.moveFill.style.width = `${clamp((active.moveRemaining / MAX_MOVE_PER_TURN) * 100, 0, 100)}%`;
+        ui.moveValue.textContent = `${moveToPercent(active.moveRemaining)}%`;
       }
     } else if (isDrawPhase) {
       if (ui.angleValue) {
@@ -4084,15 +5230,9 @@
       if (ui.moveValue) {
         ui.moveValue.textContent = "--";
       }
-      if (ui.moveFill) {
-        ui.moveFill.style.width = "0%";
-      }
     } else {
       if (ui.moveValue) {
-        ui.moveValue.textContent = "0 px";
-      }
-      if (ui.moveFill) {
-        ui.moveFill.style.width = "0%";
+        ui.moveValue.textContent = "0%";
       }
     }
 
@@ -4106,6 +5246,12 @@
     if (ui.fireBtn) {
       ui.fireBtn.textContent = isDrawPhase ? "USE MAP" : "FIRE";
       ui.fireBtn.disabled = isDrawPhase ? !state.drawMap.ready : !canControl;
+    }
+    if (ui.powerupMenuBtn) {
+      ui.powerupMenuBtn.disabled = isDrawPhase || !canControl;
+    }
+    if ((isDrawPhase || !canControl) && ui.powerupMenu && !ui.powerupMenu.classList.contains("hidden")) {
+      setPowerupMenuOpen(false);
     }
 
     const sniperCount = active?.powerups?.sniper || 0;
@@ -4144,7 +5290,7 @@
     }
     if (ui.airstrikeBtn) {
       ui.airstrikeBtn.disabled = isDrawPhase || !canControl;
-      ui.airstrikeBtn.classList.toggle("active", state.abilityMode === "airstrike_target");
+      ui.airstrikeBtn.classList.toggle("active", state.selectedShotType === "airstrike");
     }
     if (ui.laserBtn) {
       ui.laserBtn.disabled = isDrawPhase || !canControl;
@@ -4158,7 +5304,9 @@
     const dt = clamp((ts - lastTs) / 1000, 0, 0.033);
     lastTs = ts;
 
-    if (state.phase === "aim") {
+    if (state.phase === "menu") {
+      updateMenuDemo(dt);
+    } else if (state.phase === "aim") {
       updateAimInput(dt);
       updateTankPhysics(dt);
     } else if (state.phase === "ai") {
@@ -4197,7 +5345,7 @@
 
     updateCamera(dt);
     if (state.phase === "draw_map" && state.drawMap.drawing && pointer.initialized) {
-      appendDrawPoint(pointer.x + state.cameraX, pointer.y);
+      appendDrawPoint(screenToWorldX(pointer.x), screenToWorldY(pointer.y));
     }
     updateScreenShake(dt);
 
@@ -4206,22 +5354,31 @@
     ctx.beginPath();
     ctx.rect(0, 0, canvas.width, gameplayBottom);
     ctx.clip();
-    ctx.translate(state.screenShakeX, state.screenShakeY);
+    if (state.phase === "menu") {
+      drawMenuDemoBackground();
+    } else {
+      ctx.translate(state.screenShakeX, state.screenShakeY);
 
-    drawBackground();
-    drawTerrain();
-    drawMapEditorOverlay();
+      drawBackground();
+      ctx.save();
+      const zoom = Math.max(0.001, state.cameraZoom || 1);
+      ctx.scale(zoom, zoom);
+      drawTerrain();
+      drawMapEditorWorldOverlay();
 
-    for (const tank of state.tanks) {
-      drawTank(tank);
+      for (const tank of state.tanks) {
+        drawTank(tank);
+      }
+
+      drawPowerUps();
+      drawProjectile();
+      drawLaserCuts();
+      drawExplosionBursts();
+      drawParticles();
+      ctx.restore();
+      drawMapEditorHud();
+      drawGameOverBanner();
     }
-
-    drawPowerUps();
-    drawProjectile();
-    drawLaserCuts();
-    drawExplosionBursts();
-    drawParticles();
-    drawGameOverBanner();
 
     ctx.restore();
 
@@ -4242,7 +5399,9 @@
     }
 
     if (event.code === "Escape") {
-      if (state.phase === "paused") {
+      if (ui.powerupMenu && !ui.powerupMenu.classList.contains("hidden")) {
+        setPowerupMenuOpen(false);
+      } else if (state.phase === "paused") {
         setPauseOpen(false);
       } else {
         setSettingsOpen(false);
@@ -4262,6 +5421,13 @@
     }
 
     if (state.phase === "draw_map") {
+      if (event.code === "ArrowLeft") {
+        event.preventDefault();
+        setCameraButtonPanDir(-1);
+      } else if (event.code === "ArrowRight") {
+        event.preventDefault();
+        setCameraButtonPanDir(1);
+      }
       if (event.code === "Space" || event.code === "Enter") {
         event.preventDefault();
         confirmDrawnMapAndStart();
@@ -4279,6 +5445,12 @@
       event.preventDefault();
     }
 
+    if (event.code === "ArrowLeft") {
+      setCameraButtonPanDir(-1);
+    } else if (event.code === "ArrowRight") {
+      setCameraButtonPanDir(1);
+    }
+
     if (event.code === "Space") {
       fireActiveTank();
     }
@@ -4290,6 +5462,11 @@
 
   window.addEventListener("keyup", (event) => {
     keys.delete(event.code);
+    if (event.code === "ArrowLeft" && state.cameraButtonPanDir < 0) {
+      setCameraButtonPanDir(keys.has("ArrowRight") ? 1 : 0);
+    } else if (event.code === "ArrowRight" && state.cameraButtonPanDir > 0) {
+      setCameraButtonPanDir(keys.has("ArrowLeft") ? -1 : 0);
+    }
   });
 
   canvas.addEventListener("pointerdown", (event) => {
@@ -4309,13 +5486,13 @@
         state.drawMap.previewPoints = [];
         state.drawMap.ready = false;
         state.drawMap.surface = null;
-        appendDrawPoint(pointer.x + state.cameraX, pointer.y);
+        appendDrawPoint(screenToWorldX(pointer.x), screenToWorldY(pointer.y));
         if (canvas.setPointerCapture) {
           canvas.setPointerCapture(event.pointerId);
         }
         setStatus("Drawing... click again to stop at the opposite edge");
       } else {
-        appendDrawPoint(pointer.x + state.cameraX, pointer.y);
+        appendDrawPoint(screenToWorldX(pointer.x), screenToWorldY(pointer.y));
         state.drawMap.drawing = false;
         if (canvas.releasePointerCapture && state.drawMap.pointerId !== null && canvas.hasPointerCapture(state.drawMap.pointerId)) {
           canvas.releasePointerCapture(state.drawMap.pointerId);
@@ -4337,7 +5514,7 @@
     if (canvas.setPointerCapture) {
       canvas.setPointerCapture(event.pointerId);
     }
-    applyDragAimToActiveTank(pointer.x + state.cameraX, pointer.y);
+    applyDragAimToActiveTank(screenToWorldX(pointer.x), screenToWorldY(pointer.y));
     event.preventDefault();
   });
 
@@ -4350,7 +5527,7 @@
       if (state.drawMap.pointerId !== null && state.drawMap.pointerId !== event.pointerId) {
         return;
       }
-      appendDrawPoint(pointer.x + state.cameraX, pointer.y);
+      appendDrawPoint(screenToWorldX(pointer.x), screenToWorldY(pointer.y));
       event.preventDefault();
       return;
     }
@@ -4361,7 +5538,7 @@
       return;
     }
 
-    applyDragAimToActiveTank(pointer.x + state.cameraX, pointer.y);
+    applyDragAimToActiveTank(screenToWorldX(pointer.x), screenToWorldY(pointer.y));
     event.preventDefault();
   });
 
@@ -4380,14 +5557,7 @@
       return;
     }
 
-    const worldX = pointer.x + state.cameraX;
-    const worldY = pointer.y;
-
-    if (state.abilityMode === "airstrike_target") {
-      tryAirstrikeTarget(worldX, worldY);
-      return;
-    }
-
+    const worldX = screenToWorldX(pointer.x);
     if (state.abilityMode === "teleport_target") {
       if (!tryTeleportTo(worldX)) {
         setStatus("Teleport unavailable");
@@ -4418,6 +5588,7 @@
         return;
       }
 
+      releaseCameraToPlayer();
       tank.angle = clampAimDeg(Number(ui.angleSlider.value));
       syncControlsFromActive();
     });
@@ -4434,6 +5605,7 @@
         return;
       }
 
+      releaseCameraToPlayer();
       tank.power = clamp(Number(ui.powerSlider.value), MIN_POWER, MAX_POWER);
       syncControlsFromActive();
     });
@@ -4447,6 +5619,21 @@
         return;
       }
       fireActiveTank();
+    });
+  }
+
+  if (ui.powerupMenuBtn) {
+    ui.powerupMenuBtn.addEventListener("click", () => {
+      if (state.phase === "menu" || state.phase === "paused") {
+        return;
+      }
+      togglePowerupMenu();
+    });
+  }
+
+  if (ui.powerupCloseBtn) {
+    ui.powerupCloseBtn.addEventListener("click", () => {
+      setPowerupMenuOpen(false);
     });
   }
 
@@ -4468,33 +5655,45 @@
     });
   }
 
+  if (ui.enemyCountSelect) {
+    ui.enemyCountSelect.addEventListener("change", () => {
+      state.config.enemyCount = clampAiTeamsForHumans(Number(ui.enemyCountSelect.value), state.config.humanPlayers);
+      refreshHumanPlayersUi();
+    });
+  }
+
   if (ui.sniperBtn) {
     ui.sniperBtn.addEventListener("click", () => {
       activatePowerUp("sniper");
+      setPowerupMenuOpen(false);
     });
   }
 
   if (ui.teleportBtn) {
     ui.teleportBtn.addEventListener("click", () => {
       activatePowerUp("teleport");
+      setPowerupMenuOpen(false);
     });
   }
 
   if (ui.earthquakeBtn) {
     ui.earthquakeBtn.addEventListener("click", () => {
       activatePowerUp("earthquake");
+      setPowerupMenuOpen(false);
     });
   }
 
   if (ui.airstrikeBtn) {
     ui.airstrikeBtn.addEventListener("click", () => {
       activatePowerUp("airstrike");
+      setPowerupMenuOpen(false);
     });
   }
 
   if (ui.laserBtn) {
     ui.laserBtn.addEventListener("click", () => {
       activatePowerUp("laser");
+      setPowerupMenuOpen(false);
     });
   }
 
@@ -4510,7 +5709,7 @@
         humanPlayers: 1,
         mapSize: DEFAULT_MAP_SIZE,
         playerCount: 1,
-        enemyCount: 2,
+        enemyCount: 3,
         aiDifficulty: "normal",
         maxHealth: DEFAULT_MAX_HP,
         mapSource: "random",
@@ -4550,6 +5749,65 @@
       togglePause();
     });
   }
+
+  const bindCameraPanButton = (btn, dir) => {
+    if (!btn) {
+      return;
+    }
+    btn.addEventListener("pointerdown", (event) => {
+      if (event.pointerType === "mouse" && event.button !== 0) {
+        return;
+      }
+      setCameraButtonPanDir(dir);
+      event.preventDefault();
+    });
+    btn.addEventListener("pointerup", () => {
+      if (state.cameraButtonPanDir === dir) {
+        setCameraButtonPanDir(0);
+      }
+    });
+    btn.addEventListener("pointercancel", () => {
+      if (state.cameraButtonPanDir === dir) {
+        setCameraButtonPanDir(0);
+      }
+    });
+    btn.addEventListener("pointerleave", () => {
+      if (state.cameraButtonPanDir === dir) {
+        setCameraButtonPanDir(0);
+      }
+    });
+    btn.addEventListener("click", () => {
+      nudgeCamera(dir);
+    });
+  };
+  bindCameraPanButton(ui.panLeftBtn, -1);
+  bindCameraPanButton(ui.panRightBtn, 1);
+
+  window.addEventListener("pointerup", () => {
+    if (state.cameraButtonPanDir !== 0) {
+      setCameraButtonPanDir(0);
+    }
+  });
+  window.addEventListener("pointerdown", (event) => {
+    if (!ui.powerupMenu || ui.powerupMenu.classList.contains("hidden")) {
+      return;
+    }
+    const target = event.target;
+    if (target instanceof Node) {
+      if (ui.powerupMenu.contains(target)) {
+        return;
+      }
+      if (ui.powerupMenuBtn && ui.powerupMenuBtn.contains(target)) {
+        return;
+      }
+    }
+    setPowerupMenuOpen(false);
+  });
+  window.addEventListener("blur", () => {
+    if (state.cameraButtonPanDir !== 0) {
+      setCameraButtonPanDir(0);
+    }
+  });
 
   if (ui.resumeBtn) {
     ui.resumeBtn.addEventListener("click", () => {
@@ -4596,8 +5854,21 @@
     });
   }
 
+  if (ui.devModeToggle) {
+    ui.devModeToggle.addEventListener("change", () => {
+      setDevMode(ui.devModeToggle.checked);
+      if (state.settings.devMode) {
+        setStatus("Dev mode enabled");
+      } else {
+        setStatus("Dev mode disabled");
+      }
+      updateUi();
+    });
+  }
+
   syncMenuControls();
   setFxIntensity(state.settings.fxIntensity);
+  setDevMode(state.settings.devMode);
   resize();
   openMenu();
   requestAnimationFrame(tick);
