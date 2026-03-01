@@ -2473,7 +2473,8 @@
     let minZoom = clamp(Math.min(fitX, fitY), 0.22, 1);
     if (isMobilePointerDevice() && state.phase !== "menu") {
       const configured = getConfiguredMapZoom();
-      const mobileFloor = configured - 0.02;
+      const tightViewport = canvas.height <= 640;
+      const mobileFloor = configured - (tightViewport ? 0.14 : 0.08);
       minZoom = Math.max(minZoom, mobileFloor);
     }
     return minZoom;
@@ -2518,8 +2519,11 @@
     } else if (Array.isArray(state.surfaceY) && state.surfaceY.length) {
       focusY = state.surfaceY[Math.floor(state.surfaceY.length * 0.5)] || focusY;
     }
-    const desiredScreenY = clamp(gameplayBottom * 0.72, 220, gameplayBottom - 56);
-    return clamp(desiredScreenY - focusY * zoom, 0, gameplayBottom * 0.46);
+    const desiredScreenY = clamp(gameplayBottom * 0.72, 170, gameplayBottom - 48);
+    // Allow negative offset on mobile so terrain can move up into view when HUD takes bottom space.
+    const minOffset = Math.min(0, gameplayBottom - WORLD_H * zoom - 14);
+    const maxOffset = gameplayBottom * 0.46;
+    return clamp(desiredScreenY - focusY * zoom, minOffset, maxOffset);
   }
 
   function worldToScreenX(worldX) {
@@ -2534,6 +2538,36 @@
   function screenToWorldY(screenY) {
     const zoom = Math.max(0.001, state.cameraZoom || 1);
     return (screenY - getWorldRenderYOffset()) / zoom;
+  }
+
+  function getHudBottomReservePx() {
+    if (!isMobilePointerDevice() || state.phase === "menu") {
+      return 0;
+    }
+    if (!document.body.classList.contains("in-game")) {
+      return 0;
+    }
+
+    let reserve = 0;
+    const bottomRect = ui.bottomUi?.getBoundingClientRect?.();
+    if (bottomRect && Number.isFinite(bottomRect.top) && Number.isFinite(bottomRect.height) && bottomRect.height > 0) {
+      reserve = Math.max(reserve, canvas.height - bottomRect.top);
+    }
+
+    const menuOpen = ui.powerupMenu && !ui.powerupMenu.classList.contains("hidden");
+    if (menuOpen) {
+      const powerRect = ui.powerupMenu.getBoundingClientRect();
+      if (Number.isFinite(powerRect.top) && Number.isFinite(powerRect.height) && powerRect.height > 0) {
+        reserve = Math.max(reserve, canvas.height - powerRect.top);
+      }
+    }
+
+    if (reserve <= 0) {
+      return 0;
+    }
+
+    // Keep a little air above HUD so terrain/tanks don't feel glued to buttons.
+    return clamp(Math.ceil(reserve + 8), 0, Math.floor(canvas.height * 0.56));
   }
 
   if (ui.powerSlider) {
@@ -8246,7 +8280,8 @@
   }
 
   function getGameplayBottomY() {
-    return canvas.height;
+    const reserve = getHudBottomReservePx();
+    return clamp(canvas.height - reserve, 180, canvas.height);
   }
 
   function updateMenuDemo(dt) {
