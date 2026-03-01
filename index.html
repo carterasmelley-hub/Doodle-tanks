@@ -256,6 +256,104 @@
       transform: translateY(1px) scale(0.985);
     }
 
+    .pairing-panel {
+      margin-top: 10px;
+      border: 2px solid var(--card-border);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.96);
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      text-align: left;
+    }
+
+    .pairing-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .pairing-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(100px, 1fr));
+      gap: 6px;
+    }
+
+    .pairing-row {
+      display: grid;
+      gap: 4px;
+    }
+
+    .pairing-row label {
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .pairing-room-code {
+      min-height: 36px;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      user-select: all;
+      -webkit-user-select: all;
+      background: #ffffff;
+    }
+
+    .pairing-link {
+      width: 100%;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      font-family: inherit;
+      padding: 7px 8px;
+      font-size: 12px;
+      background: #ffffff;
+      color: #000000;
+    }
+
+    .pairing-status {
+      min-height: 18px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #111111;
+    }
+
+    .pairing-status.error {
+      color: #b91c1c;
+    }
+
+    .pairing-qr-wrap {
+      display: grid;
+      place-items: center;
+      padding-top: 2px;
+    }
+
+    #room-qr {
+      width: min(210px, 72vw);
+      height: auto;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      background: #ffffff;
+      image-rendering: pixelated;
+    }
+
+    @media (max-width: 620px) {
+      .pairing-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .turn-counter {
       position: fixed;
       left: 50%;
@@ -1537,7 +1635,7 @@
         </div>
         <div class="menu-field full">
           <label for="power-filter-open-btn">POWER UPS</label>
-          <button id="power-filter-open-btn" type="button">EDIT ENABLED (8/8)</button>
+          <button id="power-filter-open-btn" type="button">EDIT ENABLED (10/10)</button>
         </div>
       </div>
       <section id="power-filter-panel" class="power-filter-panel hidden">
@@ -1547,6 +1645,8 @@
         </div>
         <div id="power-filter-grid" class="power-filter-grid">
           <button type="button" class="power-filter-item" data-power-type="sniper">POWER SHOT</button>
+          <button type="button" class="power-filter-item" data-power-type="seeker">SEEKER</button>
+          <button type="button" class="power-filter-item" data-power-type="roller">ROLLER</button>
           <button type="button" class="power-filter-item" data-power-type="dig">DIG</button>
           <button type="button" class="power-filter-item" data-power-type="build">BUILD</button>
           <button type="button" class="power-filter-item" data-power-type="teleport">TELEPORT</button>
@@ -1633,6 +1733,8 @@
     </div>
     <div class="powerups-row">
       <button id="sniper-btn" class="power-btn" type="button">POWER SHOT <span id="sniper-count">0</span></button>
+      <button id="seeker-btn" class="power-btn" type="button">SEEKER <span id="seeker-count">0</span></button>
+      <button id="roller-btn" class="power-btn" type="button">ROLLER <span id="roller-count">0</span></button>
       <button id="dig-btn" class="power-btn" type="button">DIG <span id="dig-count">0</span></button>
       <button id="build-btn" class="power-btn" type="button">BUILD <span id="build-count">0</span></button>
       <button id="teleport-btn" class="power-btn" type="button">TELE <span id="teleport-count">0</span></button>
@@ -1663,6 +1765,10 @@
     moveFill: document.getElementById("move-fill"),
     sniperBtn: document.getElementById("sniper-btn"),
     sniperCount: document.getElementById("sniper-count"),
+    seekerBtn: document.getElementById("seeker-btn"),
+    seekerCount: document.getElementById("seeker-count"),
+    rollerBtn: document.getElementById("roller-btn"),
+    rollerCount: document.getElementById("roller-count"),
     digBtn: document.getElementById("dig-btn"),
     digCount: document.getElementById("dig-count"),
     buildBtn: document.getElementById("build-btn"),
@@ -1724,6 +1830,14 @@
     mapSourceBtn: document.getElementById("map-source-btn"),
     terrainModeBtn: document.getElementById("terrain-mode-btn"),
     damageModBtn: document.getElementById("damage-mod-btn"),
+    pairingPanel: document.getElementById("pairing-panel"),
+    createRoomBtn: document.getElementById("create-room-btn"),
+    copyRoomLinkBtn: document.getElementById("copy-room-link-btn"),
+    disconnectRoomBtn: document.getElementById("disconnect-room-btn"),
+    roomCodeDisplay: document.getElementById("room-code-display"),
+    roomLinkInput: document.getElementById("room-link-input"),
+    roomQr: document.getElementById("room-qr"),
+    pairingStatus: document.getElementById("pairing-status"),
     powerFilterOpenBtn: document.getElementById("power-filter-open-btn"),
     powerFilterPanel: document.getElementById("power-filter-panel"),
     powerFilterCloseBtn: document.getElementById("power-filter-close-btn"),
@@ -1754,7 +1868,8 @@
   const TANK_W = 30;
   const TANK_H = 12;
   const BARREL_LEN = 20;
-  const MAX_TILT = degToRad(66);
+  const MAX_TILT = degToRad(82);
+  const TANK_SUPPORT_HALF_WIDTH = TANK_W * 0.4;
   const HULL_TOP_Y = -TANK_H * 0.54;
   const HULL_BOTTOM_Y = TANK_H * 0.26;
   const HULL_TOP_HALF = TANK_W * 0.58;
@@ -1789,6 +1904,18 @@
   const AIRSTRIKE_DROP_RADIUS = 24;
   const AIRSTRIKE_DROP_DAMAGE = 80;
   const DIG_TERRAIN_MULT = 3;
+  const SEEKER_TURN_RATE = degToRad(128);
+  const SEEKER_LOCK_RANGE = 420;
+  const SEEKER_MIN_SPEED = 180;
+  const SEEKER_LOCK_DOT = 0.16;
+  const SEEKER_GUIDANCE_GAIN = 1.35;
+  const ROLLER_RADIUS = 5.2;
+  const ROLLER_ROLL_FRICTION = 5.8;
+  const ROLLER_ROLL_SLOPE_ACCEL = 620;
+  const ROLLER_MIN_SPEED = 62;
+  const ROLLER_MAX_SPEED = 260;
+  const ROLLER_MAX_DISTANCE = 120;
+  const ROLLER_MAX_TIME = 2.2;
   const BUILD_RADIUS = 36;
   const FLARE_ROLL_FRICTION = 6.8;
   const FLARE_ROLL_SLOPE_ACCEL = 560;
@@ -1869,6 +1996,7 @@
       powerupSeekRange: 220,
       refinePasses: 0,
       laserChance: 0.12,
+      seekerChance: 0.2,
       sniperChance: 0.16,
       quakeChance: 0.05,
       teleportChance: 0.08,
@@ -1885,6 +2013,7 @@
       powerupSeekRange: 360,
       refinePasses: 22,
       laserChance: 0.52,
+      seekerChance: 0.42,
       sniperChance: 0.5,
       quakeChance: 0.28,
       teleportChance: 0.34,
@@ -1901,6 +2030,7 @@
       powerupSeekRange: 540,
       refinePasses: 72,
       laserChance: 0.9,
+      seekerChance: 0.72,
       sniperChance: 0.82,
       quakeChance: 0.62,
       teleportChance: 0.66,
@@ -1908,11 +2038,13 @@
     }
   };
 
-  const POWERUP_TYPES = ["sniper", "dig", "build", "teleport", "earthquake", "airstrike", "laser", "health"];
+  const POWERUP_TYPES = ["sniper", "seeker", "roller", "dig", "build", "teleport", "earthquake", "airstrike", "laser", "health"];
   const POWERUP_SPAWN_MIN_Y = 56;
   const POWERUP_SPAWN_MIN_CLEARANCE = 28;
   const POWERUP_TYPE_LABELS = {
     sniper: "POWER SHOT",
+    seeker: "SEEKER",
+    roller: "ROLLER",
     dig: "DIG",
     build: "BUILD",
     teleport: "TELEPORT",
@@ -1922,8 +2054,34 @@
     health: "HEALTH"
   };
   const HEALTH_POWERUP_AMOUNT = 28;
-  const EARTHQUAKE_SMOOTH_PASSES = 8;
-  const EARTHQUAKE_EROSION_PASSES = 9;
+  const EARTHQUAKE_SMOOTH_PASSES = 10;
+  const EARTHQUAKE_EROSION_PASSES = 8;
+  const MULTI_ROOM_CODE_RE = /^[A-Z0-9]{6}$/;
+  const MULTI_WS_PATH = "/ws";
+  const MULTI_RECONNECT_BASE_MS = 700;
+  const MULTI_RECONNECT_MAX_MS = 4500;
+  const NETPLAY_ROOM_RE = /^[A-Z0-9]{6}$/;
+  const NETPLAY_PLAYER_RE = /^[A-Z0-9]{8,20}$/;
+  const NETPLAY_SNAPSHOT_INTERVAL = 0.085;
+  const NETPLAY_RECONNECT_BASE_MS = 800;
+  const NETPLAY_RECONNECT_MAX_MS = 5000;
+  const CONTROLLER_WEAPON_MAP = {
+    basic: "normal",
+    normal: "normal",
+    heavy: "sniper",
+    sniper: "sniper",
+    power: "sniper",
+    dig: "dig",
+    seeker: "seeker",
+    roller: "roller",
+    build: "build",
+    teleport: "teleport",
+    quake: "earthquake",
+    earthquake: "earthquake",
+    airstrike: "airstrike",
+    double: "airstrike",
+    laser: "laser"
+  };
 
   const keys = new Set();
 
@@ -1989,6 +2147,7 @@
     laserCuts: [],
     airstrikeDrops: [],
     activeFlare: null,
+    activeRoller: null,
     customSurfaceY: null,
     drawMap: {
       pointerId: null,
@@ -2009,6 +2168,35 @@
     aimAssistEnd: null,
     turnCounter: 1,
     turnsIntoRound: 0,
+    multiplayer: {
+      room: "",
+      joinLink: "",
+      socket: null,
+      connecting: false,
+      connected: false,
+      controllerConnected: false,
+      wantsReconnect: false,
+      reconnectTimer: null,
+      reconnectAttempts: 0,
+      mode: null
+    },
+    netplay: {
+      enabled: false,
+      room: "",
+      playerId: "",
+      hostId: "",
+      isHost: false,
+      started: false,
+      connected: false,
+      connecting: false,
+      socket: null,
+      players: [],
+      snapshotTimer: 0,
+      reconnectTimer: null,
+      reconnectAttempts: 0,
+      wantsReconnect: false,
+      matchBootstrapped: false
+    },
     blockFireUntil: 0,
     blockTeleportUntil: 0,
     quakePendingTime: 0,
@@ -2138,6 +2326,12 @@
     if (isPowerupEnabled("sniper") && (tank.powerups?.sniper || 0) > 0) {
       cycle.push("sniper");
     }
+    if (isPowerupEnabled("seeker") && (tank.powerups?.seeker || 0) > 0) {
+      cycle.push("seeker");
+    }
+    if (isPowerupEnabled("roller") && (tank.powerups?.roller || 0) > 0) {
+      cycle.push("roller");
+    }
     if (isPowerupEnabled("dig") && (tank.powerups?.dig || 0) > 0) {
       cycle.push("dig");
     }
@@ -2159,6 +2353,12 @@
     }
     if (shotType === "dig") {
       return "DIG";
+    }
+    if (shotType === "seeker") {
+      return "SEEKER";
+    }
+    if (shotType === "roller") {
+      return "ROLLER";
     }
     if (shotType === "build") {
       return "BUILD";
@@ -2184,6 +2384,12 @@
     }
     if (shotType === "dig") {
       return `${tank.powerups?.dig || 0}`;
+    }
+    if (shotType === "seeker") {
+      return `${tank.powerups?.seeker || 0}`;
+    }
+    if (shotType === "roller") {
+      return `${tank.powerups?.roller || 0}`;
     }
     if (shotType === "build") {
       return `${tank.powerups?.build || 0}`;
@@ -2369,6 +2575,12 @@
     }
     if (isPowerupEnabled("sniper")) {
       tank.powerups.sniper = Math.max(tank.powerups.sniper || 0, DEV_POWERUP_CHARGES);
+    }
+    if (isPowerupEnabled("seeker")) {
+      tank.powerups.seeker = Math.max(tank.powerups.seeker || 0, DEV_POWERUP_CHARGES);
+    }
+    if (isPowerupEnabled("roller")) {
+      tank.powerups.roller = Math.max(tank.powerups.roller || 0, DEV_POWERUP_CHARGES);
     }
     if (isPowerupEnabled("dig")) {
       tank.powerups.dig = Math.max(tank.powerups.dig || 0, DEV_POWERUP_CHARGES);
@@ -3089,6 +3301,24 @@
   }
 
   function getMatchTeamSpecs() {
+    if (isNetplayEnabled()) {
+      const owners = getNetplayOwnerOrder();
+      const humans = clamp(owners.length || 1, 1, 4);
+      const teams = [];
+      for (let i = 0; i < humans; i += 1) {
+        teams.push({
+          id: `team${i + 1}`,
+          name: TEAM_LABELS[i] || `P${i + 1}`,
+          color: TEAM_COLORS[i] || TEAM_COLORS[TEAM_COLORS.length - 1],
+          controller: "human",
+          tankCount: 1,
+          slot: i,
+          netOwnerId: owners[i] || null
+        });
+      }
+      return teams;
+    }
+
     const normalized = normalizeTeamConfig(state.config);
     const humanPlayers = normalized.humanPlayers;
     const aiTeams = normalized.enemyCount;
@@ -3101,7 +3331,8 @@
         color: TEAM_COLORS[i] || TEAM_COLORS[TEAM_COLORS.length - 1],
         controller: "human",
         tankCount: tanksPerTeam,
-        slot: i
+        slot: i,
+        netOwnerId: null
       });
     }
 
@@ -3113,7 +3344,8 @@
         color: TEAM_COLORS[teamIndex] || TEAM_COLORS[TEAM_COLORS.length - 1],
         controller: "ai",
         tankCount: tanksPerTeam,
-        slot: teamIndex
+        slot: teamIndex,
+        netOwnerId: null
       });
     }
     return teams;
@@ -3412,7 +3644,7 @@
     return max * 0.5;
   }
 
-  function makeTank({ id, name, team, x, color, controller, teamName, teamSlot = 0 }) {
+  function makeTank({ id, name, team, x, color, controller, teamName, teamSlot = 0, netOwnerId = null }) {
     return {
       id,
       name,
@@ -3431,12 +3663,15 @@
       alive: true,
       tilt: 0,
       teamSlot,
+      netOwnerId,
       lastShotPath: [],
       lastShotEnd: null,
       lastShotAngleDeg: null,
       lastShotPowerPct: null,
       powerups: {
         sniper: 0,
+        seeker: 0,
+        roller: 0,
         dig: 0,
         build: 0,
         teleport: 0,
@@ -3464,6 +3699,1075 @@
     if (ui.statusPill) {
       ui.statusPill.textContent = text;
     }
+  }
+
+  function setPairingStatus(text, isError = false) {
+    if (!ui.pairingStatus) {
+      return;
+    }
+    ui.pairingStatus.textContent = text;
+    ui.pairingStatus.classList.toggle("error", Boolean(isError));
+  }
+
+  function setRoomDisplay(roomCode, joinLink) {
+    if (ui.roomCodeDisplay) {
+      ui.roomCodeDisplay.textContent = roomCode || "------";
+    }
+    if (ui.roomLinkInput) {
+      ui.roomLinkInput.value = joinLink || "";
+    }
+    if (ui.copyRoomLinkBtn) {
+      ui.copyRoomLinkBtn.disabled = !joinLink;
+    }
+    if (ui.disconnectRoomBtn) {
+      ui.disconnectRoomBtn.disabled = !roomCode;
+    }
+  }
+
+  function clearRoomQr() {
+    if (!ui.roomQr) {
+      return;
+    }
+    const qrCtx = ui.roomQr.getContext("2d");
+    if (!qrCtx) {
+      return;
+    }
+    qrCtx.clearRect(0, 0, ui.roomQr.width, ui.roomQr.height);
+    qrCtx.fillStyle = "#ffffff";
+    qrCtx.fillRect(0, 0, ui.roomQr.width, ui.roomQr.height);
+    qrCtx.fillStyle = "#000000";
+    qrCtx.font = "600 12px 'Comic Sans MS', 'Trebuchet MS', sans-serif";
+    qrCtx.textAlign = "center";
+    qrCtx.textBaseline = "middle";
+    qrCtx.fillText("NO ROOM", ui.roomQr.width * 0.5, ui.roomQr.height * 0.5);
+  }
+
+  function renderRoomQr(joinLink) {
+    if (!ui.roomQr) {
+      return;
+    }
+    if (!joinLink) {
+      clearRoomQr();
+      return;
+    }
+    if (!window.QRCodeLite || typeof window.QRCodeLite.renderToCanvas !== "function") {
+      clearRoomQr();
+      return;
+    }
+    try {
+      window.QRCodeLite.renderToCanvas(ui.roomQr, joinLink, { scale: 4, margin: 2 });
+    } catch (_err) {
+      clearRoomQr();
+      setPairingStatus("Room created. QR unavailable, use room code.", true);
+    }
+  }
+
+  function getMultiplayerWsUrl() {
+    if (location.protocol === "file:") {
+      return "";
+    }
+    const wsProto = location.protocol === "https:" ? "wss:" : "ws:";
+    return `${wsProto}//${location.host}${MULTI_WS_PATH}`;
+  }
+
+  function buildControllerJoinLink(room) {
+    if (!room) {
+      return "";
+    }
+    if (location.protocol === "file:") {
+      return `controller.html?room=${encodeURIComponent(room)}`;
+    }
+    const url = new URL("controller.html", location.href);
+    url.searchParams.set("room", room);
+    return url.toString();
+  }
+
+  function clearMultiplayerReconnectTimer() {
+    if (!state.multiplayer.reconnectTimer) {
+      return;
+    }
+    clearTimeout(state.multiplayer.reconnectTimer);
+    state.multiplayer.reconnectTimer = null;
+  }
+
+  function closeMultiplayerSocket() {
+    const mp = state.multiplayer;
+    if (!mp.socket) {
+      return;
+    }
+    const ws = mp.socket;
+    mp.socket = null;
+    ws.onopen = null;
+    ws.onmessage = null;
+    ws.onerror = null;
+    ws.onclose = null;
+    try {
+      ws.close();
+    } catch (_err) {
+      // ignore
+    }
+  }
+
+  function setMultiplayerDisconnectedUi() {
+    state.multiplayer.controllerConnected = false;
+    setRoomDisplay("", "");
+    clearRoomQr();
+    setPairingStatus("Create a room, then scan QR on a phone.");
+  }
+
+  function updatePairingAvailability() {
+    const available = Boolean(getMultiplayerWsUrl());
+    if (ui.createRoomBtn) {
+      ui.createRoomBtn.disabled = !available;
+    }
+    if (!available) {
+      setPairingStatus("Pairing requires running via local server (npm start).", true);
+    }
+  }
+
+  function refreshPairingUiFromState() {
+    const mp = state.multiplayer;
+    const hasRoom = MULTI_ROOM_CODE_RE.test(mp.room || "");
+    setRoomDisplay(hasRoom ? mp.room : "", hasRoom ? mp.joinLink : "");
+    if (hasRoom && mp.joinLink) {
+      renderRoomQr(mp.joinLink);
+      setPairingStatus(
+        mp.controllerConnected ? "Phone connected. Controller live." : "Room ready. Waiting for phone controller..."
+      );
+      return;
+    }
+    clearRoomQr();
+    setPairingStatus("Create a room, then scan QR on a phone.");
+  }
+
+  function disconnectMultiplayer(manual = true) {
+    const mp = state.multiplayer;
+    clearMultiplayerReconnectTimer();
+    mp.wantsReconnect = false;
+    mp.connecting = false;
+    mp.connected = false;
+    mp.controllerConnected = false;
+    mp.mode = null;
+    mp.reconnectAttempts = 0;
+    closeMultiplayerSocket();
+    mp.room = "";
+    mp.joinLink = "";
+    if (manual) {
+      setMultiplayerDisconnectedUi();
+    }
+  }
+
+  function canApplyRemoteControllerInput() {
+    if (!state.multiplayer.connected || !state.multiplayer.controllerConnected) {
+      return false;
+    }
+    if (state.phase === "menu" || state.phase === "paused" || state.phase === "draw_map" || state.phase === "gameover") {
+      return false;
+    }
+    if (!isPlayerTurn()) {
+      return false;
+    }
+    const tank = getActiveTank();
+    return Boolean(tank && tank.alive && tank.controller === "human");
+  }
+
+  function selectRemoteWeapon(rawId) {
+    if (!rawId) {
+      return;
+    }
+    const tank = getActiveTank();
+    if (!tank) {
+      return;
+    }
+    const normalized = `${rawId}`.toLowerCase().trim();
+    const mapped = CONTROLLER_WEAPON_MAP[normalized];
+    if (!mapped) {
+      return;
+    }
+    if (mapped === "normal") {
+      state.selectedShotType = "normal";
+      clearAbilityMode();
+      state.rangefinderHint = null;
+      setStatus("Normal shot selected");
+      return;
+    }
+    activatePowerUp(mapped);
+  }
+
+  function applyRemoteControllerMessage(msg) {
+    if (!msg || typeof msg !== "object") {
+      return;
+    }
+    if (!canApplyRemoteControllerInput()) {
+      return;
+    }
+    const tank = getActiveTank();
+    if (!tank) {
+      return;
+    }
+    if (msg.t === "aim") {
+      const angle = Number(msg.angle);
+      if (!Number.isFinite(angle)) {
+        return;
+      }
+      tank.angle = clampAimDeg(angle);
+      syncControlsFromActive();
+      return;
+    }
+    if (msg.t === "power") {
+      const pct = clamp(Number(msg.value), 0, 100);
+      if (!Number.isFinite(pct)) {
+        return;
+      }
+      tank.power = MIN_POWER + ((MAX_POWER - MIN_POWER) * pct) / 100;
+      syncControlsFromActive();
+      return;
+    }
+    if (msg.t === "weapon") {
+      selectRemoteWeapon(msg.id);
+      syncControlsFromActive();
+      return;
+    }
+    if (msg.t === "fire") {
+      fireActiveTank();
+      return;
+    }
+    if (msg.t === "endTurn") {
+      if (state.phase === "aim" && !state.projectile && !state.quakePendingTime) {
+        advanceTurn();
+      }
+    }
+  }
+
+  function handlePcSocketMessage(rawData) {
+    let msg = null;
+    try {
+      msg = JSON.parse(rawData);
+    } catch (_err) {
+      return;
+    }
+    if (!msg || typeof msg !== "object") {
+      return;
+    }
+    const mp = state.multiplayer;
+    if (msg.t === "created" && MULTI_ROOM_CODE_RE.test(msg.room || "")) {
+      mp.room = msg.room;
+      mp.joinLink = buildControllerJoinLink(mp.room);
+      setRoomDisplay(mp.room, mp.joinLink);
+      renderRoomQr(mp.joinLink);
+      setPairingStatus(`Room ${mp.room} ready. Waiting for phone controller...`);
+      return;
+    }
+    if (msg.t === "joined") {
+      mp.connected = true;
+      mp.connecting = false;
+      mp.reconnectAttempts = 0;
+      if (MULTI_ROOM_CODE_RE.test(msg.room || "")) {
+        mp.room = msg.room;
+        mp.joinLink = buildControllerJoinLink(mp.room);
+        setRoomDisplay(mp.room, mp.joinLink);
+        renderRoomQr(mp.joinLink);
+      }
+      setPairingStatus(mp.controllerConnected ? "Phone connected." : "PC connected. Waiting for phone controller...");
+      return;
+    }
+    if (msg.t === "peer" && msg.role === "controller") {
+      mp.controllerConnected = msg.state === "connected";
+      setPairingStatus(mp.controllerConnected ? "Phone connected. Controller live." : "Phone disconnected. Waiting to reconnect.");
+      return;
+    }
+    if (msg.t === "err") {
+      const reason = msg.msg || msg.code || "connection_error";
+      setPairingStatus(`Pairing error: ${reason}`, true);
+      return;
+    }
+    if (msg.t === "expired") {
+      disconnectMultiplayer(false);
+      setMultiplayerDisconnectedUi();
+      setPairingStatus("Room expired after inactivity. Create a new room.", true);
+      return;
+    }
+    if (msg.t === "aim" || msg.t === "power" || msg.t === "weapon" || msg.t === "fire" || msg.t === "endTurn") {
+      applyRemoteControllerMessage(msg);
+    }
+  }
+
+  function schedulePcReconnect() {
+    const mp = state.multiplayer;
+    clearMultiplayerReconnectTimer();
+    if (!mp.wantsReconnect || !MULTI_ROOM_CODE_RE.test(mp.room || "")) {
+      return;
+    }
+    const delay = Math.min(MULTI_RECONNECT_MAX_MS, MULTI_RECONNECT_BASE_MS * (1 + mp.reconnectAttempts));
+    mp.reconnectAttempts += 1;
+    setPairingStatus(`Reconnecting room ${mp.room}...`);
+    mp.reconnectTimer = setTimeout(() => {
+      openPcSocket("join");
+    }, delay);
+  }
+
+  function openPcSocket(mode = "create") {
+    const mp = state.multiplayer;
+    clearMultiplayerReconnectTimer();
+    closeMultiplayerSocket();
+
+    const wsUrl = getMultiplayerWsUrl();
+    if (!wsUrl) {
+      setPairingStatus("Pairing requires running from a web server.", true);
+      return;
+    }
+
+    mp.mode = mode;
+    mp.connecting = true;
+    mp.connected = false;
+    const ws = new WebSocket(wsUrl);
+    mp.socket = ws;
+    setPairingStatus(mode === "create" ? "Creating room..." : `Reconnecting to room ${mp.room}...`);
+
+    ws.onopen = () => {
+      if (mp.socket !== ws) {
+        return;
+      }
+      if (mode === "create") {
+        ws.send(JSON.stringify({ t: "create" }));
+      } else if (MULTI_ROOM_CODE_RE.test(mp.room || "")) {
+        ws.send(JSON.stringify({ t: "join", room: mp.room, role: "pc" }));
+      } else {
+        disconnectMultiplayer(false);
+        setMultiplayerDisconnectedUi();
+      }
+    };
+
+    ws.onmessage = (event) => {
+      if (mp.socket !== ws) {
+        return;
+      }
+      if (typeof event.data !== "string") {
+        return;
+      }
+      handlePcSocketMessage(event.data);
+    };
+
+    ws.onerror = () => {
+      if (mp.socket !== ws) {
+        return;
+      }
+      setPairingStatus("Connection error. Retrying...", true);
+    };
+
+    ws.onclose = () => {
+      if (mp.socket === ws) {
+        mp.socket = null;
+      }
+      mp.connecting = false;
+      mp.connected = false;
+      if (mp.wantsReconnect) {
+        schedulePcReconnect();
+      }
+    };
+  }
+
+  async function copyRoomJoinLink() {
+    const link = state.multiplayer.joinLink;
+    if (!link) {
+      return;
+    }
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        await navigator.clipboard.writeText(link);
+        setPairingStatus("Join link copied.");
+      } else if (ui.roomLinkInput) {
+        ui.roomLinkInput.focus();
+        ui.roomLinkInput.select();
+        const ok = document.execCommand("copy");
+        setPairingStatus(ok ? "Join link copied." : "Copy failed. Long-press link to copy.", !ok);
+      }
+    } catch (_err) {
+      setPairingStatus("Copy failed. Long-press link to copy.", true);
+    }
+  }
+
+  function isNetplayEnabled() {
+    return Boolean(state.netplay && state.netplay.enabled);
+  }
+
+  function isNetplayHost() {
+    return isNetplayEnabled() && state.netplay.isHost;
+  }
+
+  function isNetplayClientMirror() {
+    return isNetplayEnabled() && !state.netplay.isHost;
+  }
+
+  function getNetplayWsUrl() {
+    if (location.protocol === "file:") {
+      return "";
+    }
+    const wsProto = location.protocol === "https:" ? "wss:" : "ws:";
+    return `${wsProto}//${location.host}${MULTI_WS_PATH}`;
+  }
+
+  function isLocalTankOwner(tank) {
+    if (!tank) {
+      return false;
+    }
+    if (!isNetplayEnabled()) {
+      return true;
+    }
+    return tank.netOwnerId === state.netplay.playerId;
+  }
+
+  function clearNetplayReconnectTimer() {
+    if (!state.netplay.reconnectTimer) {
+      return;
+    }
+    clearTimeout(state.netplay.reconnectTimer);
+    state.netplay.reconnectTimer = null;
+  }
+
+  function closeNetplaySocket() {
+    const np = state.netplay;
+    if (!np.socket) {
+      return;
+    }
+    const ws = np.socket;
+    np.socket = null;
+    ws.onopen = null;
+    ws.onmessage = null;
+    ws.onerror = null;
+    ws.onclose = null;
+    try {
+      ws.close();
+    } catch (_err) {
+      // ignore
+    }
+  }
+
+  function sendNetplay(payload) {
+    const np = state.netplay;
+    if (!np.connected || !np.socket || np.socket.readyState !== WebSocket.OPEN) {
+      return;
+    }
+    np.socket.send(JSON.stringify(payload));
+  }
+
+  function sendNetplayInput(action, payload = {}) {
+    if (!isNetplayEnabled() || isNetplayHost() || !state.netplay.connected) {
+      return;
+    }
+    sendNetplay({
+      t: "input",
+      room: state.netplay.room,
+      playerId: state.netplay.playerId,
+      action,
+      payload
+    });
+  }
+
+  function sanitizeNetplayPlayers(players) {
+    if (!Array.isArray(players)) {
+      return [];
+    }
+    return players
+      .map((entry, idx) => {
+        const id = `${entry?.id || ""}`.toUpperCase();
+        if (!NETPLAY_PLAYER_RE.test(id)) {
+          return null;
+        }
+        return {
+          id,
+          index: Number.isFinite(Number(entry.index)) ? Number(entry.index) : idx
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.index - b.index)
+      .slice(0, 4);
+  }
+
+  function getNetplayOwnerOrder() {
+    const players = sanitizeNetplayPlayers(state.netplay.players);
+    if (players.length > 0) {
+      return players.map((p) => p.id);
+    }
+    if (NETPLAY_PLAYER_RE.test(state.netplay.playerId || "")) {
+      return [state.netplay.playerId];
+    }
+    return [];
+  }
+
+  function buildNetplaySnapshot() {
+    return {
+      phase: state.phase,
+      worldW: state.worldW,
+      config: {
+        mapSize: state.config.mapSize,
+        terrainMode: state.config.terrainMode,
+        damageMode: state.config.damageMode
+      },
+      turnCounter: state.turnCounter,
+      turnsIntoRound: state.turnsIntoRound,
+      activeIndex: state.activeIndex,
+      statusText: state.statusText,
+      selectedShotType: state.selectedShotType,
+      abilityMode: state.abilityMode,
+      lastImpact: { x: state.lastImpact.x, y: state.lastImpact.y },
+      surfaceY: state.surfaceY.slice(0, state.worldW),
+      craters: state.craters.map((c) => ({ x: c.x, y: c.y, r: c.r })),
+      teams: state.teams.map((team) => ({
+        id: team.id,
+        name: team.name,
+        color: team.color,
+        controller: team.controller,
+        netOwnerId: team.netOwnerId || null
+      })),
+      tanks: state.tanks.map((tank) => ({
+        id: tank.id,
+        name: tank.name,
+        team: tank.team,
+        teamName: tank.teamName,
+        controller: tank.controller,
+        teamSlot: tank.teamSlot || 0,
+        color: tank.color,
+        x: tank.x,
+        y: tank.y,
+        vx: tank.vx,
+        vy: tank.vy,
+        angle: tank.angle,
+        power: tank.power,
+        moveRemaining: tank.moveRemaining,
+        hp: tank.hp,
+        alive: tank.alive,
+        tilt: tank.tilt,
+        netOwnerId: tank.netOwnerId || null,
+        lastShotPath: Array.isArray(tank.lastShotPath) ? tank.lastShotPath.slice() : [],
+        lastShotEnd: tank.lastShotEnd ? { x: tank.lastShotEnd.x, y: tank.lastShotEnd.y } : null,
+        lastShotAngleDeg: tank.lastShotAngleDeg,
+        lastShotPowerPct: tank.lastShotPowerPct,
+        powerups: {
+          sniper: tank.powerups?.sniper || 0,
+          seeker: tank.powerups?.seeker || 0,
+          roller: tank.powerups?.roller || 0,
+          dig: tank.powerups?.dig || 0,
+          build: tank.powerups?.build || 0,
+          teleport: tank.powerups?.teleport || 0,
+          earthquake: tank.powerups?.earthquake || 0,
+          airstrike: tank.powerups?.airstrike || 0,
+          laser: tank.powerups?.laser || 0
+        }
+      })),
+      powerUps: state.powerUps.map((p) => ({ id: p.id, type: p.type, x: p.x, y: p.y, r: p.r })),
+      projectile: state.projectile
+        ? {
+            x: state.projectile.x,
+            y: state.projectile.y,
+            px: state.projectile.px,
+            py: state.projectile.py,
+            vx: state.projectile.vx,
+            vy: state.projectile.vy,
+            ownerId: state.projectile.ownerId,
+            radius: state.projectile.radius,
+            active: state.projectile.active,
+            shotType: state.projectile.shotType
+          }
+        : null,
+      simultaneousProjectiles: state.simultaneousProjectiles.map((p) => ({
+        x: p.x,
+        y: p.y,
+        px: p.px,
+        py: p.py,
+        vx: p.vx,
+        vy: p.vy,
+        ownerId: p.ownerId,
+        radius: p.radius,
+        active: p.active,
+        shotType: p.shotType
+      })),
+      airstrikeDrops: state.airstrikeDrops.map((d) => ({
+        x: d.x,
+        y: d.y,
+        py: d.py,
+        vy: d.vy,
+        ownerId: d.ownerId,
+        radius: d.radius,
+        delay: d.delay
+      })),
+      activeFlare: state.activeFlare
+        ? {
+            x: state.activeFlare.x,
+            y: state.activeFlare.y,
+            px: state.activeFlare.px,
+            py: state.activeFlare.py,
+            vx: state.activeFlare.vx,
+            vy: state.activeFlare.vy,
+            ownerId: state.activeFlare.ownerId,
+            life: state.activeFlare.life,
+            arm: state.activeFlare.arm,
+            active: state.activeFlare.active
+          }
+        : null,
+      currentShotPath: Array.isArray(state.currentShotPath) ? state.currentShotPath.slice() : []
+    };
+  }
+
+  function applyNetplaySnapshot(snapshot) {
+    if (!snapshot || typeof snapshot !== "object") {
+      return;
+    }
+    const worldW = clamp(Number(snapshot.worldW || state.worldW), MAP_PRESETS.small.width, MAX_WORLD_W);
+    state.worldW = worldW;
+
+    if (Array.isArray(snapshot.surfaceY) && snapshot.surfaceY.length >= worldW) {
+      state.surfaceY = snapshot.surfaceY.slice(0, worldW).map((y) => clamp(Number(y) || 0, 0, WORLD_H - 1));
+    }
+
+    state.craters = Array.isArray(snapshot.craters)
+      ? snapshot.craters.map((c) => {
+          const x = clamp(Number(c?.x || 0), 0, state.worldW - 1);
+          const y = clamp(Number(c?.y || 0), 0, WORLD_H - 1);
+          const r = Math.max(2, Number(c?.r || 2));
+          return {
+            x,
+            y,
+            r,
+            r2: r * r,
+            minX: x - r,
+            maxX: x + r,
+            minY: y - r,
+            maxY: y + r
+          };
+        })
+      : [];
+    rebuildVoidMaskFromCraters();
+    state.craterLayersDirty = true;
+
+    if (Array.isArray(snapshot.teams)) {
+      state.teams = snapshot.teams.map((team) => ({
+        id: team.id,
+        name: team.name,
+        color: team.color,
+        controller: team.controller,
+        netOwnerId: team.netOwnerId || null
+      }));
+    }
+
+    if (Array.isArray(snapshot.tanks)) {
+      state.tanks = snapshot.tanks.map((tank) => ({
+        id: tank.id,
+        name: tank.name,
+        team: tank.team,
+        teamName: tank.teamName || tank.team,
+        controller: tank.controller || "human",
+        color: tank.color || "#000000",
+        x: Number(tank.x || 0),
+        y: Number(tank.y || 0),
+        vx: Number(tank.vx || 0),
+        vy: Number(tank.vy || 0),
+        angle: Number(tank.angle || 0),
+        power: Number(tank.power || DEFAULT_SHOT_POWER),
+        moveRemaining: Number(tank.moveRemaining || 0),
+        hp: Number(tank.hp || 0),
+        alive: Boolean(tank.alive),
+        tilt: Number(tank.tilt || 0),
+        teamSlot: Number(tank.teamSlot || 0),
+        netOwnerId: tank.netOwnerId || null,
+        lastShotPath: Array.isArray(tank.lastShotPath) ? tank.lastShotPath.slice() : [],
+        lastShotEnd: tank.lastShotEnd ? { x: Number(tank.lastShotEnd.x), y: Number(tank.lastShotEnd.y) } : null,
+        lastShotAngleDeg: tank.lastShotAngleDeg == null ? null : Number(tank.lastShotAngleDeg),
+        lastShotPowerPct: tank.lastShotPowerPct == null ? null : Number(tank.lastShotPowerPct),
+        powerups: {
+          sniper: Number(tank.powerups?.sniper || 0),
+          seeker: Number(tank.powerups?.seeker || 0),
+          roller: Number(tank.powerups?.roller || 0),
+          dig: Number(tank.powerups?.dig || 0),
+          build: Number(tank.powerups?.build || 0),
+          teleport: Number(tank.powerups?.teleport || 0),
+          earthquake: Number(tank.powerups?.earthquake || 0),
+          airstrike: Number(tank.powerups?.airstrike || 0),
+          laser: Number(tank.powerups?.laser || 0)
+        }
+      }));
+    }
+
+    state.powerUps = Array.isArray(snapshot.powerUps)
+      ? snapshot.powerUps.map((p) => ({
+          id: Number(p.id || 0),
+          type: p.type,
+          x: Number(p.x || 0),
+          y: Number(p.y || 0),
+          r: Number(p.r || 10)
+        }))
+      : [];
+
+    state.projectile = snapshot.projectile
+      ? {
+          x: Number(snapshot.projectile.x || 0),
+          y: Number(snapshot.projectile.y || 0),
+          px: Number(snapshot.projectile.px || 0),
+          py: Number(snapshot.projectile.py || 0),
+          vx: Number(snapshot.projectile.vx || 0),
+          vy: Number(snapshot.projectile.vy || 0),
+          ownerId: snapshot.projectile.ownerId,
+          radius: Number(snapshot.projectile.radius || 4),
+          active: Boolean(snapshot.projectile.active),
+          shotType: snapshot.projectile.shotType || "normal"
+        }
+      : null;
+
+    state.simultaneousProjectiles = Array.isArray(snapshot.simultaneousProjectiles)
+      ? snapshot.simultaneousProjectiles.map((p) => ({
+          x: Number(p.x || 0),
+          y: Number(p.y || 0),
+          px: Number(p.px || 0),
+          py: Number(p.py || 0),
+          vx: Number(p.vx || 0),
+          vy: Number(p.vy || 0),
+          ownerId: p.ownerId,
+          radius: Number(p.radius || 4),
+          active: Boolean(p.active),
+          shotType: p.shotType || "normal",
+          path: []
+        }))
+      : [];
+
+    state.airstrikeDrops = Array.isArray(snapshot.airstrikeDrops)
+      ? snapshot.airstrikeDrops.map((d) => ({
+          x: Number(d.x || 0),
+          y: Number(d.y || 0),
+          py: Number(d.py || 0),
+          vy: Number(d.vy || 0),
+          ownerId: d.ownerId,
+          radius: Number(d.radius || 4),
+          delay: Number(d.delay || 0)
+        }))
+      : [];
+
+    state.activeFlare = snapshot.activeFlare
+      ? {
+          x: Number(snapshot.activeFlare.x || 0),
+          y: Number(snapshot.activeFlare.y || 0),
+          px: Number(snapshot.activeFlare.px || 0),
+          py: Number(snapshot.activeFlare.py || 0),
+          vx: Number(snapshot.activeFlare.vx || 0),
+          vy: Number(snapshot.activeFlare.vy || 0),
+          ownerId: snapshot.activeFlare.ownerId,
+          life: Number(snapshot.activeFlare.life || 0),
+          arm: Number(snapshot.activeFlare.arm || 0),
+          active: Boolean(snapshot.activeFlare.active),
+          sparkTimer: 0,
+          settleTimer: 0
+        }
+      : null;
+
+    state.currentShotPath = Array.isArray(snapshot.currentShotPath) ? snapshot.currentShotPath.slice() : [];
+    state.phase = typeof snapshot.phase === "string" ? snapshot.phase : state.phase;
+    state.activeIndex = clamp(Number(snapshot.activeIndex || 0), 0, Math.max(0, state.tanks.length - 1));
+    state.turnCounter = Math.max(1, Number(snapshot.turnCounter || state.turnCounter || 1));
+    state.turnsIntoRound = Math.max(0, Number(snapshot.turnsIntoRound || state.turnsIntoRound || 0));
+    state.selectedShotType = snapshot.selectedShotType || "normal";
+    state.abilityMode = snapshot.abilityMode || null;
+    state.lastImpact = {
+      x: Number(snapshot.lastImpact?.x || state.lastImpact.x || state.worldW * 0.5),
+      y: Number(snapshot.lastImpact?.y || state.lastImpact.y || WORLD_H * 0.5)
+    };
+    setStatus(snapshot.statusText || state.statusText || "Multiplayer");
+    syncControlsFromActive();
+  }
+
+  function applyNetplayRemoteInput(fromId, action, payload = {}) {
+    if (!isNetplayEnabled() || !isNetplayHost()) {
+      return;
+    }
+    const tank = getActiveTank();
+    if (!tank || !tank.alive || tank.controller !== "human" || tank.netOwnerId !== fromId || state.phase !== "aim") {
+      return;
+    }
+
+    if (action === "aim") {
+      const angle = Number(payload.angle);
+      const power = Number(payload.power);
+      if (Number.isFinite(angle)) {
+        tank.angle = clampAimDeg(angle);
+      }
+      if (Number.isFinite(power)) {
+        tank.power = clamp(power, MIN_POWER, MAX_POWER);
+      }
+      syncControlsFromActive();
+      return;
+    }
+
+    if (action === "weapon") {
+      const mapped = CONTROLLER_WEAPON_MAP[`${payload.id || ""}`.toLowerCase().trim()];
+      if (!mapped) {
+        return;
+      }
+      if (mapped === "normal") {
+        state.selectedShotType = "normal";
+        clearAbilityMode();
+        state.rangefinderHint = null;
+        return;
+      }
+      activatePowerUp(mapped, true);
+      return;
+    }
+
+    if (action === "drive") {
+      const dir = clamp(Math.sign(Number(payload.dir || 0)), -1, 1);
+      const dt = clamp(Number(payload.dt || 0.033), 0.01, 0.12);
+      if (dir !== 0) {
+        tryDriveTank(tank, dir, dt);
+      }
+      return;
+    }
+
+    if (action === "teleport") {
+      const x = Number(payload.x);
+      if (Number.isFinite(x)) {
+        tryTeleportTo(x, true);
+      }
+      return;
+    }
+
+    if (action === "fire") {
+      fireActiveTank();
+      return;
+    }
+
+    if (action === "endTurn") {
+      advanceTurn();
+    }
+  }
+
+  function broadcastNetplaySnapshot(force = false, dt = 0) {
+    if (!isNetplayEnabled() || !isNetplayHost() || !state.netplay.connected) {
+      return;
+    }
+    state.netplay.snapshotTimer += dt;
+    if (!force && state.netplay.snapshotTimer < NETPLAY_SNAPSHOT_INTERVAL) {
+      return;
+    }
+    state.netplay.snapshotTimer = 0;
+    sendNetplay({
+      t: "state",
+      room: state.netplay.room,
+      playerId: state.netplay.playerId,
+      snapshot: buildNetplaySnapshot()
+    });
+  }
+
+  function setupHostNetplayMatch() {
+    if (!isNetplayEnabled() || !isNetplayHost() || !state.netplay.started || !state.netplay.connected) {
+      return;
+    }
+    if (state.netplay.matchBootstrapped) {
+      return;
+    }
+
+    const owners = getNetplayOwnerOrder();
+    const humanPlayers = clamp(owners.length || 1, 1, 4);
+    state.config = normalizeTeamConfig({
+      ...state.config,
+      humanPlayers,
+      playerCount: 1,
+      enemyCount: 0,
+      turnMode: "classic",
+      mapSource: "random"
+    });
+    applyMenuConfig();
+    state.customSurfaceY = null;
+    resetMatch();
+    state.netplay.matchBootstrapped = true;
+    setStatus("Multiplayer match started");
+    broadcastNetplaySnapshot(true, 0);
+  }
+
+  function scheduleNetplayReconnect() {
+    clearNetplayReconnectTimer();
+    if (!state.netplay.wantsReconnect || !NETPLAY_ROOM_RE.test(state.netplay.room || "") || !NETPLAY_PLAYER_RE.test(state.netplay.playerId || "")) {
+      return;
+    }
+    const delay = Math.min(NETPLAY_RECONNECT_MAX_MS, NETPLAY_RECONNECT_BASE_MS * (1 + state.netplay.reconnectAttempts));
+    state.netplay.reconnectAttempts += 1;
+    state.netplay.reconnectTimer = setTimeout(() => {
+      connectNetplaySocket();
+    }, delay);
+  }
+
+  function disconnectNetplay(manual = true) {
+    clearNetplayReconnectTimer();
+    state.netplay.wantsReconnect = false;
+    state.netplay.connected = false;
+    state.netplay.connecting = false;
+    state.netplay.matchBootstrapped = false;
+    closeNetplaySocket();
+    if (manual) {
+      setStatus("Disconnected from multiplayer");
+    }
+  }
+
+  function handleNetplayMessage(rawData) {
+    let msg = null;
+    try {
+      msg = JSON.parse(rawData);
+    } catch (_err) {
+      return;
+    }
+    if (!msg || typeof msg !== "object") {
+      return;
+    }
+
+    if (msg.t === "gameJoined") {
+      state.netplay.connected = true;
+      state.netplay.connecting = false;
+      state.netplay.reconnectAttempts = 0;
+      state.netplay.hostId = `${msg.hostId || state.netplay.hostId || ""}`.toUpperCase();
+      state.netplay.isHost = state.netplay.playerId === state.netplay.hostId;
+      state.netplay.players = sanitizeNetplayPlayers(msg.players);
+      state.netplay.started = Boolean(msg.started);
+      if (state.netplay.started && state.netplay.isHost) {
+        setupHostNetplayMatch();
+      } else if (!state.netplay.isHost) {
+        setStatus(state.netplay.started ? "Waiting for host state..." : "Waiting for host to start...");
+      }
+      return;
+    }
+
+    if (msg.t === "lobbyState") {
+      state.netplay.hostId = `${msg.hostId || state.netplay.hostId || ""}`.toUpperCase();
+      state.netplay.isHost = state.netplay.playerId === state.netplay.hostId;
+      state.netplay.players = sanitizeNetplayPlayers(msg.players);
+      state.netplay.started = Boolean(msg.started);
+      if (state.netplay.started && state.netplay.isHost) {
+        setupHostNetplayMatch();
+      }
+      return;
+    }
+
+    if (msg.t === "state") {
+      if (isNetplayHost()) {
+        return;
+      }
+      applyNetplaySnapshot(msg.snapshot);
+      return;
+    }
+
+    if (msg.t === "input") {
+      if (!isNetplayHost()) {
+        return;
+      }
+      applyNetplayRemoteInput(`${msg.from || ""}`.toUpperCase(), msg.action, msg.payload || {});
+      return;
+    }
+
+    if (msg.t === "gameStart") {
+      state.netplay.started = true;
+      if (isNetplayHost()) {
+        setupHostNetplayMatch();
+      } else {
+        setStatus("Match started. Waiting for host state...");
+      }
+      return;
+    }
+
+    if (msg.t === "expired") {
+      disconnectNetplay(false);
+      setStatus("Room expired");
+      return;
+    }
+
+    if (msg.t === "err") {
+      setStatus(`Multiplayer error: ${msg.msg || msg.code || "error"}`);
+    }
+  }
+
+  function connectNetplaySocket() {
+    if (!isNetplayEnabled()) {
+      return;
+    }
+    clearNetplayReconnectTimer();
+    closeNetplaySocket();
+    const wsUrl = getNetplayWsUrl();
+    if (!wsUrl) {
+      setStatus("Multiplayer requires local server (npm start)");
+      return;
+    }
+
+    state.netplay.connecting = true;
+    state.netplay.connected = false;
+    const ws = new WebSocket(wsUrl);
+    state.netplay.socket = ws;
+
+    ws.onopen = () => {
+      if (state.netplay.socket !== ws) {
+        return;
+      }
+      ws.send(
+        JSON.stringify({
+          t: "joinGame",
+          room: state.netplay.room,
+          playerId: state.netplay.playerId
+        })
+      );
+    };
+
+    ws.onmessage = (event) => {
+      if (state.netplay.socket !== ws || typeof event.data !== "string") {
+        return;
+      }
+      handleNetplayMessage(event.data);
+    };
+
+    ws.onerror = () => {
+      if (state.netplay.socket !== ws) {
+        return;
+      }
+      setStatus("Multiplayer connection error");
+    };
+
+    ws.onclose = () => {
+      if (state.netplay.socket === ws) {
+        state.netplay.socket = null;
+      }
+      state.netplay.connected = false;
+      state.netplay.connecting = false;
+      if (state.netplay.wantsReconnect) {
+        scheduleNetplayReconnect();
+      }
+    };
+  }
+
+  function initNetplayFromUrl() {
+    const params = new URLSearchParams(location.search);
+    if (params.get("mp") !== "1") {
+      return false;
+    }
+
+    const room = `${params.get("room") || ""}`.toUpperCase();
+    const playerId = `${params.get("player") || ""}`.toUpperCase();
+    if (!NETPLAY_ROOM_RE.test(room) || !NETPLAY_PLAYER_RE.test(playerId)) {
+      setStatus("Invalid multiplayer link");
+      return false;
+    }
+
+    state.netplay.enabled = true;
+    state.netplay.room = room;
+    state.netplay.playerId = playerId;
+    state.netplay.hostId = "";
+    state.netplay.players = [];
+    state.netplay.started = false;
+    state.netplay.matchBootstrapped = false;
+    state.netplay.wantsReconnect = true;
+    state.netplay.snapshotTimer = 0;
+
+    state.surfaceY = new Array(state.worldW).fill(Math.round(WORLD_H * 0.62));
+    clearCraterState();
+    state.tanks = [];
+    state.teams = [];
+    state.powerUps = [];
+    state.phase = "resolving";
+    setStatus("Connecting to multiplayer room...");
+    enterInGameShell();
+    connectNetplaySocket();
+    return true;
   }
 
   function menuDemoTankAtPoint(demo, x, y, ignoreIndex = -1) {
@@ -3608,6 +4912,17 @@
   }
 
   function openMenu() {
+    if (isNetplayEnabled()) {
+      disconnectNetplay(false);
+      state.netplay.enabled = false;
+      state.netplay.room = "";
+      state.netplay.playerId = "";
+      state.netplay.hostId = "";
+      state.netplay.players = [];
+      state.netplay.started = false;
+      state.netplay.matchBootstrapped = false;
+      state.netplay.isHost = false;
+    }
     state.phase = "menu";
     state.pauseFromPhase = null;
     state.projectile = null;
@@ -3627,6 +4942,7 @@
     state.laserCuts = [];
     state.airstrikeDrops = [];
     state.activeFlare = null;
+    state.activeRoller = null;
     state.customSurfaceY = null;
     state.drawMap.pointerId = null;
     state.drawMap.drawing = false;
@@ -3694,6 +5010,7 @@
     state.laserCuts = [];
     state.airstrikeDrops = [];
     state.activeFlare = null;
+    state.activeRoller = null;
     state.abilityMode = null;
     state.selectedShotType = "normal";
     state.drawMap.pointerId = null;
@@ -4207,6 +5524,28 @@
     return clamp(y, 0, WORLD_H - 1);
   }
 
+  function getTankSupportYAtX(x) {
+    const ys = [];
+    for (let sx = -TANK_SUPPORT_HALF_WIDTH; sx <= TANK_SUPPORT_HALF_WIDTH + 0.001; sx += 3) {
+      ys.push(supportY(x + sx));
+    }
+    ys.sort((a, b) => a - b);
+    if (!ys.length) {
+      return supportY(x);
+    }
+    if (ys.length <= 2) {
+      return ys[Math.floor(ys.length * 0.5)];
+    }
+    // Ignore the most extreme sample on each side to prevent jitter on steep/rough spikes.
+    let sum = 0;
+    let count = 0;
+    for (let i = 1; i < ys.length - 1; i += 1) {
+      sum += ys[i];
+      count += 1;
+    }
+    return count > 0 ? sum / count : ys[Math.floor(ys.length * 0.5)];
+  }
+
   function rebuildCraterLayers() {
     if (!state.craterLayersDirty) {
       return;
@@ -4267,31 +5606,23 @@
   }
 
   function getTankTiltTarget(tank) {
-    const leftX = tank.x - TANK_W * 0.43;
-    const rightX = tank.x + TANK_W * 0.43;
-    let leftY = 0;
-    let rightY = 0;
-    let count = 0;
-    for (let ox = -2; ox <= 2; ox += 2) {
-      leftY += supportY(leftX + ox);
-      rightY += supportY(rightX + ox);
-      count += 1;
-    }
-    leftY /= count;
-    rightY /= count;
+    const leftX = tank.x - TANK_W * 0.35;
+    const rightX = tank.x + TANK_W * 0.35;
+    const leftY = getTankSupportYAtX(leftX);
+    const rightY = getTankSupportYAtX(rightX);
     const raw = Math.atan2(rightY - leftY, rightX - leftX);
     return clamp(raw, -MAX_TILT, MAX_TILT);
   }
 
   function updateTankTilt(tank, dt) {
-    const nearGround = hasGroundUnderTank(tank) || Math.abs(tank.y + TANK_H * 0.5 + 1 - supportY(tank.x)) <= 30;
+    const nearGround = hasGroundUnderTank(tank) || Math.abs(tank.y + TANK_H * 0.5 + 1 - getTankSupportYAtX(tank.x)) <= 30;
     const target = nearGround ? getTankTiltTarget(tank) : 0;
     const next = lerp(tank.tilt, target, clamp(dt * 10, 0, 1));
     tank.tilt = Math.abs(next - target) < 0.002 ? target : next;
   }
 
   function placeTankOnGround(tank) {
-    tank.y = supportY(tank.x) - TANK_H * 0.5 - 1;
+    tank.y = getTankSupportYAtX(tank.x) - TANK_H * 0.5 - 1;
     tank.tilt = getTankTiltTarget(tank);
   }
 
@@ -4309,7 +5640,8 @@
         contacts += 1;
       }
     }
-    return contacts >= 2 || closestGap <= 8;
+    const baseGap = Math.abs(footY - getTankSupportYAtX(tank.x));
+    return contacts >= 2 || closestGap <= 8 || baseGap <= 10;
   }
 
   function tankCollidesTerrain(tank) {
@@ -4367,7 +5699,13 @@
     const teamSpecs = getMatchTeamSpecs();
     const spawnsByTeam = generateTerrain(teamSpecs);
     const tanks = [];
-    state.teams = teamSpecs.map((team) => ({ id: team.id, name: team.name, color: team.color, controller: team.controller }));
+    state.teams = teamSpecs.map((team) => ({
+      id: team.id,
+      name: team.name,
+      color: team.color,
+      controller: team.controller,
+      netOwnerId: team.netOwnerId || null
+    }));
     let id = 0;
 
     for (const team of teamSpecs) {
@@ -4388,6 +5726,7 @@
             teamName: team.name,
             controller: team.controller,
             teamSlot: i,
+            netOwnerId: team.netOwnerId || null,
             x: teamSpawns[i],
             color: team.color
           })
@@ -4421,6 +5760,7 @@
     state.laserCuts = [];
     state.airstrikeDrops = [];
     state.activeFlare = null;
+    state.activeRoller = null;
     state.drawMap.pointerId = null;
     state.drawMap.drawing = false;
     state.drawMap.points = [];
@@ -4608,7 +5948,7 @@
 
   function isPlayerTurn() {
     const tank = getActiveTank();
-    return state.phase === "aim" && tank && tank.controller === "human";
+    return state.phase === "aim" && tank && tank.controller === "human" && isLocalTankOwner(tank);
   }
 
   function syncControlsFromActive() {
@@ -4646,6 +5986,12 @@
     }
     if (powerDelta !== 0) {
       tank.power = clamp(tank.power + powerDelta, MIN_POWER, MAX_POWER);
+    }
+    if (isNetplayClientMirror()) {
+      sendNetplayInput("aim", {
+        angle: tank.angle,
+        power: tank.power
+      });
     }
     syncControlsFromActive();
     return true;
@@ -4722,6 +6068,13 @@
     if (!tank || !tank.alive || direction === 0 || tank.moveRemaining <= 0) {
       return 0;
     }
+    if (isNetplayClientMirror() && tank === getActiveTank() && isLocalTankOwner(tank)) {
+      sendNetplayInput("drive", {
+        dir: clamp(Math.sign(direction), -1, 1),
+        dt: clamp(dt, 0.01, 0.12)
+      });
+      return 0;
+    }
 
     const distance = Math.min(DRIVE_SPEED * dt, tank.moveRemaining);
     if (distance <= 0) {
@@ -4729,9 +6082,9 @@
     }
 
     const oldX = tank.x;
-    const oldSupport = supportY(oldX);
+    const oldSupport = getTankSupportYAtX(oldX);
     const targetX = clamp(oldX + direction * distance, TANK_W * 0.6, state.worldW - TANK_W * 0.6);
-    const targetSupport = supportY(targetX);
+    const targetSupport = getTankSupportYAtX(targetX);
     const rise = oldSupport - targetSupport;
     const drop = targetSupport - oldSupport;
 
@@ -4794,6 +6147,12 @@
       tank.angle = clampAimDeg(angle);
       const powerT = clamp((dist - DRAG_MIN_DISTANCE) / (DRAG_POWER_DISTANCE - DRAG_MIN_DISTANCE), 0, 1);
       tank.power = clamp(lerp(MIN_POWER, MAX_POWER, powerT), MIN_POWER, MAX_POWER);
+      if (isNetplayClientMirror()) {
+        sendNetplayInput("aim", {
+          angle: tank.angle,
+          power: tank.power
+        });
+      }
       syncControlsFromActive();
     }
   }
@@ -4951,7 +6310,11 @@
     const sourceTank = getActiveTank();
     const epicenterX = sourceTank ? sourceTank.x : rand(state.worldW * 0.25, state.worldW * 0.75);
     const last = state.worldW - 1;
-    const src = state.surfaceY.slice(0, state.worldW);
+    // Use effective ground profile (includes crater/void damage), not raw surface line.
+    const src = new Array(state.worldW);
+    for (let x = 0; x < state.worldW; x += 1) {
+      src[x] = supportY(x);
+    }
     const radius = Math.max(220, state.worldW * 0.68);
     const coreRadius = radius * 0.34;
     const pushPixels = clamp(state.worldW * 0.03, 18, 72);
@@ -4975,7 +6338,11 @@
       const sink = coreInfluence * sinkAmp;
       const rimLift = ringInfluence * rippleAmp * 0.32;
       const ripple = Math.sin((ad / radius) * Math.PI * 6.2 + phase) * rippleAmp * influence * 0.55;
-      displaced[x] = base + sink - rimLift + ripple;
+      const l = src[Math.max(0, x - 1)];
+      const r = src[Math.min(last, x + 1)];
+      const roughness = Math.abs(src[x] - l) + Math.abs(r - src[x]);
+      const erosionFromDamage = roughness * 0.26 * influence;
+      displaced[x] = base + sink - rimLift + ripple + erosionFromDamage;
     }
 
     let smoothSrc = displaced;
@@ -5022,10 +6389,23 @@
       smoothSrc = next;
     }
 
-    const quakeClamp = getSurfaceClampRange(getTerrainMode() === "valley" || state.config.mapSource === "drawn");
-    state.surfaceY = relaxSurfaceForMobility(smoothSrc, 5, quakeClamp.minY, quakeClamp.maxY);
+    // Final cleanup pass to knock down sharp spikes after erosion transfer.
+    for (let pass = 0; pass < 3; pass += 1) {
+      const next = smoothSrc.slice();
+      next[0] = smoothSrc[0];
+      next[last] = smoothSrc[last];
+      for (let x = 1; x < last; x += 1) {
+        next[x] = (smoothSrc[x - 1] + smoothSrc[x] * 2 + smoothSrc[x + 1]) * 0.25;
+      }
+      smoothSrc = next;
+    }
 
-    // Quake packs loose earth into voids: clear all crater masks in-place.
+    const quakeClamp = getSurfaceClampRange(getTerrainMode() === "valley" || state.config.mapSource === "drawn");
+    const nonRegrow = smoothSrc.map((y, x) => Math.max(y, src[x]));
+    const relaxed = relaxSurfaceForMobility(nonRegrow, 5, quakeClamp.minY, quakeClamp.maxY);
+    state.surfaceY = relaxed.map((y, x) => clamp(Math.round(Math.max(y, src[x])), quakeClamp.minY, quakeClamp.maxY));
+
+    // Bake old crater voids into the reshaped surface so lost terrain never regrows after quake.
     clearCraterState();
     state.laserCuts = [];
     state.lastImpact.x = clamp(epicenterX, 0, state.worldW - 1);
@@ -5037,7 +6417,7 @@
       }
       const safeX = findNearestTankSafeX(tank.x);
       tank.x = clamp(safeX, TANK_W * 0.6, state.worldW - TANK_W * 0.6);
-      tank.y = supportY(tank.x) - TANK_H * 0.5 - 1;
+      tank.y = getTankSupportYAtX(tank.x) - TANK_H * 0.5 - 1;
       tank.vx = 0;
       tank.vy = 0;
       tank.tilt = getTankTiltTarget(tank);
@@ -5159,6 +6539,10 @@
     if (!tank || !tank.alive) {
       return;
     }
+    if (isNetplayClientMirror() && tank.controller === "human" && isLocalTankOwner(tank)) {
+      sendNetplayInput("fire");
+      return;
+    }
     if (state.quakePendingTime > 0) {
       setStatus("Ground is shaking...");
       return;
@@ -5187,6 +6571,14 @@
       shotType = "sniper";
       consumePowerUp(tank, "sniper");
     }
+    if (state.selectedShotType === "seeker" && isPowerupEnabled("seeker") && (tank.powerups.seeker || 0) > 0) {
+      shotType = "seeker";
+      consumePowerUp(tank, "seeker");
+    }
+    if (state.selectedShotType === "roller" && isPowerupEnabled("roller") && (tank.powerups.roller || 0) > 0) {
+      shotType = "roller";
+      consumePowerUp(tank, "roller");
+    }
     if (state.selectedShotType === "dig" && isPowerupEnabled("dig") && (tank.powerups.dig || 0) > 0) {
       shotType = "dig";
       consumePowerUp(tank, "dig");
@@ -5202,6 +6594,10 @@
     if (state.selectedShotType === "airstrike" && isPowerupEnabled("airstrike") && (tank.powerups.airstrike || 0) > 0) {
       shotType = "airstrike_double";
       consumePowerUp(tank, "airstrike");
+    }
+
+    if (isSimultaneousMode() && shotType === "roller") {
+      shotType = "normal";
     }
 
     if (isSimultaneousMode()) {
@@ -5438,6 +6834,177 @@
     });
   }
 
+  function getRollForwardDir(ownerId, incomingVx = 0) {
+    if (Math.abs(incomingVx) > 1) {
+      return Math.sign(incomingVx) || 1;
+    }
+    const owner = getTankById(ownerId);
+    if (owner) {
+      const muzzle = getMuzzleData(owner);
+      const dx = Math.cos(muzzle.rad);
+      if (Math.abs(dx) > 0.001) {
+        return Math.sign(dx);
+      }
+    }
+    return 1;
+  }
+
+  function beginRollingCharge(ownerId, impactX, impactY, incomingVx = 0) {
+    const x = clamp(impactX, 0, state.worldW - 1);
+    const groundY = supportY(x);
+    const dir = getRollForwardDir(ownerId, incomingVx);
+    const speed = clamp(Math.abs(incomingVx) * 0.42, ROLLER_MIN_SPEED, ROLLER_MAX_SPEED);
+    state.activeRoller = {
+      ownerId,
+      x,
+      y: groundY - ROLLER_RADIUS,
+      dir,
+      speed,
+      radius: ROLLER_RADIUS,
+      traveled: 0,
+      life: ROLLER_MAX_TIME
+    };
+    setStatus("Roller is rolling...");
+  }
+
+  function updateActiveRoller(dt) {
+    const roll = state.activeRoller;
+    if (!roll) {
+      return;
+    }
+
+    const slope = supportY(roll.x + 2) - supportY(roll.x - 2);
+    const alongSlope = slope * roll.dir;
+    roll.speed += clamp(alongSlope * ROLLER_ROLL_SLOPE_ACCEL * dt, -140 * dt, 140 * dt);
+    roll.speed -= ROLLER_ROLL_FRICTION * 10 * dt;
+    roll.speed = clamp(roll.speed, ROLLER_MIN_SPEED, ROLLER_MAX_SPEED);
+    const nextX = clamp(roll.x + roll.dir * roll.speed * dt, 0, state.worldW - 1);
+    roll.traveled += Math.abs(nextX - roll.x);
+    roll.x = nextX;
+    roll.y = supportY(roll.x) - roll.radius;
+    roll.life = Math.max(0, roll.life - dt);
+
+    const hitTank = tankAtPoint(roll.x, roll.y, roll.ownerId);
+    if (hitTank) {
+      state.activeRoller = null;
+      explode(roll.x, roll.y, EXPLOSION_RADIUS, EXPLOSION_DAMAGE);
+      return;
+    }
+
+    if (roll.life <= 0 || roll.traveled >= ROLLER_MAX_DISTANCE) {
+      state.activeRoller = null;
+      explode(roll.x, roll.y, EXPLOSION_RADIUS * 0.95, EXPLOSION_DAMAGE * 0.95);
+    }
+  }
+
+  function normalizeAngleRad(rad) {
+    let v = rad;
+    while (v > Math.PI) {
+      v -= TAU;
+    }
+    while (v < -Math.PI) {
+      v += TAU;
+    }
+    return v;
+  }
+
+  function findNearestEnemyTank(ownerId, x, y) {
+    const owner = getTankById(ownerId);
+    if (!owner) {
+      return null;
+    }
+    let best = null;
+    let bestDist2 = Number.POSITIVE_INFINITY;
+    for (const tank of state.tanks) {
+      if (!tank.alive || tank.team === owner.team) {
+        continue;
+      }
+      const tx = tank.x;
+      const ty = tank.y - TANK_H * 0.32;
+      const dx = tx - x;
+      const dy = ty - y;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < bestDist2) {
+        bestDist2 = d2;
+        best = tank;
+      }
+    }
+    return best;
+  }
+
+  function hasSeekerLineOfSight(ownerId, x0, y0, target) {
+    if (!target) {
+      return false;
+    }
+    const x1 = target.x;
+    const y1 = target.y - TANK_H * 0.32;
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    const dist = Math.hypot(dx, dy);
+    const steps = Math.max(1, Math.ceil(dist / 2.3));
+    for (let i = 1; i <= steps; i += 1) {
+      const t = i / steps;
+      const sx = x0 + dx * t;
+      const sy = y0 + dy * t;
+      if (sx < 0 || sx >= state.worldW || sy >= WORLD_H) {
+        return false;
+      }
+      if (sy >= 0 && isTerrainSolid(sx, sy)) {
+        return false;
+      }
+      const hitTank = tankAtPoint(sx, sy, ownerId);
+      if (hitTank && hitTank.id !== target.id) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function applySeekerGuidance(p, dt) {
+    if (!p || p.shotType !== "seeker") {
+      return;
+    }
+    const target = findNearestEnemyTank(p.ownerId, p.x, p.y);
+    if (!target) {
+      return;
+    }
+    if (!hasSeekerLineOfSight(p.ownerId, p.x, p.y, target)) {
+      return;
+    }
+    const tx = target.x;
+    const ty = target.y - TANK_H * 0.32;
+    const dx = tx - p.x;
+    const dy = ty - p.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 0.001 || dist > SEEKER_LOCK_RANGE) {
+      return;
+    }
+
+    const speed = Math.hypot(p.vx, p.vy);
+    if (speed < SEEKER_MIN_SPEED) {
+      return;
+    }
+
+    const toNx = dx / dist;
+    const toNy = dy / dist;
+    const velNx = p.vx / speed;
+    const velNy = p.vy / speed;
+    const facing = velNx * toNx + velNy * toNy;
+    if (facing < SEEKER_LOCK_DOT) {
+      return;
+    }
+
+    const currentAng = Math.atan2(p.vy, p.vx);
+    const desiredAng = Math.atan2(dy, dx);
+    const maxTurn = SEEKER_TURN_RATE * dt * (0.42 + 0.58 * facing) * SEEKER_GUIDANCE_GAIN;
+    const delta = clamp(normalizeAngleRad(desiredAng - currentAng), -maxTurn, maxTurn);
+    const nextAng = currentAng + delta;
+
+    const nextSpeed = clamp(speed + 55 * dt, SEEKER_MIN_SPEED * 0.82, MAX_POWER * 1.08);
+    p.vx = Math.cos(nextAng) * nextSpeed;
+    p.vy = Math.sin(nextAng) * nextSpeed;
+  }
+
   function updateSingleProjectile(p, dt, options = {}) {
     if (!p || !p.active) {
       return;
@@ -5456,6 +7023,9 @@
 
       if (p.shotType !== "sniper") {
         p.vy += GRAVITY * sdt;
+      }
+      if (p.shotType === "seeker") {
+        applySeekerGuidance(p, sdt);
       }
 
       p.x += p.vx * sdt;
@@ -5510,6 +7080,14 @@
           }
           return;
         }
+        if (p.shotType === "roller") {
+          if (hit.kind === "terrain") {
+            beginRollingCharge(p.ownerId, hit.x, hit.y, p.vx);
+            return;
+          }
+          explode(hit.x, hit.y, EXPLOSION_RADIUS, EXPLOSION_DAMAGE, { deferResolve });
+          return;
+        }
         explode(hit.x, hit.y, EXPLOSION_RADIUS, EXPLOSION_DAMAGE, { deferResolve });
         return;
       }
@@ -5535,7 +7113,7 @@
     const p = state.projectile;
     const volley = state.simultaneousProjectiles;
 
-    if ((!p || !p.active) && (!volley || volley.length === 0) && state.airstrikeDrops.length === 0) {
+    if ((!p || !p.active) && (!volley || volley.length === 0) && state.airstrikeDrops.length === 0 && !state.activeRoller) {
       return;
     }
 
@@ -5547,7 +7125,7 @@
       if (state.airstrikeDrops.length > 0) {
         updateAirstrikeDrops(dt);
       }
-      if (state.simultaneousProjectiles.length === 0 && state.airstrikeDrops.length === 0 && !state.activeFlare) {
+      if (state.simultaneousProjectiles.length === 0 && state.airstrikeDrops.length === 0 && !state.activeFlare && !state.activeRoller) {
         beginResolvePhase("Volley complete");
       }
       return;
@@ -5557,12 +7135,18 @@
       if (state.airstrikeDrops.length > 0) {
         updateAirstrikeDrops(dt);
       }
+      if (state.activeRoller) {
+        updateActiveRoller(dt);
+      }
       return;
     }
 
     updateSingleProjectile(p, dt, { deferResolve: false, simultaneous: false });
     if (state.airstrikeDrops.length > 0) {
       updateAirstrikeDrops(dt);
+    }
+    if (state.activeRoller) {
+      updateActiveRoller(dt);
     }
   }
 
@@ -5601,7 +7185,12 @@
         continue;
       }
 
-      tank.vy += GRAVITY * dt;
+      const wasGrounded = hasGroundUnderTank(tank);
+      if (!wasGrounded || tank.vy < -18) {
+        tank.vy += GRAVITY * dt;
+      } else if (tank.vy > 0) {
+        tank.vy = 0;
+      }
       tank.x += tank.vx * dt;
       tank.y += tank.vy * dt;
       tank.vx *= 0.985;
@@ -5609,10 +7198,14 @@
       resolveTankTerrain(tank);
 
       const grounded = hasGroundUnderTank(tank);
-      if (grounded) {
-        const gy = supportY(tank.x) - TANK_H * 0.5 - 1;
+      const collidingAfterResolve = tankCollidesTerrain(tank);
+      if (grounded && !collidingAfterResolve) {
+        const gy = getTankSupportYAtX(tank.x) - TANK_H * 0.5 - 1;
         tank.y = gy;
         if (tank.vy > 0) {
+          tank.vy = 0;
+        }
+        if (Math.abs(tank.vy) < 18) {
           tank.vy = 0;
         }
       }
@@ -5802,8 +7395,8 @@
     return best;
   }
 
-  function activatePowerUp(type) {
-    if (!isPlayerTurn()) {
+  function activatePowerUp(type, force = false) {
+    if (!force && !isPlayerTurn()) {
       return false;
     }
     if (!isPowerupEnabled(type)) {
@@ -5813,6 +7406,17 @@
     const tank = getActiveTank();
     if (!tank || !tank.powerups) {
       return false;
+    }
+    if (!force && isNetplayClientMirror()) {
+      sendNetplayInput("weapon", { id: type });
+      if (type === "teleport") {
+        state.abilityMode = "teleport_target";
+      } else if (type === "sniper" || type === "seeker" || type === "roller" || type === "dig" || type === "build" || type === "airstrike" || type === "laser") {
+        state.selectedShotType = type;
+      } else if (type === "earthquake") {
+        state.selectedShotType = "normal";
+      }
+      return true;
     }
     if ((tank.powerups[type] || 0) <= 0) {
       const displayName = type === "sniper" ? "POWER SHOT" : type.toUpperCase();
@@ -5824,6 +7428,20 @@
       state.selectedShotType = state.selectedShotType === "sniper" ? "normal" : "sniper";
       clearAbilityMode();
       setStatus(state.selectedShotType === "sniper" ? "Power shot ready" : "Normal shot selected");
+      return true;
+    }
+
+    if (type === "seeker") {
+      state.selectedShotType = state.selectedShotType === "seeker" ? "normal" : "seeker";
+      clearAbilityMode();
+      setStatus(state.selectedShotType === "seeker" ? "Seeker shot ready" : "Normal shot selected");
+      return true;
+    }
+
+    if (type === "roller") {
+      state.selectedShotType = state.selectedShotType === "roller" ? "normal" : "roller";
+      clearAbilityMode();
+      setStatus(state.selectedShotType === "roller" ? "Roller shot ready" : "Normal shot selected");
       return true;
     }
 
@@ -5890,7 +7508,7 @@
       return false;
     }
     tank.x = clamp(worldX, TANK_W * 0.6, state.worldW - TANK_W * 0.6);
-    tank.y = supportY(tank.x) - TANK_H * 0.5 - 1;
+    tank.y = getTankSupportYAtX(tank.x) - TANK_H * 0.5 - 1;
     tank.vx = 0;
     tank.vy = 0;
     resolveTankTerrain(tank);
@@ -5899,10 +7517,16 @@
     return true;
   }
 
-  function tryTeleportTo(worldX) {
+  function tryTeleportTo(worldX, force = false) {
     const tank = getActiveTank();
-    if (!tank || !isPlayerTurn()) {
+    if (!tank || (!force && !isPlayerTurn())) {
       return false;
+    }
+    if (!force && isNetplayClientMirror()) {
+      sendNetplayInput("teleport", { x: worldX });
+      clearAbilityMode();
+      setStatus("Teleport requested");
+      return true;
     }
     if (!consumePowerUp(tank, "teleport")) {
       return false;
@@ -5921,6 +7545,7 @@
     state.settleTimer = 0;
     state.resolveTimeout = 0;
     state.activeFlare = null;
+    state.activeRoller = null;
     if (statusText) {
       setStatus(statusText);
     }
@@ -6277,6 +7902,10 @@
         value = 154;
       } else if (p.type === "sniper") {
         value = 164;
+      } else if (p.type === "seeker") {
+        value = 176;
+      } else if (p.type === "roller") {
+        value = 168;
       } else if (p.type === "teleport") {
         value = 136;
       } else if (p.type === "earthquake") {
@@ -6325,6 +7954,29 @@
           shotType: "sniper",
           angle,
           power: clamp(Math.max(DEFAULT_SHOT_POWER, dist * 1.25), MIN_POWER, MAX_POWER)
+        };
+      }
+    }
+
+    if (isPowerupEnabled("seeker") && (aiTank.powerups.seeker || 0) > 0) {
+      const hard = state.config.aiDifficulty === "hard";
+      const canUseSeeker = shotPlan.score > (hard ? 12 : 20) || Math.abs(target.x - aiTank.x) > 250;
+      if (canUseSeeker && Math.random() < (aiPreset.seekerChance || 0.4)) {
+        return {
+          shotType: "seeker",
+          angle: shotPlan.angle,
+          power: clamp(shotPlan.power * 0.9, MIN_POWER, MAX_POWER)
+        };
+      }
+    }
+
+    if (isPowerupEnabled("roller") && (aiTank.powerups.roller || 0) > 0) {
+      const roughShot = shotPlan.score > (state.config.aiDifficulty === "hard" ? 14 : 24);
+      if (roughShot && Math.random() < (aiPreset.seekerChance || 0.35) * 0.75) {
+        return {
+          shotType: "roller",
+          angle: shotPlan.angle,
+          power: clamp(shotPlan.power * 0.84, MIN_POWER, MAX_POWER)
         };
       }
     }
@@ -6563,6 +8215,8 @@
       targetX = sum / state.simultaneousProjectiles.length;
     } else if (state.phase === "projectile" && state.activeFlare) {
       targetX = state.activeFlare.x;
+    } else if (state.phase === "projectile" && state.activeRoller) {
+      targetX = state.activeRoller.x;
     } else if (state.phase === "projectile" && state.airstrikeDrops.length > 0) {
       targetX = state.airstrikeDrops[0].x;
     } else if (state.phase === "resolving") {
@@ -7304,11 +8958,22 @@
     }
 
     for (const p of liveProjectiles) {
-      ctx.fillStyle = p.shotType === "airstrike_double" ? "#6b7280" : "#808080";
+      ctx.fillStyle = p.shotType === "airstrike_double" ? "#6b7280" : p.shotType === "seeker" ? "#5a5a5a" : "#808080";
       ctx.strokeStyle = "#000000";
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.arc(p.x - state.cameraX, p.y, p.radius + 1.2, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    if (state.activeRoller) {
+      const roll = state.activeRoller;
+      ctx.fillStyle = "#5a5a5a";
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.arc(roll.x - state.cameraX, roll.y, roll.radius + 1.1, 0, TAU);
       ctx.fill();
       ctx.stroke();
     }
@@ -7592,6 +9257,8 @@
     }
 
     const sniperCount = active?.powerups?.sniper || 0;
+    const seekerCount = active?.powerups?.seeker || 0;
+    const rollerCount = active?.powerups?.roller || 0;
     const digCount = active?.powerups?.dig || 0;
     const buildCount = active?.powerups?.build || 0;
     const teleCount = active?.powerups?.teleport || 0;
@@ -7602,6 +9269,10 @@
     const enabledPowers = new Set(getEnabledPowerupTypes());
 
     if (state.selectedShotType === "sniper" && !enabledPowers.has("sniper")) {
+      state.selectedShotType = "normal";
+    } else if (state.selectedShotType === "seeker" && !enabledPowers.has("seeker")) {
+      state.selectedShotType = "normal";
+    } else if (state.selectedShotType === "roller" && !enabledPowers.has("roller")) {
       state.selectedShotType = "normal";
     } else if (state.selectedShotType === "dig" && !enabledPowers.has("dig")) {
       state.selectedShotType = "normal";
@@ -7618,6 +9289,12 @@
 
     if (ui.sniperCount) {
       ui.sniperCount.textContent = `${sniperCount}`;
+    }
+    if (ui.seekerCount) {
+      ui.seekerCount.textContent = `${seekerCount}`;
+    }
+    if (ui.rollerCount) {
+      ui.rollerCount.textContent = `${rollerCount}`;
     }
     if (ui.digCount) {
       ui.digCount.textContent = `${digCount}`;
@@ -7642,6 +9319,16 @@
       ui.sniperBtn.style.display = enabledPowers.has("sniper") ? "" : "none";
       ui.sniperBtn.disabled = isDrawPhase || !canControl || !enabledPowers.has("sniper") || (!hasUnlimitedPowers && sniperCount <= 0);
       ui.sniperBtn.classList.toggle("active", state.selectedShotType === "sniper");
+    }
+    if (ui.seekerBtn) {
+      ui.seekerBtn.style.display = enabledPowers.has("seeker") ? "" : "none";
+      ui.seekerBtn.disabled = isDrawPhase || !canControl || !enabledPowers.has("seeker") || (!hasUnlimitedPowers && seekerCount <= 0);
+      ui.seekerBtn.classList.toggle("active", state.selectedShotType === "seeker");
+    }
+    if (ui.rollerBtn) {
+      ui.rollerBtn.style.display = enabledPowers.has("roller") ? "" : "none";
+      ui.rollerBtn.disabled = isDrawPhase || !canControl || !enabledPowers.has("roller") || (!hasUnlimitedPowers && rollerCount <= 0);
+      ui.rollerBtn.classList.toggle("active", state.selectedShotType === "roller");
     }
     if (ui.digBtn) {
       ui.digBtn.style.display = enabledPowers.has("dig") ? "" : "none";
@@ -7683,44 +9370,55 @@
     const dt = clamp((ts - lastTs) / 1000, 0, 0.033);
     lastTs = ts;
     ctx.imageSmoothingEnabled = false;
+    const netMirror = isNetplayClientMirror();
 
-    if (state.phase === "menu") {
-      updateMenuDemo(dt);
-    } else if (state.phase === "aim") {
-      updateAimInput(dt);
-      updateTankPhysics(dt);
-    } else if (state.phase === "ai") {
-      updateAi(dt);
-      updateTankPhysics(dt);
-    } else if (state.phase === "projectile") {
-      updateProjectile(dt);
-    } else if (state.phase === "resolving") {
-      updateTankPhysics(dt);
-      updateParticles(dt);
-      state.resolveTimeout += dt;
+    if (netMirror) {
+      if (state.phase === "aim") {
+        updateAimInput(dt);
+      }
+    } else {
+      if (state.phase === "menu") {
+        updateMenuDemo(dt);
+      } else if (state.phase === "aim") {
+        updateAimInput(dt);
+        updateTankPhysics(dt);
+      } else if (state.phase === "ai") {
+        updateAi(dt);
+        updateTankPhysics(dt);
+      } else if (state.phase === "projectile") {
+        updateProjectile(dt);
+      } else if (state.phase === "resolving") {
+        updateTankPhysics(dt);
+        updateParticles(dt);
+        state.resolveTimeout += dt;
 
-      if (tanksAreStill() && state.particles.length === 0 && state.bursts.length === 0) {
-        state.settleTimer += dt;
-      } else {
-        state.settleTimer = 0;
+        if (tanksAreStill() && state.particles.length === 0 && state.bursts.length === 0) {
+          state.settleTimer += dt;
+        } else {
+          state.settleTimer = 0;
+        }
+
+        if (state.settleTimer > 0.5 || state.resolveTimeout > 2.4) {
+          advanceTurn();
+        }
+      } else if (state.phase === "gameover") {
+        updateParticles(dt);
+        updateTankPhysics(dt);
+      } else if (state.phase === "paused") {
+        // Freeze gameplay while paused.
       }
 
-      if (state.settleTimer > 0.5 || state.resolveTimeout > 2.4) {
-        advanceTurn();
+      if (state.phase !== "menu" && state.phase !== "paused" && state.phase !== "resolving" && state.phase !== "gameover") {
+        updateParticles(dt);
       }
-    } else if (state.phase === "gameover") {
-      updateParticles(dt);
-      updateTankPhysics(dt);
-    } else if (state.phase === "paused") {
-      // Freeze gameplay while paused.
+
+      if (state.phase !== "menu" && state.phase !== "paused") {
+        updateQuakePending(dt);
+      }
     }
 
-    if (state.phase !== "menu" && state.phase !== "paused" && state.phase !== "resolving" && state.phase !== "gameover") {
-      updateParticles(dt);
-    }
-
-    if (state.phase !== "menu" && state.phase !== "paused") {
-      updateQuakePending(dt);
+    if (isNetplayEnabled() && isNetplayHost()) {
+      broadcastNetplaySnapshot(false, dt);
     }
 
     updateCamera(dt);
@@ -7974,6 +9672,12 @@
       }
 
       tank.angle = clampAimDeg(Number(ui.angleSlider.value));
+      if (isNetplayClientMirror()) {
+        sendNetplayInput("aim", {
+          angle: tank.angle,
+          power: tank.power
+        });
+      }
       syncControlsFromActive();
     });
   }
@@ -7990,6 +9694,12 @@
       }
 
       tank.power = clamp(Number(ui.powerSlider.value), MIN_POWER, MAX_POWER);
+      if (isNetplayClientMirror()) {
+        sendNetplayInput("aim", {
+          angle: tank.angle,
+          power: tank.power
+        });
+      }
       syncControlsFromActive();
     });
   }
@@ -8324,6 +10034,8 @@
   };
 
   bindPowerupPickerButton(ui.sniperBtn, "sniper");
+  bindPowerupPickerButton(ui.seekerBtn, "seeker");
+  bindPowerupPickerButton(ui.rollerBtn, "roller");
   bindPowerupPickerButton(ui.digBtn, "dig");
   bindPowerupPickerButton(ui.buildBtn, "build");
   bindPowerupPickerButton(ui.teleportBtn, "teleport");
@@ -8360,6 +10072,29 @@
   if (ui.openCustomBtn) {
     ui.openCustomBtn.addEventListener("click", () => {
       setMenuView("custom");
+    });
+  }
+
+  if (ui.createRoomBtn) {
+    ui.createRoomBtn.addEventListener("click", () => {
+      disconnectMultiplayer(false);
+      setRoomDisplay("", "");
+      clearRoomQr();
+      state.multiplayer.wantsReconnect = true;
+      openPcSocket("create");
+    });
+  }
+
+  if (ui.copyRoomLinkBtn) {
+    ui.copyRoomLinkBtn.addEventListener("click", () => {
+      copyRoomJoinLink();
+    });
+  }
+
+  if (ui.disconnectRoomBtn) {
+    ui.disconnectRoomBtn.addEventListener("click", () => {
+      disconnectMultiplayer(false);
+      setMultiplayerDisconnectedUi();
     });
   }
 
