@@ -272,6 +272,27 @@
       pointer-events: none;
     }
 
+    .gameover-restart-btn {
+      position: fixed;
+      left: 50%;
+      top: clamp(182px, 30vh, 288px);
+      transform: translateX(-50%);
+      z-index: 22;
+      min-width: 178px;
+      min-height: 54px;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 18px;
+      letter-spacing: 0.06em;
+      background: rgba(255, 255, 255, 0.96);
+      border: 3px solid #000000;
+      box-shadow: 0 3px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    .gameover-restart-btn.hidden {
+      display: none;
+    }
+
     .bottom-ui {
       position: fixed;
       left: 10px;
@@ -1276,6 +1297,13 @@
         min-width: 42px !important;
         min-height: 64px !important;
       }
+
+      .gameover-restart-btn {
+        min-width: 192px;
+        min-height: 60px;
+        padding: 14px 20px;
+        font-size: 20px;
+      }
     }
 
     @media (pointer: coarse) and (orientation: landscape) and (max-height: 620px) {
@@ -1579,6 +1607,7 @@
   </section>
 
   <div class="turn-counter" id="turn-counter">TURN 1</div>
+  <button id="gameover-restart-btn" class="gameover-restart-btn hidden" type="button">RESTART ROUND</button>
 
   <div class="bottom-ui" id="bottom-ui">
     <section class="control-panel">
@@ -1621,6 +1650,7 @@
 
   const ui = {
     turnCounter: document.getElementById("turn-counter"),
+    gameoverRestartBtn: document.getElementById("gameover-restart-btn"),
     angleSlider: document.getElementById("angle-slider"),
     powerSlider: document.getElementById("power-slider"),
     angleValue: document.getElementById("angle-value"),
@@ -1792,6 +1822,7 @@
   const IMPACT_CRATER_MAX_DEPTH = 64;
   const TERRAIN_SURFACE_MIN_FRAC = 0.1;
   const TERRAIN_SURFACE_MAX_FRAC = 0.73;
+  const DRAW_SURFACE_MAX_FRAC = 0.88;
   const LASER_DAMAGE = 58;
   const LASER_KNOCKBACK = 130;
   const LASER_TUNNEL_RADIUS = 6;
@@ -1878,6 +1909,8 @@
   };
 
   const POWERUP_TYPES = ["sniper", "dig", "build", "teleport", "earthquake", "airstrike", "laser", "health"];
+  const POWERUP_SPAWN_MIN_Y = 56;
+  const POWERUP_SPAWN_MIN_CLEARANCE = 28;
   const POWERUP_TYPE_LABELS = {
     sniper: "POWER SHOT",
     dig: "DIG",
@@ -1913,6 +1946,7 @@
     settings: {
       fxIntensity: 0.7,
       aimTextScale: 2,
+      aimTextScaleUserOverride: false,
       devMode: false,
       hudLayout: "classic"
     },
@@ -2312,12 +2346,15 @@
     }
   }
 
-  function setAimTextScale(value) {
+  function setAimTextScale(value, fromUser = false) {
     const allowed = [2, 2.5, 3];
     const numeric = Number(value);
     const fallback = state.settings.aimTextScale || 2;
     const next = allowed.includes(numeric) ? numeric : (allowed.includes(fallback) ? fallback : 2);
     state.settings.aimTextScale = next;
+    if (fromUser) {
+      state.settings.aimTextScaleUserOverride = true;
+    }
     if (ui.aimTextScaleSelect) {
       ui.aimTextScaleSelect.value = `${next}`;
     }
@@ -2523,7 +2560,7 @@
     return lerp(arr[x0], arr[x1], t);
   }
 
-  function relaxSurfaceForMobility(surface, passes = 2) {
+  function relaxSurfaceForMobility(surface, passes = 2, minSurfaceYOverride = null, maxSurfaceYOverride = null) {
     if (!surface || surface.length < 5) {
       return surface;
     }
@@ -2582,9 +2619,36 @@
       arr = next;
     }
 
-    const minSurfaceY = Math.round(WORLD_H * TERRAIN_SURFACE_MIN_FRAC);
-    const maxSurfaceY = Math.round(WORLD_H * TERRAIN_SURFACE_MAX_FRAC);
+    const minSurfaceY = Number.isFinite(minSurfaceYOverride) ? minSurfaceYOverride : Math.round(WORLD_H * TERRAIN_SURFACE_MIN_FRAC);
+    const maxSurfaceY = Number.isFinite(maxSurfaceYOverride) ? maxSurfaceYOverride : Math.round(WORLD_H * TERRAIN_SURFACE_MAX_FRAC);
     return arr.map((yy) => clamp(Math.round(yy), minSurfaceY, maxSurfaceY));
+  }
+
+  function getSurfaceClampRange(allowDeepTerrain = false) {
+    if (allowDeepTerrain) {
+      return { minY: 14, maxY: WORLD_H - 14 };
+    }
+    return {
+      minY: Math.round(WORLD_H * TERRAIN_SURFACE_MIN_FRAC),
+      maxY: Math.round(WORLD_H * TERRAIN_SURFACE_MAX_FRAC)
+    };
+  }
+
+  function shiftSurfaceDownIfTooHigh(surface, minPeakY, maxShiftPx, clampMaxY) {
+    if (!surface || surface.length < 2) {
+      return surface;
+    }
+    let peakY = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < surface.length; i += 1) {
+      if (surface[i] < peakY) {
+        peakY = surface[i];
+      }
+    }
+    if (!Number.isFinite(peakY) || peakY >= minPeakY) {
+      return surface;
+    }
+    const shift = clamp(minPeakY - peakY, 0, maxShiftPx);
+    return surface.map((yy) => Math.min(yy + shift, clampMaxY));
   }
 
   function getPitDepthAtX(surface, x, shoulder = 26) {
@@ -3018,6 +3082,10 @@
     state.config = normalizeTeamConfig(getMenuConfig());
     const preset = MAP_PRESETS[state.config.mapSize] || MAP_PRESETS[DEFAULT_MAP_SIZE];
     state.worldW = preset.width;
+    if (!state.settings.aimTextScaleUserOverride) {
+      const autoScale = state.config.mapSize === "large" ? 3 : 2;
+      setAimTextScale(autoScale);
+    }
   }
 
   function getMatchTeamSpecs() {
@@ -3174,6 +3242,48 @@
     return enabled[Math.floor(Math.random() * enabled.length)];
   }
 
+  function getPowerupSpawnOffsetRange() {
+    const mapSize = MAP_PRESETS[state.config.mapSize] ? state.config.mapSize : DEFAULT_MAP_SIZE;
+    if (mapSize === "small") {
+      return { minOffset: 94, maxOffset: 154 };
+    }
+    if (mapSize === "large") {
+      return { minOffset: 118, maxOffset: 194 };
+    }
+    return { minOffset: 106, maxOffset: 172 };
+  }
+
+  function isPowerupSpawnClear(x, y, r) {
+    if (x - r < 0 || x + r >= state.worldW || y - r < 0 || y + r >= WORLD_H) {
+      return false;
+    }
+
+    const samples = [
+      [0, 0],
+      [r * 0.7, 0],
+      [-r * 0.7, 0],
+      [0, r * 0.7],
+      [0, -r * 0.7],
+      [r * 0.5, r * 0.5],
+      [-r * 0.5, r * 0.5],
+      [r * 0.5, -r * 0.5],
+      [-r * 0.5, -r * 0.5]
+    ];
+    for (const [dx, dy] of samples) {
+      if (isTerrainSolid(x + dx, y + dy)) {
+        return false;
+      }
+    }
+
+    for (let sx = -r; sx <= r; sx += 2) {
+      const groundY = supportY(x + sx);
+      if (y + r >= groundY - 2) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   function spawnPowerUp(type = null) {
     if (state.powerUps.length >= MAX_POWERUPS_ON_MAP) {
       return false;
@@ -3184,9 +3294,16 @@
       return false;
     }
     const r = 11;
-    for (let attempt = 0; attempt < 20; attempt += 1) {
+    const { minOffset, maxOffset } = getPowerupSpawnOffsetRange();
+    for (let attempt = 0; attempt < 36; attempt += 1) {
       const x = rand(state.worldW * 0.08, state.worldW * 0.92);
-      const y = rand(90, Math.min(WORLD_H * 0.34, 250));
+      const groundY = supportY(x);
+      const offset = rand(minOffset, maxOffset);
+      const maxAllowedY = groundY - (r + POWERUP_SPAWN_MIN_CLEARANCE);
+      if (maxAllowedY <= POWERUP_SPAWN_MIN_Y) {
+        continue;
+      }
+      const y = clamp(groundY - offset, POWERUP_SPAWN_MIN_Y, maxAllowedY);
       let valid = true;
       for (const p of state.powerUps) {
         if (Math.hypot(p.x - x, p.y - y) < p.r + r + 16) {
@@ -3195,6 +3312,9 @@
         }
       }
       if (!valid) {
+        continue;
+      }
+      if (!isPowerupSpawnClear(x, y, r)) {
         continue;
       }
       state.powerUps.push({ id: state.nextPowerUpId++, type: kind, x, y, r });
@@ -3678,8 +3798,7 @@
   }
 
   function clampDrawY(y) {
-    const gameplayBottom = getGameplayBottomY();
-    return clamp(y, 14, gameplayBottom - 14);
+    return clamp(y, 14, Math.round(WORLD_H * DRAW_SURFACE_MAX_FRAC));
   }
 
   function resetDrawMapStroke() {
@@ -3760,7 +3879,8 @@
       }
     }
 
-    return relaxSurfaceForMobility(surface.map((yy) => clamp(Math.round(yy), 0, WORLD_H - 1)), 2);
+    const drawClamp = getSurfaceClampRange(true);
+    return relaxSurfaceForMobility(surface.map((yy) => clamp(Math.round(yy), 0, WORLD_H - 1)), 2, drawClamp.minY, drawClamp.maxY);
   }
 
   function tryFinalizeDrawMap() {
@@ -3828,15 +3948,68 @@
     launchMatchSession();
   }
 
+  function generateValleyProfile(worldW, preset) {
+    const heights = new Array(worldW);
+    const center = (worldW - 1) * rand(0.44, 0.56);
+    const half = Math.max(1, worldW * rand(0.48, 0.58));
+    const leftShoulderX = center - half * rand(0.72, 0.9);
+    const rightShoulderX = center + half * rand(0.72, 0.9);
+    const shoulderSigma = Math.max(56, worldW * rand(0.075, 0.125));
+    const minY = WORLD_H * 0.14;
+    const maxY = WORLD_H * 0.78;
+    const edgeY = clamp(WORLD_H * rand(0.19, 0.27) + (preset.yBias || 0) * 0.4, minY, WORLD_H * 0.44);
+    const centerY = clamp(WORLD_H * rand(0.72, 0.81) + (preset.yBias || 0) * 0.36, WORLD_H * 0.6, maxY);
+    const shoulderLift = 92 * preset.amp * rand(0.7, 1.25);
+    const bowlPower = rand(0.48, 0.74);
+    const centerRadius = Math.max(48, worldW * rand(0.07, 0.13));
+    const phaseA = rand(0, TAU);
+    const phaseB = rand(0, TAU);
+    const phaseC = rand(0, TAU);
+    const roughA = rand(0.0048, 0.0074);
+    const roughB = rand(0.012, 0.02);
+    const roughC = rand(0.028, 0.056);
+
+    for (let x = 0; x < worldW; x += 1) {
+      const t = Math.min(1, Math.abs(x - center) / half);
+      const bowl = lerp(centerY, edgeY, Math.pow(t, bowlPower));
+      const leftShoulder = Math.exp(-((x - leftShoulderX) ** 2) / (2 * shoulderSigma * shoulderSigma));
+      const rightShoulder = Math.exp(-((x - rightShoulderX) ** 2) / (2 * shoulderSigma * shoulderSigma));
+      const shoulders = (leftShoulder + rightShoulder) * shoulderLift;
+      const centerDetail = 1 - Math.min(1, Math.abs(x - center) / centerRadius);
+      const centerRound = centerY + Math.sin((x - center) / Math.max(1, centerRadius) * Math.PI * 0.5) * 2.2;
+      const rough =
+        Math.sin(x * roughA + phaseA) * (18 * preset.amp) +
+        Math.sin(x * roughB + phaseB) * (8 * preset.amp) +
+        Math.sin(x * roughC + phaseC) * 3.5 +
+        Math.sin(x * 0.051 + 0.9) * (7.2 * centerDetail);
+      const shaped = bowl - shoulders + rough;
+      heights[x] = clamp(lerp(shaped, centerRound, Math.max(0, centerDetail) * 0.42), minY, maxY);
+    }
+
+    const passes = Math.round(rand(2, 4));
+    for (let pass = 0; pass < passes; pass += 1) {
+      for (let x = 1; x < worldW - 1; x += 1) {
+        heights[x] = (heights[x - 1] + heights[x] * 2 + heights[x + 1]) * 0.25;
+      }
+    }
+
+    return heights;
+  }
+
   function generateTerrain(teamSpecs) {
     const worldW = state.worldW;
     const preset = MAP_PRESETS[state.config.mapSize] || MAP_PRESETS[DEFAULT_MAP_SIZE];
     const useDrawnMap = state.config.mapSource === "drawn" && Array.isArray(state.customSurfaceY) && state.customSurfaceY.length === worldW;
-    const style = TERRAIN_STYLE[getTerrainMode()] || TERRAIN_STYLE.hilly;
+    const terrainMode = getTerrainMode();
+    const style = TERRAIN_STYLE[terrainMode] || TERRAIN_STYLE.hilly;
     let heights;
+    let valleyGuide = null;
 
     if (useDrawnMap) {
       heights = state.customSurfaceY.slice();
+    } else if (terrainMode === "valley") {
+      valleyGuide = generateValleyProfile(worldW, preset);
+      heights = valleyGuide.slice();
     } else {
       heights = new Array(worldW);
       let h = WORLD_H * style.base;
@@ -3858,32 +4031,6 @@
         const maxY = WORLD_H * 0.74;
         for (let x = 0; x < worldW; x += 1) {
           heights[x] = clamp(heights[x] + preset.yBias, minY, maxY);
-        }
-      }
-
-      if (getTerrainMode() === "valley") {
-        const center = (worldW - 1) * 0.5;
-        const half = Math.max(1, worldW * 0.5);
-        const leftPeakX = worldW * 0.14;
-        const rightPeakX = worldW * 0.86;
-        const peakSigma = Math.max(50, worldW * 0.095);
-        const centerY = WORLD_H * 0.72;
-        const edgeY = WORLD_H * 0.27;
-        const rimAmplitude = 96 * preset.amp;
-        for (let x = 0; x < worldW; x += 1) {
-          const t = Math.min(1, Math.abs(x - center) / half);
-          const bowlBase = lerp(centerY, edgeY, Math.pow(t, 1.22));
-          const leftPeak = Math.exp(-((x - leftPeakX) ** 2) / (2 * peakSigma * peakSigma));
-          const rightPeak = Math.exp(-((x - rightPeakX) ** 2) / (2 * peakSigma * peakSigma));
-          const rimLift = (leftPeak + rightPeak) * rimAmplitude;
-          const rough = Math.sin(x * 0.0102 + 0.4) * 8 + Math.sin(x * 0.024 + 1.1) * 4;
-          heights[x] = bowlBase - rimLift + rough;
-        }
-
-        for (let pass = 0; pass < 8; pass += 1) {
-          for (let x = 1; x < worldW - 1; x += 1) {
-            heights[x] = (heights[x - 1] + heights[x] * 2 + heights[x + 1]) * 0.25;
-          }
         }
       }
     }
@@ -3908,44 +4055,48 @@
 
     if (!useDrawnMap) {
       for (const spawnX of allSpawns) {
-        const plateauY = WORLD_H * preset.plateau;
-        const radius = preset.plateauRadius;
+        const xi = clamp(Math.round(spawnX), 0, worldW - 1);
+        const plateauY = terrainMode === "valley" ? heights[xi] : WORLD_H * preset.plateau;
+        const radius = terrainMode === "valley" ? Math.max(42, preset.plateauRadius * 0.48) : preset.plateauRadius;
+        const blendScale = terrainMode === "valley" ? 0.33 : 0.76;
         for (let x = Math.floor(spawnX - radius); x <= spawnX + radius; x += 1) {
           if (x > 0 && x < worldW) {
             const t = Math.abs(x - spawnX) / radius;
             const influence = 1 - t * t;
-            heights[x] = lerp(heights[x], plateauY, clamp(influence * 0.76, 0, 0.76));
+            heights[x] = lerp(heights[x], plateauY, clamp(influence * blendScale, 0, blendScale));
           }
         }
       }
 
-      for (let pass = 0; pass < 8; pass += 1) {
+      if (terrainMode === "valley") {
+        const guide = valleyGuide || generateValleyProfile(worldW, preset);
+        for (let x = 0; x < worldW; x += 1) {
+          heights[x] = lerp(heights[x], guide[x], 0.42);
+        }
+      }
+
+      const smoothPasses = terrainMode === "valley" ? 2 : 8;
+      for (let pass = 0; pass < smoothPasses; pass += 1) {
         for (let x = 1; x < worldW - 1; x += 1) {
           heights[x] = (heights[x - 1] + heights[x] * 2 + heights[x + 1]) * 0.25;
         }
       }
-
-      if (getTerrainMode() === "valley") {
-        const center = (worldW - 1) * 0.5;
-        const half = Math.max(1, worldW * 0.5);
-        const leftPeakX = worldW * 0.14;
-        const rightPeakX = worldW * 0.86;
-        const peakSigma = Math.max(50, worldW * 0.095);
-        const centerY = WORLD_H * 0.72;
-        const edgeY = WORLD_H * 0.27;
-        const rimAmplitude = 104 * preset.amp;
-        for (let x = 0; x < worldW; x += 1) {
-          const t = Math.min(1, Math.abs(x - center) / half);
-          const bowlBase = lerp(centerY, edgeY, Math.pow(t, 1.22));
-          const leftPeak = Math.exp(-((x - leftPeakX) ** 2) / (2 * peakSigma * peakSigma));
-          const rightPeak = Math.exp(-((x - rightPeakX) ** 2) / (2 * peakSigma * peakSigma));
-          const target = bowlBase - (leftPeak + rightPeak) * rimAmplitude;
-          heights[x] = lerp(heights[x], target, 0.88);
-        }
-      }
     }
 
-    state.surfaceY = relaxSurfaceForMobility(heights.map((yy) => clamp(Math.floor(yy), 0, WORLD_H - 1)), useDrawnMap ? 1 : 3);
+    const clampRange = getSurfaceClampRange(useDrawnMap || terrainMode === "valley");
+    const relaxPasses = useDrawnMap ? 1 : (terrainMode === "valley" ? 2 : 3);
+    let nextSurface = relaxSurfaceForMobility(
+      heights.map((yy) => clamp(Math.floor(yy), 0, WORLD_H - 1)),
+      relaxPasses,
+      clampRange.minY,
+      clampRange.maxY
+    );
+    if (!useDrawnMap) {
+      const desiredPeakY = terrainMode === "mountain" ? Math.round(WORLD_H * 0.2) : Math.round(WORLD_H * 0.22);
+      const maxShift = Math.round(WORLD_H * 0.2);
+      nextSurface = shiftSurfaceDownIfTooHigh(nextSurface, desiredPeakY, maxShift, clampRange.maxY);
+    }
+    state.surfaceY = nextSurface;
     clearCraterState();
 
     return spawnByTeam;
@@ -4871,7 +5022,8 @@
       smoothSrc = next;
     }
 
-    state.surfaceY = relaxSurfaceForMobility(smoothSrc, 5);
+    const quakeClamp = getSurfaceClampRange(getTerrainMode() === "valley" || state.config.mapSource === "drawn");
+    state.surfaceY = relaxSurfaceForMobility(smoothSrc, 5, quakeClamp.minY, quakeClamp.maxY);
 
     // Quake packs loose earth into voids: clear all crater masks in-place.
     clearCraterState();
@@ -5239,10 +5391,9 @@
         state.surfaceY[x] = (state.surfaceY[x - 1] + state.surfaceY[x] * 2 + state.surfaceY[x + 1]) * 0.25;
       }
     }
-    const minSurfaceY = Math.round(WORLD_H * TERRAIN_SURFACE_MIN_FRAC);
-    const maxSurfaceY = Math.round(WORLD_H * TERRAIN_SURFACE_MAX_FRAC);
-    const builtSurface = state.surfaceY.map((yy) => clamp(Math.round(yy), minSurfaceY, maxSurfaceY));
-    state.surfaceY = relaxSurfaceForMobility(builtSurface, 2);
+    const buildClamp = getSurfaceClampRange(getTerrainMode() === "valley" || state.config.mapSource === "drawn");
+    const builtSurface = state.surfaceY.map((yy) => clamp(Math.round(yy), buildClamp.minY, buildClamp.maxY));
+    state.surfaceY = relaxSurfaceForMobility(builtSurface, 2, buildClamp.minY, buildClamp.maxY);
 
     // Clear crater void masks around the build impact so new terrain merges as solid mass.
     clearVoidCircle(ix, iy + radius * 0.15, radius * 1.08);
@@ -6635,6 +6786,9 @@
     if (!state.surfaceY || state.surfaceY.length !== state.worldW) {
       return;
     }
+    if (state.phase === "draw_map" && !state.drawMap.ready) {
+      return;
+    }
 
     rebuildCraterLayers();
 
@@ -6997,11 +7151,57 @@
       const fontSize = Math.round((mobileAimReadout ? 9 : 6) * scale);
       const bubbleH = Math.round((mobileAimReadout ? 16 : 11) * scale);
       const bubblePad = Math.round((mobileAimReadout ? 12 : 7) * scale);
-      const sideOffset = mobileAimReadout ? (pointer.x < canvas.width * 0.5 ? 42 + 8 * scale : -(42 + 8 * scale)) : 0;
+      const defaultSideOffset = Math.cos(muzzle.rad) >= 0 ? 28 + 8 * scale : -(28 + 8 * scale);
+      const sideOffset = mobileAimReadout
+        ? (pointer.x < canvas.width * 0.5 ? 42 + 8 * scale : -(42 + 8 * scale))
+        : defaultSideOffset;
       ctx.font = `700 ${fontSize}px 'Comic Sans MS', 'Trebuchet MS', sans-serif`;
       const textW = Math.max(mobileAimReadout ? 112 : 58, Math.ceil(ctx.measureText(text).width + bubblePad));
-      const drawX = clamp(tipX + sideOffset - textW * 0.5, 8, canvas.width - textW - 8);
-      const drawY = clamp(tipY - (mobileAimReadout ? 22 + 16 * scale : 16 + 10 * scale), 12, getGameplayBottomY() - bubbleH - 6);
+      const zoom = Math.max(0.001, state.cameraZoom || 1);
+      const worldYOffset = getWorldRenderYOffset();
+      const viewLeft = 0;
+      const viewRight = canvas.width / zoom;
+      const viewTop = -worldYOffset / zoom;
+      const viewBottom = viewTop + getGameplayBottomY() / zoom;
+      const margin = 8 / zoom;
+
+      let drawX = clamp(tipX + sideOffset - textW * 0.5, viewLeft + margin, viewRight - textW - margin);
+      let drawY = clamp(
+        tipY - (mobileAimReadout ? 22 + 16 * scale : 16 + 10 * scale),
+        viewTop + margin,
+        viewBottom - bubbleH - margin
+      );
+
+      const tankScreenX = tank.x - state.cameraX;
+      const tankHalfW = Math.max(HULL_TOP_HALF, HULL_BOTTOM_HALF) + 7;
+      const tankLeft = tankScreenX - tankHalfW;
+      const tankRight = tankScreenX + tankHalfW;
+      const tankTop = tank.y + TURRET_Y - 6;
+      const tankBottom = tank.y + HULL_BOTTOM_Y + 7;
+      const tankW = tankRight - tankLeft;
+      const tankH = tankBottom - tankTop;
+      const intersectsTank = (x, y) =>
+        x < tankLeft + tankW && x + textW > tankLeft && y < tankTop + tankH && y + bubbleH > tankTop;
+
+      if (intersectsTank(drawX, drawY)) {
+        const gap = 12 / zoom;
+        const candidates = [
+          { x: tipX - textW * 0.5, y: tankTop - bubbleH - gap },
+          { x: tankRight + gap, y: tank.y - bubbleH * 0.5 },
+          { x: tankLeft - textW - gap, y: tank.y - bubbleH * 0.5 },
+          { x: tipX + sideOffset - textW * 0.5, y: tipY - (mobileAimReadout ? 30 + 18 * scale : 22 + 12 * scale) }
+        ];
+        for (const candidate of candidates) {
+          const cx = clamp(candidate.x, viewLeft + margin, viewRight - textW - margin);
+          const cy = clamp(candidate.y, viewTop + margin, viewBottom - bubbleH - margin);
+          if (!intersectsTank(cx, cy)) {
+            drawX = cx;
+            drawY = cy;
+            break;
+          }
+        }
+      }
+
       ctx.fillStyle = "rgba(255, 255, 255, 0.94)";
       ctx.strokeStyle = "rgba(0, 0, 0, 0.74)";
       ctx.lineWidth = mobileAimReadout ? 2.2 : 1.5;
@@ -7245,7 +7445,7 @@
     ctx.textBaseline = "middle";
     ctx.fillText(text, 0, -4);
     ctx.font = "600 15px 'Comic Sans MS', 'Trebuchet MS', sans-serif";
-    ctx.fillText("Press R to restart", 0, 22);
+    ctx.fillText("Press R or tap RESTART", 0, 22);
     ctx.restore();
   }
 
@@ -7254,6 +7454,9 @@
     const isDrawPhase = state.phase === "draw_map";
     if (ui.turnCounter) {
       ui.turnCounter.textContent = `TURN ${Math.max(1, state.turnCounter)}`;
+    }
+    if (ui.gameoverRestartBtn) {
+      ui.gameoverRestartBtn.classList.toggle("hidden", state.phase !== "gameover");
     }
 
     if (active) {
@@ -8184,6 +8387,15 @@
     });
   }
 
+  if (ui.gameoverRestartBtn) {
+    ui.gameoverRestartBtn.addEventListener("click", () => {
+      if (state.phase !== "gameover") {
+        return;
+      }
+      resetMatch();
+    });
+  }
+
   const nudgeDriveByButton = (dir) => {
     if (!isPlayerTurn()) {
       return;
@@ -8402,7 +8614,7 @@
 
   if (ui.aimTextScaleSelect) {
     ui.aimTextScaleSelect.addEventListener("change", () => {
-      setAimTextScale(ui.aimTextScaleSelect.value);
+      setAimTextScale(ui.aimTextScaleSelect.value, true);
       updateUi();
     });
   }
