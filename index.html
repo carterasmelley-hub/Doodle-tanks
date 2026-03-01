@@ -13,6 +13,7 @@
       --card-border: rgba(0, 0, 0, 0.7);
       --player: #00ff00;
       --enemy: #ff00ff;
+      --paper-margin-x: 84px;
     }
 
     * {
@@ -25,9 +26,35 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: var(--paper);
+      background: #f8f8f5;
       color: var(--ink);
       font-family: "Comic Sans MS", "Chalkboard SE", "Trebuchet MS", sans-serif;
+    }
+
+    #paper-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-color: #f8f8f5;
+      background-image:
+        repeating-linear-gradient(
+          to bottom,
+          transparent 0px,
+          transparent 33px,
+          rgba(66, 133, 244, 0.18) 33px,
+          rgba(66, 133, 244, 0.18) 34px
+        ),
+        linear-gradient(
+          to right,
+          transparent calc(var(--paper-margin-x) - 1px),
+          rgba(220, 38, 38, 0.22) calc(var(--paper-margin-x) - 1px),
+          rgba(220, 38, 38, 0.22) calc(var(--paper-margin-x) + 1px),
+          transparent calc(var(--paper-margin-x) + 1px)
+        );
+      background-position: 0 22px, 0 0;
+      will-change: transform;
+      transform: translateZ(0);
     }
 
     body:not(.in-game) .bottom-ui,
@@ -44,12 +71,15 @@
     }
 
     #game {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
       width: 100vw;
       height: 100vh;
       width: 100dvw;
       height: 100dvh;
       display: block;
-      background: var(--paper);
+      background: transparent;
       touch-action: none;
     }
 
@@ -60,6 +90,10 @@
       display: grid;
       place-items: center;
       background: rgba(255, 255, 255, 0.72);
+    }
+
+    body.menu-custom .menu-screen {
+      background: rgba(255, 255, 255, 0.56);
     }
 
     .menu-screen.hidden {
@@ -73,6 +107,14 @@
       background: var(--card);
       padding: 20px 18px;
       text-align: center;
+    }
+
+    #custom-menu-card {
+      width: min(620px, calc(100vw - 16px));
+      max-height: min(86dvh, 700px);
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      background: rgba(255, 255, 255, 0.9);
     }
 
     .menu-card.hidden {
@@ -139,6 +181,10 @@
       gap: 4px;
     }
 
+    .menu-field.full {
+      grid-column: 1 / -1;
+    }
+
     .menu-field label {
       font-size: 11px;
       letter-spacing: 0.06em;
@@ -159,6 +205,55 @@
     .menu-field button {
       width: 100%;
       padding: 8px 10px;
+    }
+
+    .power-filter-panel {
+      margin-top: 10px;
+      border: 2px solid var(--card-border);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.96);
+      padding: 8px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .power-filter-panel.hidden {
+      display: none;
+    }
+
+    .power-filter-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .power-filter-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(120px, 1fr));
+      gap: 6px;
+    }
+
+    .power-filter-item {
+      min-height: 38px;
+      border-radius: 9px;
+      font-size: 12px;
+      letter-spacing: 0.03em;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: transform 0.08s ease, background-color 0.1s ease;
+    }
+
+    .power-filter-item.active {
+      background: #1f1f1f;
+      color: #ffffff;
+    }
+
+    .power-filter-item:active {
+      transform: translateY(1px) scale(0.985);
     }
 
     .turn-counter {
@@ -419,10 +514,11 @@
 
     .drive-btn {
       display: none;
-      min-width: 46px;
-      min-height: 46px;
-      padding: 8px 9px;
-      font-size: 18px;
+      min-width: 36px;
+      min-height: 56px;
+      padding: 8px 6px;
+      border-radius: 9px;
+      font-size: 19px;
       line-height: 1;
       letter-spacing: 0;
     }
@@ -708,6 +804,12 @@
       cursor: not-allowed;
     }
 
+    button {
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
     .status-pill {
       position: fixed;
       left: 50%;
@@ -923,6 +1025,14 @@
     }
 
     @media (max-width: 620px) {
+      #custom-menu-card {
+        max-height: min(82dvh, 620px);
+      }
+
+      .power-filter-grid {
+        grid-template-columns: 1fr;
+      }
+
       .control-panel {
         grid-template-columns: 1fr;
         gap: 6px;
@@ -1044,9 +1154,10 @@
     }
 
     .drive-btn {
-      min-width: 52px !important;
-      min-height: 52px !important;
-      padding: 8px 10px !important;
+      min-width: 38px !important;
+      min-height: 62px !important;
+      padding: 8px 6px !important;
+      border-radius: 9px !important;
       font-size: 20px !important;
       line-height: 1 !important;
     }
@@ -1088,9 +1199,9 @@
       }
 
       .drive-btn {
-        min-width: 46px !important;
-        min-height: 46px !important;
-        font-size: 17px !important;
+        min-width: 34px !important;
+        min-height: 54px !important;
+        font-size: 16px !important;
       }
 
       #powerup-menu-btn {
@@ -1162,6 +1273,8 @@
         display: inline-flex !important;
         align-items: center;
         justify-content: center;
+        min-width: 42px !important;
+        min-height: 64px !important;
       }
     }
 
@@ -1169,14 +1282,14 @@
       .pause-map-btn {
         top: max(6px, env(safe-area-inset-top)) !important;
         left: max(6px, env(safe-area-inset-left)) !important;
-        padding: 6px 8px !important;
-        font-size: 11px !important;
+        padding: 5px 8px !important;
+        font-size: 10px !important;
       }
 
       .turn-counter {
         top: max(6px, env(safe-area-inset-top)) !important;
-        font-size: 12px !important;
-        padding: 4px 10px !important;
+        font-size: 11px !important;
+        padding: 3px 9px !important;
       }
 
       .bottom-ui {
@@ -1200,32 +1313,32 @@
       }
 
       #fire-btn {
-        min-width: 96px !important;
-        min-height: 40px !important;
-        font-size: 18px !important;
-        padding: 6px 10px !important;
+        min-width: 88px !important;
+        min-height: 36px !important;
+        font-size: 16px !important;
+        padding: 5px 10px !important;
       }
 
       .cam-pan-btn,
       .drive-btn {
-        min-width: 34px !important;
-        min-height: 34px !important;
-        font-size: 14px !important;
-        padding: 5px 6px !important;
+        min-width: 30px !important;
+        min-height: 42px !important;
+        font-size: 13px !important;
+        padding: 4px 5px !important;
       }
 
       #powerup-menu-btn {
-        min-width: 88px !important;
-        min-height: 34px !important;
-        font-size: 13px !important;
-        padding: 6px 8px !important;
+        min-width: 82px !important;
+        min-height: 32px !important;
+        font-size: 12px !important;
+        padding: 5px 8px !important;
       }
 
       .zoom-btn {
-        min-width: 34px !important;
-        min-height: 34px !important;
-        font-size: 17px !important;
-        padding: 5px 6px !important;
+        min-width: 30px !important;
+        min-height: 32px !important;
+        font-size: 15px !important;
+        padding: 4px 6px !important;
       }
 
       .powerup-menu {
@@ -1233,9 +1346,81 @@
         width: min(94vw, 520px) !important;
       }
     }
+
+    @media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+      .bottom-ui {
+        gap: 4px !important;
+      }
+
+      .control-panel {
+        padding: 5px 7px !important;
+      }
+
+      .action-center,
+      .utility-actions {
+        gap: 4px !important;
+      }
+
+      #fire-btn {
+        min-width: 78px !important;
+        min-height: 32px !important;
+        font-size: 15px !important;
+      }
+
+      .cam-pan-btn,
+      .drive-btn {
+        min-width: 28px !important;
+        min-height: 36px !important;
+        font-size: 12px !important;
+      }
+
+      #powerup-menu-btn {
+        min-width: 76px !important;
+        min-height: 30px !important;
+        font-size: 11px !important;
+      }
+
+      .zoom-btn {
+        min-width: 28px !important;
+        min-height: 30px !important;
+        font-size: 14px !important;
+      }
+    }
+
+    @media (pointer: coarse) and (orientation: landscape) {
+      body.menu-custom .menu-screen {
+        place-items: center end;
+        padding: max(6px, env(safe-area-inset-top))
+          max(8px, env(safe-area-inset-right))
+          max(6px, env(safe-area-inset-bottom))
+          max(6px, env(safe-area-inset-left));
+      }
+
+      #custom-menu-card {
+        width: min(460px, 56vw);
+        max-height: min(94dvh, 560px);
+        padding: 14px 12px;
+      }
+
+      #custom-menu-card h1 {
+        font-size: 26px;
+        margin: 0 0 6px;
+      }
+
+      #custom-menu-card p {
+        font-size: 12px;
+        margin: 0 0 10px;
+      }
+
+      #custom-menu-card .menu-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+    }
   </style>
 </head>
 <body>
+  <div id="paper-bg" aria-hidden="true"></div>
   <canvas id="game"></canvas>
 
   <div class="menu-screen" id="menu-screen">
@@ -1318,7 +1503,31 @@
           <label for="terrain-mode-btn">TERRAIN STYLE</label>
           <button id="terrain-mode-btn" type="button">HILLY</button>
         </div>
+        <div class="menu-field">
+          <label for="damage-mod-btn">DAMAGE</label>
+          <button id="damage-mod-btn" type="button">NORMAL DAMAGE</button>
+        </div>
+        <div class="menu-field full">
+          <label for="power-filter-open-btn">POWER UPS</label>
+          <button id="power-filter-open-btn" type="button">EDIT ENABLED (8/8)</button>
+        </div>
       </div>
+      <section id="power-filter-panel" class="power-filter-panel hidden">
+        <div class="power-filter-head">
+          <span>ENABLE MAP POWER UPS</span>
+          <button id="power-filter-close-btn" type="button">DONE</button>
+        </div>
+        <div id="power-filter-grid" class="power-filter-grid">
+          <button type="button" class="power-filter-item" data-power-type="sniper">POWER SHOT</button>
+          <button type="button" class="power-filter-item" data-power-type="dig">DIG</button>
+          <button type="button" class="power-filter-item" data-power-type="build">BUILD</button>
+          <button type="button" class="power-filter-item" data-power-type="teleport">TELEPORT</button>
+          <button type="button" class="power-filter-item" data-power-type="earthquake">QUAKE</button>
+          <button type="button" class="power-filter-item" data-power-type="airstrike">DOUBLE</button>
+          <button type="button" class="power-filter-item" data-power-type="laser">LASER</button>
+          <button type="button" class="power-filter-item" data-power-type="health">HEALTH</button>
+        </div>
+      </section>
       <div class="menu-actions">
         <button id="start-btn" type="button">START GAME</button>
         <button id="back-main-btn" type="button">BACK</button>
@@ -1374,11 +1583,11 @@
   <div class="bottom-ui" id="bottom-ui">
     <section class="control-panel">
       <div class="action-center">
-        <button id="drive-left-btn" class="drive-btn" type="button" aria-label="Move left">+&larr;</button>
-        <button id="pan-left-btn" class="cam-pan-btn" type="button" aria-label="Pan left">&larr;</button>
+        <button id="drive-left-btn" class="drive-btn" type="button" aria-label="Move left">+&lt;</button>
+        <button id="pan-left-btn" class="cam-pan-btn" type="button" aria-label="Pan left">&lt;</button>
         <button id="fire-btn" type="button">FIRE</button>
-        <button id="pan-right-btn" class="cam-pan-btn" type="button" aria-label="Pan right">&rarr;</button>
-        <button id="drive-right-btn" class="drive-btn" type="button" aria-label="Move right">&rarr;+</button>
+        <button id="pan-right-btn" class="cam-pan-btn" type="button" aria-label="Pan right">&gt;</button>
+        <button id="drive-right-btn" class="drive-btn" type="button" aria-label="Move right">&gt;+</button>
       </div>
       <div class="utility-actions">
         <button id="powerup-menu-btn" type="button">POWERS</button>
@@ -1484,6 +1693,11 @@
     healthSelect: document.getElementById("health-select"),
     mapSourceBtn: document.getElementById("map-source-btn"),
     terrainModeBtn: document.getElementById("terrain-mode-btn"),
+    damageModBtn: document.getElementById("damage-mod-btn"),
+    powerFilterOpenBtn: document.getElementById("power-filter-open-btn"),
+    powerFilterPanel: document.getElementById("power-filter-panel"),
+    powerFilterCloseBtn: document.getElementById("power-filter-close-btn"),
+    powerFilterGrid: document.getElementById("power-filter-grid"),
     settingsPanel: document.getElementById("settings-panel"),
     settingsCloseBtn: document.getElementById("settings-close-btn"),
     fxIntensitySlider: document.getElementById("fx-intensity-slider"),
@@ -1601,13 +1815,15 @@
   const TEAM_COLORS = ["#00ff00", "#ff00ff", "#22a8ff", "#ff9f1a"];
   const TEAM_LABELS = ["P1", "P2", "P3", "P4"];
   const MAP_SOURCE_ORDER = ["random", "drawn"];
-  const TERRAIN_MODE_ORDER = ["flat", "hilly", "mountain"];
   const TURN_MODE_ORDER = ["classic", "simultaneous", "mismatched"];
+  const DAMAGE_MODE_ORDER = ["half", "normal", "double"];
   const TERRAIN_STYLE = {
     flat: { amp: 0.45, rough: 0.58, base: 0.61, label: "FLAT" },
     hilly: { amp: 1, rough: 1, base: 0.56, label: "HILLY" },
-    mountain: { amp: 1.68, rough: 1.44, base: 0.52, label: "MOUNTAIN" }
+    mountain: { amp: 1.68, rough: 1.44, base: 0.52, label: "MOUNTAIN" },
+    valley: { amp: 0.86, rough: 0.9, base: 0.59, label: "VALLEY" }
   };
+  const TERRAIN_MODE_ORDER = ["flat", "hilly", "mountain", "valley"];
   const DRAW_MIN_POINTS = 28;
 
   const AI_PRESETS = {
@@ -1662,6 +1878,16 @@
   };
 
   const POWERUP_TYPES = ["sniper", "dig", "build", "teleport", "earthquake", "airstrike", "laser", "health"];
+  const POWERUP_TYPE_LABELS = {
+    sniper: "POWER SHOT",
+    dig: "DIG",
+    build: "BUILD",
+    teleport: "TELEPORT",
+    earthquake: "QUAKE",
+    airstrike: "DOUBLE",
+    laser: "LASER",
+    health: "HEALTH"
+  };
   const HEALTH_POWERUP_AMOUNT = 28;
   const EARTHQUAKE_SMOOTH_PASSES = 8;
   const EARTHQUAKE_EROSION_PASSES = 9;
@@ -1680,7 +1906,9 @@
       turnMode: "classic",
       maxHealth: DEFAULT_MAX_HP,
       mapSource: "random",
-      terrainMode: "hilly"
+      terrainMode: "hilly",
+      damageMode: "normal",
+      enabledPowerups: POWERUP_TYPES.slice()
     },
     settings: {
       fxIntensity: 0.7,
@@ -1694,6 +1922,8 @@
     tanks: [],
     activeIndex: 0,
     projectile: null,
+    simultaneousLockedShots: [],
+    simultaneousProjectiles: [],
     particles: [],
     bursts: [],
     cameraX: 0,
@@ -1746,6 +1976,7 @@
     turnCounter: 1,
     turnsIntoRound: 0,
     blockFireUntil: 0,
+    blockTeleportUntil: 0,
     quakePendingTime: 0,
     quakeSource: null,
     audioCtx: null,
@@ -1870,19 +2101,19 @@
     }
 
     const cycle = ["normal"];
-    if ((tank.powerups?.sniper || 0) > 0) {
+    if (isPowerupEnabled("sniper") && (tank.powerups?.sniper || 0) > 0) {
       cycle.push("sniper");
     }
-    if ((tank.powerups?.dig || 0) > 0) {
+    if (isPowerupEnabled("dig") && (tank.powerups?.dig || 0) > 0) {
       cycle.push("dig");
     }
-    if ((tank.powerups?.build || 0) > 0) {
+    if (isPowerupEnabled("build") && (tank.powerups?.build || 0) > 0) {
       cycle.push("build");
     }
-    if ((tank.powerups?.airstrike || 0) > 0) {
+    if (isPowerupEnabled("airstrike") && (tank.powerups?.airstrike || 0) > 0) {
       cycle.push("airstrike");
     }
-    if ((tank.powerups?.laser || 0) > 0) {
+    if (isPowerupEnabled("laser") && (tank.powerups?.laser || 0) > 0) {
       cycle.push("laser");
     }
     return cycle;
@@ -2099,13 +2330,27 @@
     if (!tank || tank.controller !== "human" || !tank.powerups) {
       return;
     }
-    tank.powerups.sniper = Math.max(tank.powerups.sniper || 0, DEV_POWERUP_CHARGES);
-    tank.powerups.dig = Math.max(tank.powerups.dig || 0, DEV_POWERUP_CHARGES);
-    tank.powerups.build = Math.max(tank.powerups.build || 0, DEV_POWERUP_CHARGES);
-    tank.powerups.teleport = Math.max(tank.powerups.teleport || 0, DEV_POWERUP_CHARGES);
-    tank.powerups.earthquake = Math.max(tank.powerups.earthquake || 0, DEV_POWERUP_CHARGES);
-    tank.powerups.airstrike = Math.max(tank.powerups.airstrike || 0, DEV_POWERUP_CHARGES);
-    tank.powerups.laser = Math.max(tank.powerups.laser || 0, DEV_POWERUP_CHARGES);
+    if (isPowerupEnabled("sniper")) {
+      tank.powerups.sniper = Math.max(tank.powerups.sniper || 0, DEV_POWERUP_CHARGES);
+    }
+    if (isPowerupEnabled("dig")) {
+      tank.powerups.dig = Math.max(tank.powerups.dig || 0, DEV_POWERUP_CHARGES);
+    }
+    if (isPowerupEnabled("build")) {
+      tank.powerups.build = Math.max(tank.powerups.build || 0, DEV_POWERUP_CHARGES);
+    }
+    if (isPowerupEnabled("teleport")) {
+      tank.powerups.teleport = Math.max(tank.powerups.teleport || 0, DEV_POWERUP_CHARGES);
+    }
+    if (isPowerupEnabled("earthquake")) {
+      tank.powerups.earthquake = Math.max(tank.powerups.earthquake || 0, DEV_POWERUP_CHARGES);
+    }
+    if (isPowerupEnabled("airstrike")) {
+      tank.powerups.airstrike = Math.max(tank.powerups.airstrike || 0, DEV_POWERUP_CHARGES);
+    }
+    if (isPowerupEnabled("laser")) {
+      tank.powerups.laser = Math.max(tank.powerups.laser || 0, DEV_POWERUP_CHARGES);
+    }
   }
 
   function setDevMode(enabled) {
@@ -2128,6 +2373,22 @@
     return clamp(Number(state.config.maxHealth || DEFAULT_MAX_HP), MIN_CONFIG_HP, MAX_CONFIG_HP);
   }
 
+  function getDamageMode() {
+    const mode = typeof state.config.damageMode === "string" ? state.config.damageMode : "normal";
+    return DAMAGE_MODE_ORDER.includes(mode) ? mode : "normal";
+  }
+
+  function getDamageMultiplier() {
+    const mode = getDamageMode();
+    if (mode === "half") {
+      return 0.5;
+    }
+    if (mode === "double") {
+      return 2;
+    }
+    return 1;
+  }
+
   function getMapSourceMode() {
     return MAP_SOURCE_ORDER.includes(state.config.mapSource) ? state.config.mapSource : "random";
   }
@@ -2148,6 +2409,14 @@
       ui.terrainModeBtn.textContent = style.label;
       ui.terrainModeBtn.disabled = source === "drawn";
     }
+  }
+
+  function refreshDamageModUi() {
+    if (!ui.damageModBtn) {
+      return;
+    }
+    const mode = getDamageMode();
+    ui.damageModBtn.textContent = mode === "half" ? "HALF DAMAGE" : mode === "double" ? "DOUBLE DAMAGE" : "NORMAL DAMAGE";
   }
 
   function powerToPercent(power) {
@@ -2546,7 +2815,62 @@
     next.playerCount = clamp(Number(next.playerCount || 1), 1, 4);
     next.enemyCount = clampAiTeamsForHumans(next.enemyCount, next.humanPlayers);
     next.turnMode = TURN_MODE_ORDER.includes(next.turnMode) ? next.turnMode : "classic";
+    const modeFromLegacy = next.doubleDamage ? "double" : "normal";
+    const rawMode = typeof next.damageMode === "string" ? next.damageMode : modeFromLegacy;
+    next.damageMode = DAMAGE_MODE_ORDER.includes(rawMode) ? rawMode : "normal";
+    next.doubleDamage = next.damageMode === "double";
+    const incoming = Array.isArray(next.enabledPowerups) ? next.enabledPowerups : POWERUP_TYPES.slice();
+    const filtered = POWERUP_TYPES.filter((type) => incoming.includes(type));
+    next.enabledPowerups = filtered.length ? filtered : POWERUP_TYPES.slice();
     return next;
+  }
+
+  function getEnabledPowerupTypes() {
+    const cfg = normalizeTeamConfig(state.config);
+    return POWERUP_TYPES.filter((type) => cfg.enabledPowerups.includes(type));
+  }
+
+  function isPowerupEnabled(type) {
+    return getEnabledPowerupTypes().includes(type);
+  }
+
+  function setPowerFilterOpen(open) {
+    if (!ui.powerFilterPanel) {
+      return;
+    }
+    ui.powerFilterPanel.classList.toggle("hidden", !open);
+  }
+
+  function updatePowerFilterUi() {
+    const enabled = new Set(getEnabledPowerupTypes());
+    if (ui.powerFilterGrid) {
+      const items = ui.powerFilterGrid.querySelectorAll("[data-power-type]");
+      items.forEach((item) => {
+        const type = item.getAttribute("data-power-type");
+        if (!type) {
+          return;
+        }
+        item.classList.toggle("active", enabled.has(type));
+      });
+    }
+    if (ui.powerFilterOpenBtn) {
+      ui.powerFilterOpenBtn.textContent = `EDIT ENABLED (${enabled.size}/${POWERUP_TYPES.length})`;
+    }
+  }
+
+  function togglePowerupEnabled(type) {
+    if (!POWERUP_TYPES.includes(type)) {
+      return;
+    }
+    const enabled = new Set(getEnabledPowerupTypes());
+    if (enabled.has(type)) {
+      enabled.delete(type);
+    } else {
+      enabled.add(type);
+    }
+    const next = POWERUP_TYPES.filter((key) => enabled.has(key));
+    state.config.enabledPowerups = next.length ? next : POWERUP_TYPES.slice();
+    updatePowerFilterUi();
   }
 
   function syncEnemyCountOptions(humanPlayers) {
@@ -2600,7 +2924,9 @@
       turnMode: TURN_MODE_ORDER.includes(turnMode) ? turnMode : "classic",
       maxHealth,
       mapSource: getMapSourceMode(),
-      terrainMode: getTerrainMode()
+      terrainMode: getTerrainMode(),
+      damageMode: getDamageMode(),
+      enabledPowerups: state.config.enabledPowerups || POWERUP_TYPES.slice()
     });
   }
 
@@ -2653,10 +2979,21 @@
     refreshMapModeUi();
   }
 
+  function toggleDoubleDamageMode() {
+    const mode = getDamageMode();
+    const idx = DAMAGE_MODE_ORDER.indexOf(mode);
+    const next = DAMAGE_MODE_ORDER[(idx + 1) % DAMAGE_MODE_ORDER.length];
+    state.config.damageMode = next;
+    refreshDamageModUi();
+  }
+
   function syncMenuControls() {
     state.config = normalizeTeamConfig(state.config);
     refreshHumanPlayersUi();
     refreshMapModeUi();
+    refreshDamageModUi();
+    updatePowerFilterUi();
+    setPowerFilterOpen(false);
     if (ui.mapSizeSelect) {
       ui.mapSizeSelect.value = state.config.mapSize;
     }
@@ -2716,6 +3053,50 @@
 
   function getTurnMode() {
     return TURN_MODE_ORDER.includes(state.config.turnMode) ? state.config.turnMode : "classic";
+  }
+
+  function isSimultaneousMode() {
+    return getTurnMode() === "simultaneous";
+  }
+
+  function clearSimultaneousState() {
+    state.simultaneousLockedShots = [];
+    state.simultaneousProjectiles = [];
+  }
+
+  function upsertLockedShot(entry) {
+    const idx = state.simultaneousLockedShots.findIndex((shot) => shot.ownerId === entry.ownerId);
+    if (idx >= 0) {
+      state.simultaneousLockedShots[idx] = entry;
+    } else {
+      state.simultaneousLockedShots.push(entry);
+    }
+  }
+
+  function getNextUnlockedTankId(currentTankId) {
+    const order = getAliveTurnOrderIds();
+    if (!order.length) {
+      return null;
+    }
+    const locked = new Set(state.simultaneousLockedShots.map((shot) => shot.ownerId));
+    const currentIdx = Math.max(0, order.indexOf(currentTankId));
+    for (let step = 1; step <= order.length; step += 1) {
+      const id = order[(currentIdx + step) % order.length];
+      if (!locked.has(id)) {
+        return id;
+      }
+    }
+    return null;
+  }
+
+  function finalizeShotPathFromPath(ownerId, path, endX, endY) {
+    const owner = getTankById(ownerId);
+    if (!owner || !Array.isArray(path) || path.length < 1) {
+      return;
+    }
+    owner.lastShotPath = path.slice();
+    owner.lastShotPath.push({ x: endX, y: endY });
+    owner.lastShotEnd = { x: endX, y: endY };
   }
 
   function compareTankSlotThenId(a, b) {
@@ -2786,7 +3167,11 @@
   }
 
   function pickRandomPowerupType() {
-    return POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+    const enabled = getEnabledPowerupTypes();
+    if (!enabled.length) {
+      return null;
+    }
+    return enabled[Math.floor(Math.random() * enabled.length)];
   }
 
   function spawnPowerUp(type = null) {
@@ -2795,6 +3180,9 @@
     }
 
     const kind = type || pickRandomPowerupType();
+    if (!kind || !isPowerupEnabled(kind)) {
+      return false;
+    }
     const r = 11;
     for (let attempt = 0; attempt < 20; attempt += 1) {
       const x = rand(state.worldW * 0.08, state.worldW * 0.92);
@@ -2834,11 +3222,15 @@
 
   function setMenuView(view) {
     state.menuView = view === "custom" ? "custom" : "main";
+    document.body.classList.toggle("menu-custom", state.menuView === "custom");
     if (ui.mainMenuCard) {
       ui.mainMenuCard.classList.toggle("hidden", state.menuView !== "main");
     }
     if (ui.customMenuCard) {
       ui.customMenuCard.classList.toggle("hidden", state.menuView !== "custom");
+    }
+    if (state.menuView !== "custom") {
+      setPowerFilterOpen(false);
     }
   }
 
@@ -3099,6 +3491,7 @@
     state.phase = "menu";
     state.pauseFromPhase = null;
     state.projectile = null;
+    clearSimultaneousState();
     state.particles = [];
     state.bursts = [];
     state.powerUps = [];
@@ -3169,6 +3562,7 @@
     state.tanks = [];
     state.activeIndex = 0;
     state.projectile = null;
+    clearSimultaneousState();
     state.particles = [];
     state.bursts = [];
     state.powerUps = [];
@@ -3226,6 +3620,8 @@
     canvas.height = viewport.height;
     canvas.style.width = `${viewport.width}px`;
     canvas.style.height = `${viewport.height}px`;
+    const paperMarginX = Math.min(96, Math.max(64, viewport.width * 0.08));
+    document.documentElement.style.setProperty("--paper-margin-x", `${paperMarginX}px`);
     setCameraZoom(state.cameraZoom || 1, false);
     if (state.phase === "menu") {
       initMenuDemo(true);
@@ -3464,6 +3860,32 @@
           heights[x] = clamp(heights[x] + preset.yBias, minY, maxY);
         }
       }
+
+      if (getTerrainMode() === "valley") {
+        const center = (worldW - 1) * 0.5;
+        const half = Math.max(1, worldW * 0.5);
+        const leftPeakX = worldW * 0.14;
+        const rightPeakX = worldW * 0.86;
+        const peakSigma = Math.max(50, worldW * 0.095);
+        const centerY = WORLD_H * 0.72;
+        const edgeY = WORLD_H * 0.27;
+        const rimAmplitude = 96 * preset.amp;
+        for (let x = 0; x < worldW; x += 1) {
+          const t = Math.min(1, Math.abs(x - center) / half);
+          const bowlBase = lerp(centerY, edgeY, Math.pow(t, 1.22));
+          const leftPeak = Math.exp(-((x - leftPeakX) ** 2) / (2 * peakSigma * peakSigma));
+          const rightPeak = Math.exp(-((x - rightPeakX) ** 2) / (2 * peakSigma * peakSigma));
+          const rimLift = (leftPeak + rightPeak) * rimAmplitude;
+          const rough = Math.sin(x * 0.0102 + 0.4) * 8 + Math.sin(x * 0.024 + 1.1) * 4;
+          heights[x] = bowlBase - rimLift + rough;
+        }
+
+        for (let pass = 0; pass < 8; pass += 1) {
+          for (let x = 1; x < worldW - 1; x += 1) {
+            heights[x] = (heights[x - 1] + heights[x] * 2 + heights[x + 1]) * 0.25;
+          }
+        }
+      }
     }
 
     const clampedTeams = teamSpecs && teamSpecs.length ? teamSpecs : getMatchTeamSpecs();
@@ -3500,6 +3922,25 @@
       for (let pass = 0; pass < 8; pass += 1) {
         for (let x = 1; x < worldW - 1; x += 1) {
           heights[x] = (heights[x - 1] + heights[x] * 2 + heights[x + 1]) * 0.25;
+        }
+      }
+
+      if (getTerrainMode() === "valley") {
+        const center = (worldW - 1) * 0.5;
+        const half = Math.max(1, worldW * 0.5);
+        const leftPeakX = worldW * 0.14;
+        const rightPeakX = worldW * 0.86;
+        const peakSigma = Math.max(50, worldW * 0.095);
+        const centerY = WORLD_H * 0.72;
+        const edgeY = WORLD_H * 0.27;
+        const rimAmplitude = 104 * preset.amp;
+        for (let x = 0; x < worldW; x += 1) {
+          const t = Math.min(1, Math.abs(x - center) / half);
+          const bowlBase = lerp(centerY, edgeY, Math.pow(t, 1.22));
+          const leftPeak = Math.exp(-((x - leftPeakX) ** 2) / (2 * peakSigma * peakSigma));
+          const rightPeak = Math.exp(-((x - rightPeakX) ** 2) / (2 * peakSigma * peakSigma));
+          const target = bowlBase - (leftPeak + rightPeak) * rimAmplitude;
+          heights[x] = lerp(heights[x], target, 0.88);
         }
       }
     }
@@ -3815,6 +4256,7 @@
 
     state.activeIndex = 0;
     state.projectile = null;
+    clearSimultaneousState();
     state.particles = [];
     state.bursts = [];
     state.powerUps = [];
@@ -3939,8 +4381,10 @@
     clearAbilityMode();
     setPowerupMenuOpen(false);
     state.rangefinderHint = null;
-    if (Math.random() < 0.42) {
-      spawnPowerUp();
+    if (!isSimultaneousMode() || state.simultaneousLockedShots.length === 0) {
+      if (Math.random() < 0.42) {
+        spawnPowerUp();
+      }
     }
     syncControlsFromActive();
   }
@@ -3948,6 +4392,37 @@
   function advanceTurn() {
     if (checkGameOver()) {
       return;
+    }
+
+    if (isSimultaneousMode()) {
+      const order = getAliveTurnOrderIds();
+      if (!order.length) {
+        return;
+      }
+
+      const completedVolley = state.simultaneousLockedShots.length >= order.length;
+      if (completedVolley) {
+        clearSimultaneousState();
+        state.turnCounter += 1;
+        if (state.turnCounter % 5 === 0) {
+          if (state.quakePendingTime <= 0) {
+            state.quakeSource = "round";
+          }
+          state.quakePendingTime = Math.max(state.quakePendingTime, EARTHQUAKE_SHAKE_TIME);
+          startScreenShake(EARTHQUAKE_SHAKE_TIME, EARTHQUAKE_SHAKE_AMP);
+          playEarthquakeRumble(EARTHQUAKE_SHAKE_TIME);
+        }
+
+        const nextTankId = order[0];
+        const nextTankIdx = state.tanks.findIndex((tank) => tank.id === nextTankId);
+        state.activeIndex = nextTankIdx >= 0 ? nextTankIdx : state.activeIndex;
+        configureTurn();
+        return;
+      }
+    }
+
+    if (!isSimultaneousMode()) {
+      clearSimultaneousState();
     }
 
     const order = getAliveTurnOrderIds();
@@ -4275,11 +4750,15 @@
   function clearAbilityMode() {
     state.abilityMode = null;
     state.rangefinderPendingTargetId = null;
+    state.blockTeleportUntil = 0;
   }
 
   function grantPowerUp(ownerId, type) {
     const owner = getTankById(ownerId);
     if (!owner) {
+      return;
+    }
+    if (!isPowerupEnabled(type)) {
       return;
     }
 
@@ -4443,6 +4922,83 @@
     setStatus("Earthquake reshaped terrain");
   }
 
+  function lockSimultaneousShot(tank, shotType) {
+    const muzzle = getMuzzleData(tank);
+    const launchSpeed = shotType === "sniper" ? Math.max(820, tank.power * 1.9) : tank.power;
+    const entry = {
+      ownerId: tank.id,
+      shotType,
+      angle: tank.angle,
+      power: tank.power,
+      x: muzzle.x,
+      y: muzzle.y,
+      vx: Math.cos(muzzle.rad) * launchSpeed,
+      vy: -Math.sin(muzzle.rad) * launchSpeed,
+      radius: 4
+    };
+    upsertLockedShot(entry);
+    tank.lastShotAngleDeg = Math.round(getTrueShotAngleDeg(tank));
+    tank.lastShotPowerPct = powerToPercent(tank.power);
+    state.selectedShotType = "normal";
+    clearAbilityMode();
+    state.rangefinderHint = null;
+    setPowerupMenuOpen(false);
+
+    const nextTankId = getNextUnlockedTankId(tank.id);
+    if (nextTankId == null) {
+      launchSimultaneousVolley();
+      return;
+    }
+
+    const nextIndex = state.tanks.findIndex((item) => item.id === nextTankId);
+    if (nextIndex >= 0) {
+      state.activeIndex = nextIndex;
+      configureTurn();
+      setStatus(`${tank.name} locked shot`);
+    }
+  }
+
+  function launchSimultaneousVolley() {
+    state.simultaneousProjectiles = [];
+    const order = getAliveTurnOrderIds();
+    const lockedByOwner = new Map(state.simultaneousLockedShots.map((shot) => [shot.ownerId, shot]));
+    for (const ownerId of order) {
+      const shot = lockedByOwner.get(ownerId);
+      const owner = getTankById(ownerId);
+      if (!shot || !owner || !owner.alive) {
+        continue;
+      }
+      if (shot.shotType === "laser") {
+        executeLaserShot(owner, { consume: false, deferResolve: true, angle: shot.angle });
+        continue;
+      }
+      state.simultaneousProjectiles.push({
+        x: shot.x,
+        y: shot.y,
+        px: shot.x,
+        py: shot.y,
+        vx: shot.vx,
+        vy: shot.vy,
+        ownerId: shot.ownerId,
+        radius: shot.radius,
+        active: true,
+        shotType: shot.shotType,
+        path: [{ x: shot.x, y: shot.y }]
+      });
+    }
+
+    state.phase = "projectile";
+    state.projectile = null;
+    state.currentShotPath = [];
+    state.settleTimer = 0;
+    state.resolveTimeout = 0;
+    setStatus("Volley launched");
+
+    if (!state.simultaneousProjectiles.length && state.airstrikeDrops.length === 0) {
+      beginResolvePhase("Volley complete");
+    }
+  }
+
   function fireActiveTank() {
     if (performance.now() < (state.blockFireUntil || 0)) {
       return;
@@ -4474,29 +5030,38 @@
     snapCameraToTank(tank);
     setMobileDriveDir(0);
 
-    tank.lastShotAngleDeg = Math.round(getTrueShotAngleDeg(tank));
-    tank.lastShotPowerPct = powerToPercent(tank.power);
-
     let shotType = "normal";
-    if (state.selectedShotType === "sniper" && (tank.powerups.sniper || 0) > 0) {
+    if (state.selectedShotType === "sniper" && isPowerupEnabled("sniper") && (tank.powerups.sniper || 0) > 0) {
       shotType = "sniper";
       consumePowerUp(tank, "sniper");
     }
-    if (state.selectedShotType === "dig" && (tank.powerups.dig || 0) > 0) {
+    if (state.selectedShotType === "dig" && isPowerupEnabled("dig") && (tank.powerups.dig || 0) > 0) {
       shotType = "dig";
       consumePowerUp(tank, "dig");
     }
-    if (state.selectedShotType === "build" && (tank.powerups.build || 0) > 0) {
+    if (state.selectedShotType === "build" && isPowerupEnabled("build") && (tank.powerups.build || 0) > 0) {
       shotType = "build";
       consumePowerUp(tank, "build");
     }
-    if (state.selectedShotType === "laser" && (tank.powerups.laser || 0) > 0) {
-      executeLaserShot(tank);
-      return;
+    if (state.selectedShotType === "laser" && isPowerupEnabled("laser") && (tank.powerups.laser || 0) > 0) {
+      shotType = "laser";
+      consumePowerUp(tank, "laser");
     }
-    if (state.selectedShotType === "airstrike" && (tank.powerups.airstrike || 0) > 0) {
+    if (state.selectedShotType === "airstrike" && isPowerupEnabled("airstrike") && (tank.powerups.airstrike || 0) > 0) {
       shotType = "airstrike_double";
       consumePowerUp(tank, "airstrike");
+    }
+
+    if (isSimultaneousMode()) {
+      lockSimultaneousShot(tank, shotType);
+      return;
+    }
+
+    tank.lastShotAngleDeg = Math.round(getTrueShotAngleDeg(tank));
+    tank.lastShotPowerPct = powerToPercent(tank.power);
+    if (shotType === "laser") {
+      executeLaserShot(tank, { consume: false });
+      return;
     }
 
     const muzzle = getMuzzleData(tank);
@@ -4530,6 +5095,8 @@
     const visualStyle = options.visualStyle || "normal";
     const skipParticles = Boolean(options.skipParticles);
     const playSoundFx = options.playSound !== false;
+    const damageScale = getDamageMultiplier();
+    const effectiveMaxDamage = maxDamage * damageScale;
     state.lastImpact.x = ix;
     state.lastImpact.y = iy;
 
@@ -4549,7 +5116,7 @@
       }
 
       const falloff = 1 - dist / radius;
-      const damage = Math.max(MIN_SPLASH_DAMAGE, Math.round(maxDamage * falloff * falloff));
+      const damage = Math.max(Math.round(MIN_SPLASH_DAMAGE * damageScale), Math.round(effectiveMaxDamage * falloff * falloff));
       tank.hp = clamp(tank.hp - damage, 0, getMaxHp());
 
       const nx = dist > 0.0001 ? dx / dist : 0;
@@ -4598,7 +5165,7 @@
 
     startScreenShake(0.22 + radius * 0.003, visualStyle === "dig" ? 1.9 + radius * 0.03 : 2.6 + radius * 0.055);
     if (playSoundFx) {
-      playExplosionSound(0.8 + maxDamage / 120);
+      playExplosionSound(0.8 + effectiveMaxDamage / 120);
     }
 
     if (!deferResolve) {
@@ -4709,31 +5276,25 @@
   }
 
   function spawnFollowupAirstrike(ownerId, x) {
-    state.airstrikeDrops = [
-      {
-        x: clamp(x, 0, state.worldW - 1),
-        y: -22,
-        py: -22,
-        vy: AIRSTRIKE_DROP_SPEED * 1.04,
-        ownerId,
-        radius: 4,
-        delay: 0
-      }
-    ];
+    state.airstrikeDrops.push({
+      x: clamp(x, 0, state.worldW - 1),
+      y: -22,
+      py: -22,
+      vy: AIRSTRIKE_DROP_SPEED * 1.04,
+      ownerId,
+      radius: 4,
+      delay: 0
+    });
   }
 
-  function updateProjectile(dt) {
-    const p = state.projectile;
-    if ((!p || !p.active) && state.airstrikeDrops.length === 0) {
-      return;
-    }
+  function updateSingleProjectile(p, dt, options = {}) {
     if (!p || !p.active) {
-      if (state.airstrikeDrops.length > 0) {
-        updateAirstrikeDrops(dt);
-      }
       return;
     }
 
+    const deferResolve = Boolean(options.deferResolve);
+    const isSimultaneous = Boolean(options.simultaneous);
+    const path = Array.isArray(p.path) ? p.path : state.currentShotPath;
     let substeps = Math.ceil((Math.abs(p.vx) + Math.abs(p.vy)) * dt / 60);
     substeps = clamp(substeps, 1, p.shotType === "sniper" ? 14 : 8);
     const sdt = dt / substeps;
@@ -4748,7 +5309,7 @@
 
       p.x += p.vx * sdt;
       p.y += p.vy * sdt;
-      state.currentShotPath.push({ x: p.x, y: p.y });
+      path.push({ x: p.x, y: p.y });
 
       const hit = traceCollision(p.px, p.py, p.x, p.y, p.ownerId);
       if (hit) {
@@ -4763,9 +5324,17 @@
           p.vy *= 0.96;
           continue;
         }
-        finalizeShotPath(p.ownerId, hit.x, hit.y);
+
+        if (Array.isArray(p.path)) {
+          finalizeShotPathFromPath(p.ownerId, p.path, hit.x, hit.y);
+        } else {
+          finalizeShotPath(p.ownerId, hit.x, hit.y);
+        }
         p.active = false;
-        state.projectile = null;
+        if (!isSimultaneous) {
+          state.projectile = null;
+        }
+
         if (p.shotType === "airstrike_double") {
           explode(hit.x, hit.y, EXPLOSION_RADIUS, EXPLOSION_DAMAGE, { deferResolve: true });
           spawnFollowupAirstrike(p.ownerId, hit.x);
@@ -4775,28 +5344,72 @@
         if (p.shotType === "dig") {
           explode(hit.x, hit.y, EXPLOSION_RADIUS, EXPLOSION_DAMAGE, {
             terrainScale: DIG_TERRAIN_MULT,
-            visualStyle: "dig"
+            visualStyle: "dig",
+            deferResolve
           });
+          if (!deferResolve) {
+            return;
+          }
           return;
         }
         if (p.shotType === "build") {
           applyBuildImpact(hit.x, hit.y, p.ownerId);
-          beginResolvePhase("Build impact");
+          if (!deferResolve) {
+            beginResolvePhase("Build impact");
+          }
           return;
         }
-        explode(hit.x, hit.y, EXPLOSION_RADIUS, EXPLOSION_DAMAGE);
+        explode(hit.x, hit.y, EXPLOSION_RADIUS, EXPLOSION_DAMAGE, { deferResolve });
         return;
       }
     }
 
     if (p.x < -30 || p.x > state.worldW + 30 || p.y > WORLD_H + 30) {
-      finalizeShotPath(p.ownerId, clamp(p.x, 0, state.worldW - 1), clamp(p.y, 0, WORLD_H - 1));
+      const endX = clamp(p.x, 0, state.worldW - 1);
+      const endY = clamp(p.y, 0, WORLD_H - 1);
+      if (Array.isArray(p.path)) {
+        finalizeShotPathFromPath(p.ownerId, p.path, endX, endY);
+      } else {
+        finalizeShotPath(p.ownerId, endX, endY);
+      }
       p.active = false;
-      state.projectile = null;
-      beginResolvePhase("Missed");
+      if (!isSimultaneous) {
+        state.projectile = null;
+        beginResolvePhase("Missed");
+      }
+    }
+  }
+
+  function updateProjectile(dt) {
+    const p = state.projectile;
+    const volley = state.simultaneousProjectiles;
+
+    if ((!p || !p.active) && (!volley || volley.length === 0) && state.airstrikeDrops.length === 0) {
       return;
     }
 
+    if (volley && volley.length > 0) {
+      for (const vp of volley) {
+        updateSingleProjectile(vp, dt, { deferResolve: true, simultaneous: true });
+      }
+      state.simultaneousProjectiles = volley.filter((vp) => vp.active);
+      if (state.airstrikeDrops.length > 0) {
+        updateAirstrikeDrops(dt);
+      }
+      if (state.simultaneousProjectiles.length === 0 && state.airstrikeDrops.length === 0 && !state.activeFlare) {
+        beginResolvePhase("Volley complete");
+      }
+      return;
+    }
+
+    if (!p || !p.active) {
+      if (state.airstrikeDrops.length > 0) {
+        updateAirstrikeDrops(dt);
+      }
+      return;
+    }
+
+    updateSingleProjectile(p, dt, { deferResolve: false, simultaneous: false });
     if (state.airstrikeDrops.length > 0) {
       updateAirstrikeDrops(dt);
     }
@@ -5042,6 +5655,10 @@
     if (!isPlayerTurn()) {
       return false;
     }
+    if (!isPowerupEnabled(type)) {
+      setStatus(`${POWERUP_TYPE_LABELS[type] || type.toUpperCase()} is disabled`);
+      return false;
+    }
     const tank = getActiveTank();
     if (!tank || !tank.powerups) {
       return false;
@@ -5084,6 +5701,7 @@
     if (type === "teleport") {
       state.abilityMode = "teleport_target";
       state.rangefinderPendingTargetId = null;
+      state.blockTeleportUntil = performance.now() + 260;
       setStatus("Teleport: click terrain location");
       return true;
     }
@@ -5288,7 +5906,12 @@
       }
     }
 
-    if (state.phase === "projectile" && !state.projectile && state.airstrikeDrops.length === 0) {
+    if (
+      state.phase === "projectile" &&
+      !state.projectile &&
+      state.airstrikeDrops.length === 0 &&
+      state.simultaneousProjectiles.length === 0
+    ) {
       beginResolvePhase("Airstrike complete");
     }
   }
@@ -5345,12 +5968,14 @@
     }
   }
 
-  function executeLaserShot(shooter) {
-    if (!consumePowerUp(shooter, "laser")) {
+  function executeLaserShot(shooter, options = {}) {
+    const consumeCharge = options.consume !== false;
+    const deferResolve = Boolean(options.deferResolve);
+    if (consumeCharge && !consumePowerUp(shooter, "laser")) {
       return false;
     }
 
-    const muzzle = getMuzzleData(shooter);
+    const muzzle = getMuzzleData(shooter, options.angle ?? shooter.angle);
     const hit = traceLaserBeam(shooter.id, muzzle.x, muzzle.y, muzzle.rad);
     const hitX = hit.x;
     const hitY = hit.y;
@@ -5362,7 +5987,7 @@
       const dx = hit.tank.x - shooter.x;
       const dy = hit.tank.y - shooter.y;
       const dist = Math.max(0.001, Math.hypot(dx, dy));
-      hit.tank.hp = clamp(hit.tank.hp - LASER_DAMAGE, 0, getMaxHp());
+      hit.tank.hp = clamp(hit.tank.hp - Math.round(LASER_DAMAGE * getDamageMultiplier()), 0, getMaxHp());
       hit.tank.vx += (dx / dist) * LASER_KNOCKBACK;
       hit.tank.vy += (dy / dist) * LASER_KNOCKBACK * 0.28;
       if (hit.tank.hp <= 0) {
@@ -5386,10 +6011,12 @@
     startScreenShake(0.32, 8.4);
     playExplosionSound(1.35);
     setStatus(hit.kind === "tank" ? `${shooter.name} hit ${hit.tank.name} with LASER` : `${shooter.name} fired LASER`);
-    state.phase = "resolving";
-    state.settleTimer = 0;
-    state.resolveTimeout = 0;
-    checkGameOver();
+    if (!deferResolve) {
+      state.phase = "resolving";
+      state.settleTimer = 0;
+      state.resolveTimeout = 0;
+      checkGameOver();
+    }
     return true;
   }
 
@@ -5478,6 +6105,9 @@
     let bestScore = -Infinity;
 
     for (const p of state.powerUps) {
+      if (!isPowerupEnabled(p.type)) {
+        continue;
+      }
       const dist = Math.hypot(p.x - aiTank.x, p.y - aiTank.y);
       if (dist > aiPreset.powerupSeekRange) {
         continue;
@@ -5522,7 +6152,7 @@
       return { shotType: "normal" };
     }
 
-    if ((aiTank.powerups.laser || 0) > 0) {
+    if (isPowerupEnabled("laser") && (aiTank.powerups.laser || 0) > 0) {
       const angle = clampAimDeg((Math.atan2(aiTank.y - (target.y - TANK_H * 0.35), target.x - aiTank.x) * 180) / Math.PI);
       const muzzle = getMuzzleData(aiTank, angle);
       const hit = traceLaserBeam(aiTank.id, muzzle.x, muzzle.y, muzzle.rad);
@@ -5531,7 +6161,7 @@
       }
     }
 
-    if ((aiTank.powerups.sniper || 0) > 0) {
+    if (isPowerupEnabled("sniper") && (aiTank.powerups.sniper || 0) > 0) {
       const angle = clampAimDeg((Math.atan2(aiTank.y - (target.y - TANK_H * 0.35), target.x - aiTank.x) * 180) / Math.PI);
       const muzzle = getMuzzleData(aiTank, angle);
       const lineHit = traceCollision(muzzle.x, muzzle.y, target.x, target.y - TANK_H * 0.35, aiTank.id);
@@ -5548,21 +6178,21 @@
       }
     }
 
-    if ((aiTank.powerups.dig || 0) > 0) {
+    if (isPowerupEnabled("dig") && (aiTank.powerups.dig || 0) > 0) {
       const blockedLine = evaluateAiShot(aiTank, target, shotPlan.angle, shotPlan.power) > 28;
       if (blockedLine && Math.random() < (aiPreset.sniperChance || 0.5) * 0.5) {
         return { shotType: "dig", angle: shotPlan.angle, power: shotPlan.power };
       }
     }
 
-    if ((aiTank.powerups.build || 0) > 0) {
+    if (isPowerupEnabled("build") && (aiTank.powerups.build || 0) > 0) {
       const lowHp = aiTank.hp <= Math.round(getMaxHp() * 0.35);
       if (lowHp && Math.random() < (aiPreset.quakeChance || 0.2) * 0.75) {
         return { shotType: "build", angle: shotPlan.angle, power: shotPlan.power };
       }
     }
 
-    if ((aiTank.powerups.airstrike || 0) > 0) {
+    if (isPowerupEnabled("airstrike") && (aiTank.powerups.airstrike || 0) > 0) {
       const hard = state.config.aiDifficulty === "hard";
       const shouldUseAirstrike =
         Math.random() < aiPreset.airstrikeChance &&
@@ -5580,7 +6210,7 @@
       return false;
     }
 
-    if (target && (aiTank.powerups.teleport || 0) > 0) {
+    if (isPowerupEnabled("teleport") && target && (aiTank.powerups.teleport || 0) > 0) {
       const farFromTarget = Math.abs(target.x - aiTank.x) > aiPreset.moveRange * 1.75;
       if (farFromTarget && Math.random() < aiPreset.teleportChance) {
         const offset = target.x >= aiTank.x ? -rand(78, 148) : rand(78, 148);
@@ -5592,7 +6222,7 @@
       }
     }
 
-    if ((aiTank.powerups.earthquake || 0) > 0 && state.quakePendingTime <= 0) {
+    if (isPowerupEnabled("earthquake") && (aiTank.powerups.earthquake || 0) > 0 && state.quakePendingTime <= 0) {
       const badShot = aiPlan && aiPlan.score > (state.config.aiDifficulty === "hard" ? 58 : 86);
       if (badShot && Math.random() < aiPreset.quakeChance && consumePowerUp(aiTank, "earthquake")) {
         state.quakeSource = "powerup";
@@ -5689,7 +6319,7 @@
     if (state.aiTimer > aiPreset.fireDelay) {
       state.selectedShotType = state.aiPlan?.shotType || "normal";
       fireActiveTank();
-      if (state.phase === "ai") {
+      if (state.phase === "ai" && !isSimultaneousMode()) {
         // Failsafe if firing was blocked for any reason.
         state.phase = "resolving";
         state.settleTimer = 0;
@@ -5777,6 +6407,9 @@
       targetX = getActiveTank().x;
     } else if (state.phase === "projectile" && state.projectile) {
       targetX = state.projectile.x;
+    } else if (state.phase === "projectile" && state.simultaneousProjectiles.length > 0) {
+      const sum = state.simultaneousProjectiles.reduce((acc, item) => acc + item.x, 0);
+      targetX = sum / state.simultaneousProjectiles.length;
     } else if (state.phase === "projectile" && state.activeFlare) {
       targetX = state.activeFlare.x;
     } else if (state.phase === "projectile" && state.airstrikeDrops.length > 0) {
@@ -5887,30 +6520,8 @@
   }
 
   function drawBackground() {
-    // Doodle notebook style backdrop.
-    ctx.fillStyle = "#f8f8f5";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.save();
-    ctx.strokeStyle = "rgba(66, 133, 244, 0.18)";
-    ctx.lineWidth = 1;
-    const lineGap = 34;
-    const lineOffset = 22;
-    for (let y = lineOffset; y < canvas.height; y += lineGap) {
-      ctx.beginPath();
-      ctx.moveTo(0, y + 0.5);
-      ctx.lineTo(canvas.width, y + 0.5);
-      ctx.stroke();
-    }
-
-    ctx.strokeStyle = "rgba(220, 38, 38, 0.22)";
-    ctx.lineWidth = 1.6;
-    const marginX = Math.min(96, Math.max(64, canvas.width * 0.08));
-    ctx.beginPath();
-    ctx.moveTo(marginX, 0);
-    ctx.lineTo(marginX, canvas.height);
-    ctx.stroke();
-    ctx.restore();
+    // Paper is now a fixed CSS background layer; clear canvas each frame.
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
 
   function drawMenuDemoTank(demo, tank) {
@@ -6480,8 +7091,19 @@
   }
 
   function drawProjectile() {
+    const liveProjectiles = [];
     if (state.projectile && state.projectile.active) {
-      const p = state.projectile;
+      liveProjectiles.push(state.projectile);
+    }
+    if (state.simultaneousProjectiles.length) {
+      for (const p of state.simultaneousProjectiles) {
+        if (p && p.active) {
+          liveProjectiles.push(p);
+        }
+      }
+    }
+
+    for (const p of liveProjectiles) {
       ctx.fillStyle = p.shotType === "airstrike_double" ? "#6b7280" : "#808080";
       ctx.strokeStyle = "#000000";
       ctx.lineWidth = 3;
@@ -6774,6 +7396,22 @@
     const airstrikeCount = active?.powerups?.airstrike || 0;
     const laserCount = active?.powerups?.laser || 0;
     const hasUnlimitedPowers = Boolean(active && state.settings.devMode && active.controller === "human");
+    const enabledPowers = new Set(getEnabledPowerupTypes());
+
+    if (state.selectedShotType === "sniper" && !enabledPowers.has("sniper")) {
+      state.selectedShotType = "normal";
+    } else if (state.selectedShotType === "dig" && !enabledPowers.has("dig")) {
+      state.selectedShotType = "normal";
+    } else if (state.selectedShotType === "build" && !enabledPowers.has("build")) {
+      state.selectedShotType = "normal";
+    } else if (state.selectedShotType === "airstrike" && !enabledPowers.has("airstrike")) {
+      state.selectedShotType = "normal";
+    } else if (state.selectedShotType === "laser" && !enabledPowers.has("laser")) {
+      state.selectedShotType = "normal";
+    }
+    if (state.abilityMode === "teleport_target" && !enabledPowers.has("teleport")) {
+      clearAbilityMode();
+    }
 
     if (ui.sniperCount) {
       ui.sniperCount.textContent = `${sniperCount}`;
@@ -6798,31 +7436,38 @@
     }
 
     if (ui.sniperBtn) {
-      ui.sniperBtn.disabled = isDrawPhase || !canControl || (!hasUnlimitedPowers && sniperCount <= 0);
+      ui.sniperBtn.style.display = enabledPowers.has("sniper") ? "" : "none";
+      ui.sniperBtn.disabled = isDrawPhase || !canControl || !enabledPowers.has("sniper") || (!hasUnlimitedPowers && sniperCount <= 0);
       ui.sniperBtn.classList.toggle("active", state.selectedShotType === "sniper");
     }
     if (ui.digBtn) {
-      ui.digBtn.disabled = isDrawPhase || !canControl || (!hasUnlimitedPowers && digCount <= 0);
+      ui.digBtn.style.display = enabledPowers.has("dig") ? "" : "none";
+      ui.digBtn.disabled = isDrawPhase || !canControl || !enabledPowers.has("dig") || (!hasUnlimitedPowers && digCount <= 0);
       ui.digBtn.classList.toggle("active", state.selectedShotType === "dig");
     }
     if (ui.buildBtn) {
-      ui.buildBtn.disabled = isDrawPhase || !canControl || (!hasUnlimitedPowers && buildCount <= 0);
+      ui.buildBtn.style.display = enabledPowers.has("build") ? "" : "none";
+      ui.buildBtn.disabled = isDrawPhase || !canControl || !enabledPowers.has("build") || (!hasUnlimitedPowers && buildCount <= 0);
       ui.buildBtn.classList.toggle("active", state.selectedShotType === "build");
     }
     if (ui.teleportBtn) {
-      ui.teleportBtn.disabled = isDrawPhase || !canControl || (!hasUnlimitedPowers && teleCount <= 0);
+      ui.teleportBtn.style.display = enabledPowers.has("teleport") ? "" : "none";
+      ui.teleportBtn.disabled = isDrawPhase || !canControl || !enabledPowers.has("teleport") || (!hasUnlimitedPowers && teleCount <= 0);
       ui.teleportBtn.classList.toggle("active", state.abilityMode === "teleport_target");
     }
     if (ui.earthquakeBtn) {
-      ui.earthquakeBtn.disabled = isDrawPhase || !canControl || (!hasUnlimitedPowers && quakeCount <= 0);
+      ui.earthquakeBtn.style.display = enabledPowers.has("earthquake") ? "" : "none";
+      ui.earthquakeBtn.disabled = isDrawPhase || !canControl || !enabledPowers.has("earthquake") || (!hasUnlimitedPowers && quakeCount <= 0);
       ui.earthquakeBtn.classList.toggle("active", false);
     }
     if (ui.airstrikeBtn) {
-      ui.airstrikeBtn.disabled = isDrawPhase || !canControl || (!hasUnlimitedPowers && airstrikeCount <= 0);
+      ui.airstrikeBtn.style.display = enabledPowers.has("airstrike") ? "" : "none";
+      ui.airstrikeBtn.disabled = isDrawPhase || !canControl || !enabledPowers.has("airstrike") || (!hasUnlimitedPowers && airstrikeCount <= 0);
       ui.airstrikeBtn.classList.toggle("active", state.selectedShotType === "airstrike");
     }
     if (ui.laserBtn) {
-      ui.laserBtn.disabled = isDrawPhase || !canControl || (!hasUnlimitedPowers && laserCount <= 0);
+      ui.laserBtn.style.display = enabledPowers.has("laser") ? "" : "none";
+      ui.laserBtn.disabled = isDrawPhase || !canControl || !enabledPowers.has("laser") || (!hasUnlimitedPowers && laserCount <= 0);
       ui.laserBtn.classList.toggle("active", state.selectedShotType === "laser");
     }
 
@@ -6889,9 +7534,9 @@
     if (state.phase === "menu") {
       drawMenuDemoBackground();
     } else {
-      ctx.translate(state.screenShakeX, state.screenShakeY);
-
       drawBackground();
+      ctx.save();
+      ctx.translate(state.screenShakeX, state.screenShakeY);
       ctx.save();
       const zoom = Math.max(0.001, state.cameraZoom || 1);
       const worldYOffset = getWorldRenderYOffset();
@@ -6909,6 +7554,7 @@
       drawLaserCuts();
       drawExplosionBursts();
       drawParticles();
+      ctx.restore();
       ctx.restore();
       drawMapEditorHud();
       drawGameOverBanner();
@@ -7092,6 +7738,9 @@
 
     const worldX = screenToWorldX(pointer.x);
     if (state.abilityMode === "teleport_target") {
+      if (performance.now() < (state.blockTeleportUntil || 0)) {
+        return;
+      }
       if (!tryTeleportTo(worldX)) {
         setStatus("Teleport unavailable");
       }
@@ -7418,6 +8067,43 @@
     });
   }
 
+  if (ui.damageModBtn) {
+    ui.damageModBtn.addEventListener("click", () => {
+      toggleDoubleDamageMode();
+    });
+  }
+
+  if (ui.powerFilterOpenBtn) {
+    ui.powerFilterOpenBtn.addEventListener("click", () => {
+      const isHidden = ui.powerFilterPanel ? ui.powerFilterPanel.classList.contains("hidden") : false;
+      setPowerFilterOpen(isHidden);
+    });
+  }
+
+  if (ui.powerFilterCloseBtn) {
+    ui.powerFilterCloseBtn.addEventListener("click", () => {
+      setPowerFilterOpen(false);
+    });
+  }
+
+  if (ui.powerFilterGrid) {
+    ui.powerFilterGrid.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) {
+        return;
+      }
+      const btn = target.closest("[data-power-type]");
+      if (!btn) {
+        return;
+      }
+      const type = btn.getAttribute("data-power-type");
+      if (!type) {
+        return;
+      }
+      togglePowerupEnabled(type);
+    });
+  }
+
   if (ui.enemyCountSelect) {
     ui.enemyCountSelect.addEventListener("change", () => {
       state.config.enemyCount = clampAiTeamsForHumans(Number(ui.enemyCountSelect.value), state.config.humanPlayers);
@@ -7459,7 +8145,9 @@
         turnMode: "classic",
         maxHealth: DEFAULT_MAX_HP,
         mapSource: "random",
-        terrainMode: "hilly"
+        terrainMode: "hilly",
+        damageMode: "normal",
+        enabledPowerups: POWERUP_TYPES.slice()
       };
       syncMenuControls();
       startGame();
