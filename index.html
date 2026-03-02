@@ -29,6 +29,7 @@
       background: #f8f8f5;
       color: var(--ink);
       font-family: "Comic Sans MS", "Chalkboard SE", "Trebuchet MS", sans-serif;
+      -webkit-touch-callout: none;
     }
 
     #paper-bg {
@@ -572,6 +573,15 @@
       touch-action: manipulation;
       min-height: 38px;
       min-width: 38px;
+    }
+
+    .bottom-ui,
+    .bottom-ui *,
+    .powerup-menu,
+    .powerup-menu * {
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
     }
 
     .powerups {
@@ -1680,6 +1690,18 @@
           <label for="damage-mod-btn">DAMAGE</label>
           <button id="damage-mod-btn" type="button">NORMAL DAMAGE</button>
         </div>
+        <div class="menu-field">
+          <label for="spawn-mode-btn">SPAWN MODE</label>
+          <button id="spawn-mode-btn" type="button">TEAM LANES</button>
+        </div>
+        <div class="menu-field">
+          <label for="loot-drop-btn">DROP LOOT ON KO</label>
+          <button id="loot-drop-btn" type="button">ON</button>
+        </div>
+        <div class="menu-field">
+          <label for="border-bounce-btn">BOUNCY BORDERS</label>
+          <button id="border-bounce-btn" type="button">OFF</button>
+        </div>
         <div class="menu-field full">
           <label for="power-filter-open-btn">POWER UPS</label>
           <button id="power-filter-open-btn" type="button">EDIT ENABLED (10/10)</button>
@@ -1877,6 +1899,9 @@
     mapSourceBtn: document.getElementById("map-source-btn"),
     terrainModeBtn: document.getElementById("terrain-mode-btn"),
     damageModBtn: document.getElementById("damage-mod-btn"),
+    spawnModeBtn: document.getElementById("spawn-mode-btn"),
+    lootDropBtn: document.getElementById("loot-drop-btn"),
+    borderBounceBtn: document.getElementById("border-bounce-btn"),
     pairingPanel: document.getElementById("pairing-panel"),
     createRoomBtn: document.getElementById("create-room-btn"),
     copyRoomLinkBtn: document.getElementById("copy-room-link-btn"),
@@ -2018,12 +2043,13 @@
   };
 
   const PLAYER_NAMES = ["Ranger", "Viper", "Atlas", "Echo", "Iris", "Nova"];
-  const ENEMY_NAMES = ["Brute", "Cinder", "Hex", "Mara", "Knell", "Rook"];
+  const ENEMY_NAMES = ["Brute", "Cinder", "Hex", "Mara", "Knell", "Rook", "Shade", "Grit", "Nyx", "Vex", "Torque", "Slate"];
   const TEAM_COLORS = ["#00ff00", "#ff00ff", "#22a8ff", "#ff9f1a"];
   const TEAM_LABELS = ["P1", "P2", "P3", "P4"];
   const MAP_SOURCE_ORDER = ["random", "drawn"];
   const TURN_MODE_ORDER = ["classic", "simultaneous", "mismatched"];
   const DAMAGE_MODE_ORDER = ["half", "normal", "double"];
+  const SPAWN_MODE_ORDER = ["lanes", "random"];
   const TERRAIN_STYLE = {
     flat: { amp: 0.45, rough: 0.58, base: 0.61, label: "FLAT" },
     hilly: { amp: 1, rough: 1, base: 0.56, label: "HILLY" },
@@ -2148,6 +2174,9 @@
       mapSource: "random",
       terrainMode: "hilly",
       damageMode: "normal",
+      spawnMode: "lanes",
+      lootDropOnKo: true,
+      borderBounce: false,
       enabledPowerups: POWERUP_TYPES.slice()
     },
     settings: {
@@ -2170,6 +2199,7 @@
     cameraX: 0,
     cameraZoom: 1,
     cameraLookX: 0,
+    cameraPanY: 0,
     cameraButtonPanDir: 0,
     cameraManualMode: false,
     powerUps: [],
@@ -2247,6 +2277,7 @@
       matchBootstrapped: false
     },
     blockFireUntil: 0,
+    suppressNextFireInput: false,
     blockTeleportUntil: 0,
     quakePendingTime: 0,
     quakeSource: null,
@@ -2284,7 +2315,10 @@
     suppressAimUntilClear: false,
     anchorDistance: 0,
     anchorZoom: 1,
-    anchorWorldX: 0
+    anchorWorldX: 0,
+    anchorWorldY: 0,
+    anchorMidY: 0,
+    anchorPanY: 0
   };
 
   function setCameraButtonPanDir(dir) {
@@ -2302,6 +2336,7 @@
   function releaseCameraToPlayer() {
     state.cameraManualMode = false;
     state.cameraLookX = 0;
+    state.cameraPanY = 0;
   }
 
   function snapCameraToTank(tank) {
@@ -2532,7 +2567,7 @@
     if (isMobilePointerDevice() && state.phase !== "menu") {
       const configured = getConfiguredMapZoom();
       const tightViewport = canvas.height <= 640;
-      const mobileFloor = configured - (tightViewport ? 0.14 : 0.08);
+      const mobileFloor = configured - (tightViewport ? 0.17 : 0.11);
       minZoom = Math.max(minZoom, mobileFloor);
     }
     return minZoom;
@@ -2569,13 +2604,19 @@
     return coarsePointer || touchCapable;
   }
 
-  function getWorldRenderYOffset() {
-    const zoom = Math.max(0.001, state.cameraZoom || 1);
+  function getWorldRenderOffsetBounds(zoom = Math.max(0.001, state.cameraZoom || 1)) {
+    const gameplayBottom = getGameplayBottomY();
+    const mobileLandscape = canvas.width > canvas.height;
+    const minOffset = Math.min(0, gameplayBottom - WORLD_H * zoom - (mobileLandscape ? 24 : 14));
+    const maxOffset = gameplayBottom * 0.46;
+    return { minOffset, maxOffset, gameplayBottom, mobileLandscape };
+  }
+
+  function getAutoWorldRenderYOffset(zoom = Math.max(0.001, state.cameraZoom || 1)) {
     if (zoom >= 1 || !isMobilePointerDevice() || state.phase === "menu") {
       return 0;
     }
-    const gameplayBottom = getGameplayBottomY();
-    const mobileLandscape = canvas.width > canvas.height;
+    const { minOffset, maxOffset, gameplayBottom, mobileLandscape } = getWorldRenderOffsetBounds(zoom);
     let focusY = WORLD_H * 0.58;
     const active = getActiveTank();
     if (active) {
@@ -2585,10 +2626,27 @@
     }
     const desiredRatio = mobileLandscape ? 0.64 : 0.72;
     const desiredScreenY = clamp(gameplayBottom * desiredRatio, mobileLandscape ? 132 : 170, gameplayBottom - (mobileLandscape ? 42 : 48));
-    // Allow negative offset on mobile so terrain can move up into view when HUD takes bottom space.
-    const minOffset = Math.min(0, gameplayBottom - WORLD_H * zoom - (mobileLandscape ? 24 : 14));
-    const maxOffset = gameplayBottom * 0.46;
     return clamp(desiredScreenY - focusY * zoom, minOffset, maxOffset);
+  }
+
+  function getWorldRenderYOffset() {
+    if (state.phase === "menu") {
+      state.cameraPanY = 0;
+      return 0;
+    }
+    if (!isMobilePointerDevice() && state.cameraPanY !== 0) {
+      state.cameraPanY = 0;
+    }
+    const zoom = Math.max(0.001, state.cameraZoom || 1);
+    const autoOffset = getAutoWorldRenderYOffset(zoom);
+    const { minOffset, maxOffset } = getWorldRenderOffsetBounds(zoom);
+    const minPan = minOffset - autoOffset;
+    const maxPan = maxOffset - autoOffset;
+    const manualPan = clamp(state.cameraPanY || 0, minPan, maxPan);
+    if (manualPan !== state.cameraPanY) {
+      state.cameraPanY = manualPan;
+    }
+    return clamp(autoOffset + manualPan, minOffset, maxOffset);
   }
 
   function worldToScreenX(worldX) {
@@ -3216,6 +3274,9 @@
     const incoming = Array.isArray(next.enabledPowerups) ? next.enabledPowerups : POWERUP_TYPES.slice();
     const filtered = POWERUP_TYPES.filter((type) => incoming.includes(type));
     next.enabledPowerups = filtered.length ? filtered : POWERUP_TYPES.slice();
+    next.spawnMode = SPAWN_MODE_ORDER.includes(next.spawnMode) ? next.spawnMode : "lanes";
+    next.lootDropOnKo = next.lootDropOnKo !== false;
+    next.borderBounce = Boolean(next.borderBounce);
     return next;
   }
 
@@ -3320,6 +3381,9 @@
       mapSource: getMapSourceMode(),
       terrainMode: getTerrainMode(),
       damageMode: getDamageMode(),
+      spawnMode: getSpawnMode(),
+      lootDropOnKo: isLootDropEnabled(),
+      borderBounce: isBorderBounceEnabled(),
       enabledPowerups: state.config.enabledPowerups || POWERUP_TYPES.slice()
     });
   }
@@ -3381,11 +3445,53 @@
     refreshDamageModUi();
   }
 
+  function getSpawnMode() {
+    return SPAWN_MODE_ORDER.includes(state.config.spawnMode) ? state.config.spawnMode : "lanes";
+  }
+
+  function isLootDropEnabled() {
+    return state.config.lootDropOnKo !== false;
+  }
+
+  function isBorderBounceEnabled() {
+    return Boolean(state.config.borderBounce);
+  }
+
+  function cycleSpawnMode() {
+    const current = getSpawnMode();
+    const idx = SPAWN_MODE_ORDER.indexOf(current);
+    state.config.spawnMode = SPAWN_MODE_ORDER[(idx + 1) % SPAWN_MODE_ORDER.length];
+    refreshSpawnModeUi();
+  }
+
+  function toggleLootDropMode() {
+    state.config.lootDropOnKo = !isLootDropEnabled();
+    refreshSpawnModeUi();
+  }
+
+  function toggleBorderBounceMode() {
+    state.config.borderBounce = !isBorderBounceEnabled();
+    refreshSpawnModeUi();
+  }
+
+  function refreshSpawnModeUi() {
+    if (ui.spawnModeBtn) {
+      ui.spawnModeBtn.textContent = getSpawnMode() === "random" ? "RANDOM" : "TEAM LANES";
+    }
+    if (ui.lootDropBtn) {
+      ui.lootDropBtn.textContent = isLootDropEnabled() ? "ON" : "OFF";
+    }
+    if (ui.borderBounceBtn) {
+      ui.borderBounceBtn.textContent = isBorderBounceEnabled() ? "ON" : "OFF";
+    }
+  }
+
   function syncMenuControls() {
     state.config = normalizeTeamConfig(state.config);
     refreshHumanPlayersUi();
     refreshMapModeUi();
     refreshDamageModUi();
+    refreshSpawnModeUi();
     updatePowerFilterUi();
     setPowerFilterOpen(false);
     if (ui.mapSizeSelect) {
@@ -3532,6 +3638,12 @@
 
     const mode = getTurnMode();
     if (mode === "classic") {
+      if (getSpawnMode() === "random") {
+        return alive
+          .slice()
+          .sort((a, b) => (a.spawnOrder ?? a.id) - (b.spawnOrder ?? b.id) || a.id - b.id)
+          .map((tank) => tank.id);
+      }
       return alive.slice().sort((a, b) => a.id - b.id).map((tank) => tank.id);
     }
 
@@ -3781,6 +3893,8 @@
       alive: true,
       tilt: 0,
       teamSlot,
+      spawnOrder: id,
+      lootDropped: false,
       netOwnerId,
       lastShotPath: [],
       lastShotEnd: null,
@@ -3806,6 +3920,72 @@
 
   function getTankById(id) {
     return state.tanks.find((tank) => tank.id === id) || null;
+  }
+
+  function getTransferablePowerupBundle(tank) {
+    if (!tank || !tank.powerups) {
+      return null;
+    }
+    const bundle = {};
+    let total = 0;
+    for (const [type, raw] of Object.entries(tank.powerups)) {
+      const qty = Math.max(0, Math.floor(Number(raw) || 0));
+      if (qty <= 0) {
+        continue;
+      }
+      bundle[type] = qty;
+      total += qty;
+    }
+    return total > 0 ? bundle : null;
+  }
+
+  function spawnLootDropFromTank(tank) {
+    if (!tank || !isLootDropEnabled()) {
+      return false;
+    }
+    const bundle = getTransferablePowerupBundle(tank);
+    if (!bundle) {
+      return false;
+    }
+
+    const r = 12;
+    let spawnX = clamp(tank.x, r + 2, state.worldW - r - 2);
+    let spawnY = clamp(supportY(spawnX) - rand(48, 72), POWERUP_SPAWN_MIN_Y, WORLD_H - r - 2);
+    for (let attempt = 0; attempt < 24; attempt += 1) {
+      const ring = Math.ceil(attempt / 2);
+      const dir = attempt % 2 === 0 ? 1 : -1;
+      const tryX = clamp(tank.x + ring * 10 * dir, r + 2, state.worldW - r - 2);
+      const gy = supportY(tryX);
+      const tryY = clamp(gy - rand(42, 72), POWERUP_SPAWN_MIN_Y, gy - r - 4);
+      if (isPowerupSpawnClear(tryX, tryY, r)) {
+        spawnX = tryX;
+        spawnY = tryY;
+        break;
+      }
+    }
+
+    state.powerUps.push({
+      id: state.nextPowerUpId++,
+      type: "loot",
+      x: spawnX,
+      y: spawnY,
+      r,
+      bundle,
+      sourceTankId: tank.id
+    });
+    return true;
+  }
+
+  function markTankDefeated(tank) {
+    if (!tank || !tank.alive) {
+      return;
+    }
+    tank.alive = false;
+    tank.hp = 0;
+    if (!tank.lootDropped) {
+      spawnLootDropFromTank(tank);
+      tank.lootDropped = true;
+    }
   }
 
   function getAliveTeamCount(team) {
@@ -4688,7 +4868,10 @@
       playerCount: 1,
       enemyCount: 0,
       turnMode: "classic",
-      mapSource: "random"
+      mapSource: "random",
+      spawnMode: "lanes",
+      lootDropOnKo: true,
+      borderBounce: false
     });
     applyMenuConfig();
     state.customSurfaceY = null;
@@ -5146,6 +5329,7 @@
     setCameraZoom(getConfiguredMapZoom(), false);
     state.cameraX = clampCamera(state.worldW * 0.5 - getCameraViewWidth() * 0.5);
     state.cameraLookX = 0;
+    state.cameraPanY = 0;
     state.screenShakeTime = 0;
     state.screenShakeDuration = 0;
     state.screenShakeAmp = 0;
@@ -5233,8 +5417,49 @@
     return xs;
   }
 
+  function spreadRandomSpawnXs(totalCount, worldW) {
+    const total = Math.max(0, Math.floor(totalCount || 0));
+    if (total <= 0) {
+      return [];
+    }
+
+    const edgePad = Math.max(40, worldW * 0.07);
+    const minX = edgePad;
+    const maxX = worldW - edgePad;
+    const usable = Math.max(1, maxX - minX);
+    const spacing = usable / total;
+    const jitterMax = Math.max(8, spacing * 0.34);
+    const xs = [];
+    for (let i = 0; i < total; i += 1) {
+      const center = minX + spacing * (i + 0.5);
+      xs.push(clamp(Math.round(center + rand(-jitterMax, jitterMax)), minX, maxX));
+    }
+
+    xs.sort((a, b) => a - b);
+    const minGap = Math.max(18, spacing * 0.32);
+    for (let i = 1; i < xs.length; i += 1) {
+      if (xs[i] - xs[i - 1] < minGap) {
+        xs[i] = clamp(xs[i - 1] + minGap, minX, maxX);
+      }
+    }
+    for (let i = xs.length - 2; i >= 0; i -= 1) {
+      if (xs[i + 1] - xs[i] < minGap) {
+        xs[i] = clamp(xs[i + 1] - minGap, minX, maxX);
+      }
+    }
+
+    // Shuffle assignment so teams don't always start from the same side.
+    for (let i = xs.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = xs[i];
+      xs[i] = xs[j];
+      xs[j] = tmp;
+    }
+    return xs;
+  }
+
   function clampDrawY(y) {
-    return clamp(y, 14, Math.round(WORLD_H * DRAW_SURFACE_MAX_FRAC));
+    return clamp(y, 14, WORLD_H - 14);
   }
 
   function resetDrawMapStroke() {
@@ -5380,7 +5605,8 @@
       return;
     }
     state.customSurfaceY = state.drawMap.surface.slice();
-    state.blockFireUntil = performance.now() + 380;
+    state.blockFireUntil = performance.now() + 1200;
+    state.suppressNextFireInput = true;
     launchMatchSession();
   }
 
@@ -5475,17 +5701,36 @@
     const spawnByTeam = {};
     const allSpawns = [];
     const teamCount = clampedTeams.length;
-
-    for (let i = 0; i < teamCount; i += 1) {
-      const team = clampedTeams[i];
-      const bandStart = 0.07 + (0.86 * i) / teamCount;
-      const bandEnd = 0.07 + (0.86 * (i + 1)) / teamCount;
-      const innerStart = Math.min(0.97, bandStart + 0.03);
-      const innerEnd = Math.max(0.03, bandEnd - 0.03);
-      const spawns = spreadSpawnXs(innerStart, innerEnd, team.tankCount, worldW);
-      spawnByTeam[team.id] = spawns;
-      for (const sx of spawns) {
-        allSpawns.push(sx);
+    if (getSpawnMode() === "random") {
+      const totalTanks = clampedTeams.reduce((sum, team) => sum + Math.max(1, Number(team.tankCount || 1)), 0);
+      const spawnPool = spreadRandomSpawnXs(totalTanks, worldW);
+      let cursor = 0;
+      for (let i = 0; i < teamCount; i += 1) {
+        const team = clampedTeams[i];
+        const count = Math.max(1, Number(team.tankCount || 1));
+        const spawns = [];
+        for (let k = 0; k < count; k += 1) {
+          const fallbackX = Math.floor(worldW * (0.1 + (0.8 * (cursor + 1)) / Math.max(1, totalTanks + 1)));
+          spawns.push(spawnPool[cursor] ?? fallbackX);
+          cursor += 1;
+        }
+        spawnByTeam[team.id] = spawns;
+        for (const sx of spawns) {
+          allSpawns.push(sx);
+        }
+      }
+    } else {
+      for (let i = 0; i < teamCount; i += 1) {
+        const team = clampedTeams[i];
+        const bandStart = 0.07 + (0.86 * i) / teamCount;
+        const bandEnd = 0.07 + (0.86 * (i + 1)) / teamCount;
+        const innerStart = Math.min(0.97, bandStart + 0.03);
+        const innerEnd = Math.max(0.03, bandEnd - 0.03);
+        const spawns = spreadSpawnXs(innerStart, innerEnd, team.tankCount, worldW);
+        spawnByTeam[team.id] = spawns;
+        for (const sx of spawns) {
+          allSpawns.push(sx);
+        }
       }
     }
 
@@ -5785,8 +6030,7 @@
     }
 
     if (tank.y > WORLD_H + 120) {
-      tank.alive = false;
-      tank.hp = 0;
+      markTankDefeated(tank);
     }
   }
 
@@ -5826,6 +6070,7 @@
       netOwnerId: team.netOwnerId || null
     }));
     let id = 0;
+    let aiNameCursor = 0;
 
     for (const team of teamSpecs) {
       const teamSpawns = spawnsByTeam[team.id] || [];
@@ -5834,7 +6079,10 @@
         if (team.controller === "human" && team.id === "team1") {
           tankName = PLAYER_NAMES[i] || tankName;
         } else if (team.controller === "ai") {
-          tankName = ENEMY_NAMES[i] || tankName;
+          const base = ENEMY_NAMES[aiNameCursor % ENEMY_NAMES.length] || "Brute";
+          const cycle = Math.floor(aiNameCursor / ENEMY_NAMES.length);
+          tankName = cycle > 0 ? `${base}-${cycle + 1}` : base;
+          aiNameCursor += 1;
         }
 
         tanks.push(
@@ -5855,6 +6103,10 @@
     }
 
     state.tanks = tanks;
+    const tanksBySpawnX = state.tanks.slice().sort((a, b) => a.x - b.x || a.id - b.id);
+    for (let i = 0; i < tanksBySpawnX.length; i += 1) {
+      tanksBySpawnX[i].spawnOrder = i;
+    }
 
     for (const tank of state.tanks) {
       tank.vx = 0;
@@ -5910,6 +6162,7 @@
     state.cameraButtonPanDir = 0;
     state.cameraManualMode = false;
     state.cameraLookX = 0;
+    state.cameraPanY = 0;
 
     if (Math.random() < 0.8) {
       spawnPowerUp();
@@ -6311,6 +6564,9 @@
     touchGesture.anchorDistance = Math.max(TOUCH_PINCH_MIN_DISTANCE, dist);
     touchGesture.anchorZoom = Math.max(0.001, state.cameraZoom || 1);
     touchGesture.anchorWorldX = screenToWorldX(midX);
+    touchGesture.anchorWorldY = screenToWorldY(midY);
+    touchGesture.anchorMidY = midY;
+    touchGesture.anchorPanY = state.cameraPanY || 0;
     state.cameraManualMode = true;
     // Keep shared pointer position in sync for edge look fallback when gesture ends.
     pointer.x = midX;
@@ -6336,6 +6592,13 @@
     const nextZoom = clampCameraZoom(touchGesture.anchorZoom * zoomRatio);
     state.cameraZoom = nextZoom;
     state.cameraX = clampCamera(touchGesture.anchorWorldX - midX / Math.max(0.001, nextZoom));
+    const autoOffset = getAutoWorldRenderYOffset(nextZoom);
+    const bounds = getWorldRenderOffsetBounds(nextZoom);
+    const desiredOffset = midY - touchGesture.anchorWorldY * nextZoom;
+    const minPan = bounds.minOffset - autoOffset;
+    const maxPan = bounds.maxOffset - autoOffset;
+    state.cameraPanY = clamp(desiredOffset - autoOffset, minPan, maxPan);
+    state.cameraManualMode = true;
     pointer.x = midX;
     pointer.y = midY;
     pointer.initialized = true;
@@ -6509,6 +6772,46 @@
     }
     owner.powerups[type] += 1;
     setStatus(`${owner.name} got ${type.toUpperCase()}`);
+  }
+
+  function grantLootBundle(ownerId, bundle, sourceTankId = null) {
+    const owner = getTankById(ownerId);
+    if (!owner || !owner.powerups || !bundle) {
+      return false;
+    }
+    let granted = 0;
+    for (const [type, rawQty] of Object.entries(bundle)) {
+      if (!Object.prototype.hasOwnProperty.call(owner.powerups, type)) {
+        continue;
+      }
+      const qty = Math.max(0, Math.floor(Number(rawQty) || 0));
+      if (qty <= 0) {
+        continue;
+      }
+      owner.powerups[type] += qty;
+      granted += qty;
+    }
+    if (granted <= 0) {
+      return false;
+    }
+    if (sourceTankId != null) {
+      const source = getTankById(sourceTankId);
+      setStatus(`${owner.name} recovered ${granted} loot charges from ${source?.name || "wreckage"}`);
+    } else {
+      setStatus(`${owner.name} recovered ${granted} loot charges`);
+    }
+    return true;
+  }
+
+  function collectPowerUp(ownerId, powerup) {
+    if (!powerup) {
+      return;
+    }
+    if (powerup.type === "loot") {
+      grantLootBundle(ownerId, powerup.bundle, powerup.sourceTankId ?? null);
+      return;
+    }
+    grantPowerUp(ownerId, powerup.type);
   }
 
   function consumePowerUp(tank, type) {
@@ -6755,6 +7058,10 @@
     if (performance.now() < (state.blockFireUntil || 0)) {
       return;
     }
+    if (state.suppressNextFireInput) {
+      state.suppressNextFireInput = false;
+      return;
+    }
     const tank = getActiveTank();
     if (!tank || !tank.alive) {
       return;
@@ -6894,7 +7201,7 @@
       tank.vy += ny * impulse;
 
       if (tank.hp <= 0) {
-        tank.alive = false;
+        markTankDefeated(tank);
       }
     }
 
@@ -7250,12 +7557,39 @@
 
       p.x += p.vx * sdt;
       p.y += p.vy * sdt;
+
+      if (isBorderBounceEnabled()) {
+        const maxX = state.worldW - 1;
+        let bounced = false;
+        for (let n = 0; n < 2; n += 1) {
+          if (p.x < 0) {
+            p.x = -p.x;
+            p.vx = Math.abs(p.vx) * 0.88;
+            bounced = true;
+          } else if (p.x > maxX) {
+            p.x = maxX - (p.x - maxX);
+            p.vx = -Math.abs(p.vx) * 0.88;
+            bounced = true;
+          }
+
+          if (p.y < 0) {
+            p.y = -p.y;
+            p.vy = Math.abs(p.vy) * 0.88;
+            bounced = true;
+          }
+        }
+        if (bounced) {
+          path.push({ x: p.x, y: p.y });
+          continue;
+        }
+      }
+
       path.push({ x: p.x, y: p.y });
 
       const hit = traceCollision(p.px, p.py, p.x, p.y, p.ownerId);
       if (hit) {
         if (hit.kind === "powerup" && hit.powerup) {
-          grantPowerUp(p.ownerId, hit.powerup.type);
+          collectPowerUp(p.ownerId, hit.powerup);
           state.powerUps = state.powerUps.filter((pp) => pp.id !== hit.powerup.id);
           p.x = hit.x;
           p.y = hit.y;
@@ -7886,7 +8220,7 @@
       const hit = traceCollision(drop.x, drop.py, drop.x, drop.y, drop.ownerId);
       if (hit) {
         if (hit.kind === "powerup" && hit.powerup) {
-          grantPowerUp(drop.ownerId, hit.powerup.type);
+          collectPowerUp(drop.ownerId, hit.powerup);
           state.powerUps = state.powerUps.filter((pp) => pp.id !== hit.powerup.id);
           drop.y = hit.y + 2;
           drop.py = drop.y;
@@ -7987,7 +8321,7 @@
       hit.tank.vx += (dx / dist) * LASER_KNOCKBACK;
       hit.tank.vy += (dy / dist) * LASER_KNOCKBACK * 0.28;
       if (hit.tank.hp <= 0) {
-        hit.tank.alive = false;
+        markTankDefeated(hit.tank);
       }
     }
 
@@ -8130,6 +8464,12 @@
         value = 136;
       } else if (p.type === "earthquake") {
         value = 126;
+      } else if (p.type === "loot") {
+        let lootTotal = 0;
+        for (const qty of Object.values(p.bundle || {})) {
+          lootTotal += Math.max(0, Number(qty) || 0);
+        }
+        value = 150 + lootTotal * 34;
       }
 
       let score = value - dist * 0.26;
@@ -8822,13 +9162,13 @@
       const labelPoint = tank.lastShotPath[midIndex] || tank.lastShotPath[tank.lastShotPath.length - 1];
       const labelText = `${Math.round(tank.lastShotAngleDeg)}\u00b0 ${Math.round(tank.lastShotPowerPct)}%`;
       const scale = state.settings.aimTextScale || 2;
-      const ghostFontSize = Math.round((isMobilePointerDevice() ? 8 : 7) * scale);
+      const ghostFontSize = Math.round((isMobilePointerDevice() ? 10 : 7.5) * scale);
       ctx.fillStyle = "rgba(0, 0, 0, 0.24)";
       ctx.font = `700 ${ghostFontSize}px 'Comic Sans MS', 'Trebuchet MS', sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       const lx = labelPoint.x - state.cameraX + 6;
-      const ly = labelPoint.y - (isMobilePointerDevice() ? 10 + 3 * scale : 8 + 2 * scale);
+      const ly = labelPoint.y - (isMobilePointerDevice() ? 16 + 4 * scale : 8 + 2 * scale);
       ctx.fillText(labelText, lx, ly);
     }
 
@@ -9023,15 +9363,15 @@
       const text = `${angleText} ${powerText}`;
       const mobileAimReadout = isMobilePointerDevice();
       const scale = state.settings.aimTextScale || 2;
-      const fontSize = Math.round((mobileAimReadout ? 9 : 6) * scale);
-      const bubbleH = Math.round((mobileAimReadout ? 16 : 11) * scale);
-      const bubblePad = Math.round((mobileAimReadout ? 12 : 7) * scale);
+      const fontSize = Math.round((mobileAimReadout ? 11 : 6) * scale);
+      const bubbleH = Math.round((mobileAimReadout ? 20 : 11) * scale);
+      const bubblePad = Math.round((mobileAimReadout ? 16 : 7) * scale);
       const defaultSideOffset = Math.cos(muzzle.rad) >= 0 ? 28 + 8 * scale : -(28 + 8 * scale);
       const sideOffset = mobileAimReadout
-        ? (pointer.x < canvas.width * 0.5 ? 42 + 8 * scale : -(42 + 8 * scale))
+        ? (pointer.x < canvas.width * 0.5 ? 54 + 10 * scale : -(54 + 10 * scale))
         : defaultSideOffset;
       ctx.font = `700 ${fontSize}px 'Comic Sans MS', 'Trebuchet MS', sans-serif`;
-      const textW = Math.max(mobileAimReadout ? 112 : 58, Math.ceil(ctx.measureText(text).width + bubblePad));
+      const textW = Math.max(mobileAimReadout ? 132 : 58, Math.ceil(ctx.measureText(text).width + bubblePad));
       const zoom = Math.max(0.001, state.cameraZoom || 1);
       const worldYOffset = getWorldRenderYOffset();
       const viewLeft = 0;
@@ -9042,7 +9382,7 @@
 
       let drawX = clamp(tipX + sideOffset - textW * 0.5, viewLeft + margin, viewRight - textW - margin);
       let drawY = clamp(
-        tipY - (mobileAimReadout ? 22 + 16 * scale : 16 + 10 * scale),
+        tipY - (mobileAimReadout ? 30 + 18 * scale : 16 + 10 * scale),
         viewTop + margin,
         viewBottom - bubbleH - margin
       );
@@ -9231,7 +9571,7 @@
     for (const p of state.powerUps) {
       const x = p.x - state.cameraX;
       const y = p.y;
-      const fill = p.type === "health" ? "#22c55e" : "#2f7fff";
+      const fill = p.type === "health" ? "#22c55e" : p.type === "loot" ? "#ef4444" : "#2f7fff";
       ctx.fillStyle = fill;
       ctx.beginPath();
       ctx.arc(x, y, p.r, 0, TAU);
@@ -10252,6 +10592,24 @@
     });
   }
 
+  if (ui.spawnModeBtn) {
+    ui.spawnModeBtn.addEventListener("click", () => {
+      cycleSpawnMode();
+    });
+  }
+
+  if (ui.lootDropBtn) {
+    ui.lootDropBtn.addEventListener("click", () => {
+      toggleLootDropMode();
+    });
+  }
+
+  if (ui.borderBounceBtn) {
+    ui.borderBounceBtn.addEventListener("click", () => {
+      toggleBorderBounceMode();
+    });
+  }
+
   if (ui.powerFilterOpenBtn) {
     ui.powerFilterOpenBtn.addEventListener("click", () => {
       const isHidden = ui.powerFilterPanel ? ui.powerFilterPanel.classList.contains("hidden") : false;
@@ -10328,6 +10686,9 @@
         mapSource: "random",
         terrainMode: "hilly",
         damageMode: "normal",
+        spawnMode: "lanes",
+        lootDropOnKo: true,
+        borderBounce: false,
         enabledPowerups: POWERUP_TYPES.slice()
       };
       syncMenuControls();
