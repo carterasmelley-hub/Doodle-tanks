@@ -231,6 +231,19 @@
       color: #000000;
     }
 
+    .menu-field input {
+      width: 100%;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      font-family: inherit;
+      padding: 7px 8px;
+      font-size: 13px;
+      background: #ffffff;
+      color: #000000;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
     .menu-field button {
       width: 100%;
       padding: 8px 10px;
@@ -1613,6 +1626,7 @@
       <div class="menu-actions">
         <button id="quick-start-btn" type="button">PLAY NORMAL</button>
         <button id="open-custom-btn" type="button">CUSTOM GAME</button>
+        <button id="open-multiplayer-btn" type="button">MULTIPLAYER</button>
         <button id="menu-settings-btn" type="button">SETTINGS</button>
       </div>
     </div>
@@ -1728,6 +1742,37 @@
       <div class="menu-actions">
         <button id="start-btn" type="button">START GAME</button>
         <button id="back-main-btn" type="button">BACK</button>
+      </div>
+    </div>
+    <div class="menu-card hidden" id="multiplayer-menu-card">
+      <h1>MULTIPLAYER</h1>
+      <p>Create a room and share the code, or join an existing room code.</p>
+      <div class="menu-grid">
+        <div class="menu-field full">
+          <label>ROOM CODE</label>
+          <div id="net-room-code-display" class="pairing-room-code">------</div>
+        </div>
+        <div class="menu-field full">
+          <label for="net-room-input">JOIN CODE</label>
+          <input id="net-room-input" type="text" maxlength="6" placeholder="ABC123" autocomplete="off" />
+        </div>
+        <div class="menu-field">
+          <button id="mp-host-btn" type="button">CREATE / HOST MATCH</button>
+        </div>
+        <div class="menu-field">
+          <button id="mp-join-btn" type="button">JOIN MATCH</button>
+        </div>
+        <div class="menu-field">
+          <button id="mp-copy-code-btn" type="button">COPY CODE</button>
+        </div>
+        <div class="menu-field">
+          <button id="mp-leave-btn" type="button">LEAVE ROOM</button>
+        </div>
+      </div>
+      <div id="mp-lobby-status" class="pairing-status">Create or join a room.</div>
+      <div class="menu-actions">
+        <button id="mp-start-btn" type="button">START MATCH</button>
+        <button id="mp-back-btn" type="button">BACK</button>
       </div>
     </div>
   </div>
@@ -1873,10 +1918,21 @@
     menuScreen: document.getElementById("menu-screen"),
     mainMenuCard: document.getElementById("main-menu-card"),
     customMenuCard: document.getElementById("custom-menu-card"),
+    multiplayerMenuCard: document.getElementById("multiplayer-menu-card"),
     quickStartBtn: document.getElementById("quick-start-btn"),
     openCustomBtn: document.getElementById("open-custom-btn"),
+    openMultiplayerBtn: document.getElementById("open-multiplayer-btn"),
     menuSettingsBtn: document.getElementById("menu-settings-btn"),
     backMainBtn: document.getElementById("back-main-btn"),
+    multiplayerBackBtn: document.getElementById("mp-back-btn"),
+    multiplayerHostBtn: document.getElementById("mp-host-btn"),
+    multiplayerJoinBtn: document.getElementById("mp-join-btn"),
+    multiplayerStartBtn: document.getElementById("mp-start-btn"),
+    multiplayerCopyCodeBtn: document.getElementById("mp-copy-code-btn"),
+    multiplayerLeaveBtn: document.getElementById("mp-leave-btn"),
+    multiplayerRoomCodeDisplay: document.getElementById("net-room-code-display"),
+    multiplayerRoomInput: document.getElementById("net-room-input"),
+    multiplayerStatus: document.getElementById("mp-lobby-status"),
     pauseMenu: document.getElementById("pause-menu"),
     resumeBtn: document.getElementById("resume-btn"),
     pauseRestartBtn: document.getElementById("pause-restart-btn"),
@@ -3803,7 +3859,8 @@
   }
 
   function setMenuView(view) {
-    state.menuView = view === "custom" ? "custom" : "main";
+    const validView = view === "custom" || view === "multiplayer" ? view : "main";
+    state.menuView = validView;
     document.body.classList.toggle("menu-custom", state.menuView === "custom");
     if (ui.mainMenuCard) {
       ui.mainMenuCard.classList.toggle("hidden", state.menuView !== "main");
@@ -3811,8 +3868,14 @@
     if (ui.customMenuCard) {
       ui.customMenuCard.classList.toggle("hidden", state.menuView !== "custom");
     }
+    if (ui.multiplayerMenuCard) {
+      ui.multiplayerMenuCard.classList.toggle("hidden", state.menuView !== "multiplayer");
+    }
     if (state.menuView !== "custom") {
       setPowerFilterOpen(false);
+    }
+    if (state.menuView === "multiplayer") {
+      refreshMultiplayerLobbyUi();
     }
   }
 
@@ -3997,6 +4060,248 @@
     if (ui.statusPill) {
       ui.statusPill.textContent = text;
     }
+  }
+
+  function setMultiplayerMenuStatus(text, isError = false) {
+    if (!ui.multiplayerStatus) {
+      return;
+    }
+    ui.multiplayerStatus.textContent = text;
+    ui.multiplayerStatus.classList.toggle("error", Boolean(isError));
+  }
+
+  function makeNetplayPlayerId() {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let out = "";
+    for (let i = 0; i < 10; i += 1) {
+      out += alphabet[Math.floor(Math.random() * alphabet.length)];
+    }
+    return out;
+  }
+
+  function refreshMultiplayerLobbyUi() {
+    const code = NETPLAY_ROOM_RE.test(state.netplay.room || "") ? state.netplay.room : "";
+    const connected = Boolean(state.netplay.connected);
+    const players = sanitizeNetplayPlayers(state.netplay.players);
+    const isHost = isNetplayHost();
+
+    if (ui.multiplayerRoomCodeDisplay) {
+      ui.multiplayerRoomCodeDisplay.textContent = code || "------";
+    }
+    if (ui.multiplayerCopyCodeBtn) {
+      ui.multiplayerCopyCodeBtn.disabled = !code;
+    }
+    if (ui.multiplayerStartBtn) {
+      ui.multiplayerStartBtn.disabled = !(connected && isHost && players.length >= 2);
+    }
+    if (ui.multiplayerLeaveBtn) {
+      ui.multiplayerLeaveBtn.disabled = !state.netplay.enabled;
+    }
+
+    if (state.menuView !== "multiplayer") {
+      return;
+    }
+
+    if (!state.netplay.enabled) {
+      setMultiplayerMenuStatus("Create or join a room.");
+      return;
+    }
+
+    if (state.netplay.connecting) {
+      setMultiplayerMenuStatus("Connecting to room...");
+      return;
+    }
+
+    if (!connected) {
+      setMultiplayerMenuStatus("Disconnected. Reconnect or create a new room.", true);
+      return;
+    }
+
+    const role = isHost ? "HOST" : "PLAYER";
+    const startHint = isHost
+      ? (players.length >= 2 ? "Press START MATCH when ready." : "Need at least 2 players to start.")
+      : "Waiting for host to start.";
+    setMultiplayerMenuStatus(`Room ${code} • ${players.length}/4 • ${role}. ${startHint}`);
+  }
+
+  function resetNetplayState() {
+    state.netplay.enabled = false;
+    state.netplay.room = "";
+    state.netplay.playerId = "";
+    state.netplay.hostId = "";
+    state.netplay.players = [];
+    state.netplay.started = false;
+    state.netplay.matchBootstrapped = false;
+    state.netplay.isHost = false;
+    state.netplay.snapshotTimer = 0;
+  }
+
+  function stopNetplaySession(manual = true) {
+    disconnectNetplay(false);
+    resetNetplayState();
+    if (manual) {
+      setStatus("Select a match");
+      setMultiplayerMenuStatus("Create or join a room.");
+    }
+    refreshMultiplayerLobbyUi();
+  }
+
+  function requestRoomCodeFromServer() {
+    return new Promise((resolve, reject) => {
+      const wsUrl = getNetplayWsUrl();
+      if (!wsUrl) {
+        reject(new Error("server_required"));
+        return;
+      }
+
+      let settled = false;
+      const ws = new WebSocket(wsUrl);
+      const timer = setTimeout(() => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        try {
+          ws.close();
+        } catch (_err) {
+          // ignore
+        }
+        reject(new Error("timeout"));
+      }, 3800);
+
+      const finish = (ok, payload) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        clearTimeout(timer);
+        try {
+          ws.close();
+        } catch (_err) {
+          // ignore
+        }
+        if (ok) {
+          resolve(payload);
+        } else {
+          reject(payload instanceof Error ? payload : new Error("create_failed"));
+        }
+      };
+
+      ws.onopen = () => {
+        try {
+          ws.send(JSON.stringify({ t: "create" }));
+        } catch (_err) {
+          finish(false, _err);
+        }
+      };
+
+      ws.onmessage = (event) => {
+        if (typeof event.data !== "string") {
+          return;
+        }
+        let msg = null;
+        try {
+          msg = JSON.parse(event.data);
+        } catch (_err) {
+          return;
+        }
+        if (msg && msg.t === "created" && NETPLAY_ROOM_RE.test(`${msg.room || ""}`.toUpperCase())) {
+          finish(true, `${msg.room}`.toUpperCase());
+          return;
+        }
+        if (msg && msg.t === "err") {
+          finish(false, new Error(msg.msg || msg.code || "create_failed"));
+        }
+      };
+
+      ws.onerror = () => {
+        finish(false, new Error("socket_error"));
+      };
+
+      ws.onclose = () => {
+        if (!settled) {
+          finish(false, new Error("closed"));
+        }
+      };
+    });
+  }
+
+  function beginNetplayLobby(roomCode) {
+    const room = `${roomCode || ""}`.toUpperCase();
+    if (!NETPLAY_ROOM_RE.test(room)) {
+      setMultiplayerMenuStatus("Invalid room code.", true);
+      return;
+    }
+
+    stopNetplaySession(false);
+    state.netplay.enabled = true;
+    state.netplay.room = room;
+    state.netplay.playerId = makeNetplayPlayerId();
+    state.netplay.hostId = "";
+    state.netplay.players = [];
+    state.netplay.started = false;
+    state.netplay.matchBootstrapped = false;
+    state.netplay.wantsReconnect = true;
+    state.netplay.snapshotTimer = 0;
+    setStatus("Connecting to multiplayer room...");
+    connectNetplaySocket();
+    refreshMultiplayerLobbyUi();
+  }
+
+  async function createAndHostMultiplayerRoom() {
+    setMultiplayerMenuStatus("Creating room...");
+    try {
+      const room = await requestRoomCodeFromServer();
+      beginNetplayLobby(room);
+    } catch (_err) {
+      setMultiplayerMenuStatus("Could not create room. Run from local server and try again.", true);
+    }
+  }
+
+  async function copyMultiplayerRoomCode() {
+    const code = NETPLAY_ROOM_RE.test(state.netplay.room || "") ? state.netplay.room : "";
+    if (!code) {
+      return;
+    }
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        await navigator.clipboard.writeText(code);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = code;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      setMultiplayerMenuStatus("Room code copied.");
+    } catch (_err) {
+      setMultiplayerMenuStatus("Copy failed. Share code manually.", true);
+    }
+  }
+
+  function startNetplayMatch() {
+    if (!isNetplayEnabled() || !state.netplay.connected) {
+      setMultiplayerMenuStatus("Connect to a room first.", true);
+      return;
+    }
+    if (!isNetplayHost()) {
+      setMultiplayerMenuStatus("Only host can start the match.", true);
+      return;
+    }
+    if (sanitizeNetplayPlayers(state.netplay.players).length < 2) {
+      setMultiplayerMenuStatus("Need at least 2 players in room.", true);
+      return;
+    }
+    sendNetplay({
+      t: "startGame",
+      room: state.netplay.room,
+      playerId: state.netplay.playerId
+    });
+    setMultiplayerMenuStatus("Starting match...");
   }
 
   function setPairingStatus(text, isError = false) {
@@ -4859,6 +5164,7 @@
     if (state.netplay.matchBootstrapped) {
       return;
     }
+    enterInGameShell();
 
     const owners = getNetplayOwnerOrder();
     const humanPlayers = clamp(owners.length || 1, 1, 4);
@@ -4903,6 +5209,7 @@
     if (manual) {
       setStatus("Disconnected from multiplayer");
     }
+    refreshMultiplayerLobbyUi();
   }
 
   function handleNetplayMessage(rawData) {
@@ -4924,10 +5231,17 @@
       state.netplay.isHost = state.netplay.playerId === state.netplay.hostId;
       state.netplay.players = sanitizeNetplayPlayers(msg.players);
       state.netplay.started = Boolean(msg.started);
+      refreshMultiplayerLobbyUi();
       if (state.netplay.started && state.netplay.isHost) {
         setupHostNetplayMatch();
+      } else if (state.netplay.started && !state.netplay.isHost) {
+        state.phase = "resolving";
+        enterInGameShell();
+        setStatus("Waiting for host state...");
       } else if (!state.netplay.isHost) {
-        setStatus(state.netplay.started ? "Waiting for host state..." : "Waiting for host to start...");
+        setStatus("Waiting for host to start...");
+      } else {
+        setStatus("Room ready");
       }
       return;
     }
@@ -4937,8 +5251,13 @@
       state.netplay.isHost = state.netplay.playerId === state.netplay.hostId;
       state.netplay.players = sanitizeNetplayPlayers(msg.players);
       state.netplay.started = Boolean(msg.started);
+      refreshMultiplayerLobbyUi();
       if (state.netplay.started && state.netplay.isHost) {
         setupHostNetplayMatch();
+      } else if (state.netplay.started && !state.netplay.isHost) {
+        state.phase = "resolving";
+        enterInGameShell();
+        setStatus("Waiting for host state...");
       }
       return;
     }
@@ -4961,9 +5280,12 @@
 
     if (msg.t === "gameStart") {
       state.netplay.started = true;
+      refreshMultiplayerLobbyUi();
       if (isNetplayHost()) {
         setupHostNetplayMatch();
       } else {
+        state.phase = "resolving";
+        enterInGameShell();
         setStatus("Match started. Waiting for host state...");
       }
       return;
@@ -4971,6 +5293,8 @@
 
     if (msg.t === "expired") {
       disconnectNetplay(false);
+      resetNetplayState();
+      refreshMultiplayerLobbyUi();
       setStatus("Room expired");
       return;
     }
@@ -4989,11 +5313,13 @@
     const wsUrl = getNetplayWsUrl();
     if (!wsUrl) {
       setStatus("Multiplayer requires local server (npm start)");
+      refreshMultiplayerLobbyUi();
       return;
     }
 
     state.netplay.connecting = true;
     state.netplay.connected = false;
+    refreshMultiplayerLobbyUi();
     const ws = new WebSocket(wsUrl);
     state.netplay.socket = ws;
 
@@ -5022,6 +5348,7 @@
         return;
       }
       setStatus("Multiplayer connection error");
+      refreshMultiplayerLobbyUi();
     };
 
     ws.onclose = () => {
@@ -5030,6 +5357,7 @@
       }
       state.netplay.connected = false;
       state.netplay.connecting = false;
+      refreshMultiplayerLobbyUi();
       if (state.netplay.wantsReconnect) {
         scheduleNetplayReconnect();
       }
@@ -5214,15 +5542,7 @@
 
   function openMenu() {
     if (isNetplayEnabled()) {
-      disconnectNetplay(false);
-      state.netplay.enabled = false;
-      state.netplay.room = "";
-      state.netplay.playerId = "";
-      state.netplay.hostId = "";
-      state.netplay.players = [];
-      state.netplay.started = false;
-      state.netplay.matchBootstrapped = false;
-      state.netplay.isHost = false;
+      stopNetplaySession(false);
     }
     state.phase = "menu";
     state.pauseFromPhase = null;
@@ -5273,6 +5593,7 @@
     setSettingsOpen(false);
     setMenuView("main");
     syncMenuControls();
+    refreshMultiplayerLobbyUi();
     initMenuDemo(false);
     setStatus("Select a match");
   }
@@ -7296,7 +7617,11 @@
     const radius = BUILD_RADIUS;
     const minX = clamp(Math.floor(ix - radius), 0, state.worldW - 1);
     const maxX = clamp(Math.ceil(ix + radius), 0, state.worldW - 1);
+    const localPad = Math.ceil(radius * 1.7);
+    const localMinX = clamp(minX - localPad, 0, state.worldW - 1);
+    const localMaxX = clamp(maxX + localPad, 0, state.worldW - 1);
     const r2 = radius * radius;
+    const buildClamp = getSurfaceClampRange(getTerrainMode() === "valley" || state.config.mapSource === "drawn");
 
     for (let x = minX; x <= maxX; x += 1) {
       const dx = x - ix;
@@ -7310,13 +7635,19 @@
     }
 
     for (let pass = 0; pass < 3; pass += 1) {
-      for (let x = minX + 1; x < maxX; x += 1) {
+      for (let x = localMinX + 1; x < localMaxX; x += 1) {
         state.surfaceY[x] = (state.surfaceY[x - 1] + state.surfaceY[x] * 2 + state.surfaceY[x + 1]) * 0.25;
       }
     }
-    const buildClamp = getSurfaceClampRange(getTerrainMode() === "valley" || state.config.mapSource === "drawn");
-    const builtSurface = state.surfaceY.map((yy) => clamp(Math.round(yy), buildClamp.minY, buildClamp.maxY));
-    state.surfaceY = relaxSurfaceForMobility(builtSurface, 2, buildClamp.minY, buildClamp.maxY);
+
+    const localSlice = [];
+    for (let x = localMinX; x <= localMaxX; x += 1) {
+      localSlice.push(clamp(Math.round(state.surfaceY[x]), buildClamp.minY, buildClamp.maxY));
+    }
+    const relaxedLocal = relaxSurfaceForMobility(localSlice, 2, buildClamp.minY, buildClamp.maxY);
+    for (let i = 0; i < relaxedLocal.length; i += 1) {
+      state.surfaceY[localMinX + i] = relaxedLocal[i];
+    }
 
     // Clear crater void masks around the build impact so new terrain merges as solid mass.
     clearVoidCircle(ix, iy + radius * 0.15, radius * 1.08);
@@ -10669,12 +11000,18 @@
 
   if (ui.startBtn) {
     ui.startBtn.addEventListener("click", () => {
+      if (isNetplayEnabled()) {
+        stopNetplaySession();
+      }
       startGame();
     });
   }
 
   if (ui.quickStartBtn) {
     ui.quickStartBtn.addEventListener("click", () => {
+      if (isNetplayEnabled()) {
+        stopNetplaySession();
+      }
       state.config = {
         humanPlayers: 1,
         mapSize: DEFAULT_MAP_SIZE,
@@ -10698,7 +11035,81 @@
 
   if (ui.openCustomBtn) {
     ui.openCustomBtn.addEventListener("click", () => {
+      if (isNetplayEnabled()) {
+        stopNetplaySession();
+      }
       setMenuView("custom");
+    });
+  }
+
+  if (ui.openMultiplayerBtn) {
+    ui.openMultiplayerBtn.addEventListener("click", () => {
+      setMenuView("multiplayer");
+      refreshMultiplayerLobbyUi();
+    });
+  }
+
+  if (ui.multiplayerHostBtn) {
+    ui.multiplayerHostBtn.addEventListener("click", () => {
+      createAndHostMultiplayerRoom();
+    });
+  }
+
+  if (ui.multiplayerJoinBtn) {
+    ui.multiplayerJoinBtn.addEventListener("click", () => {
+      const room = `${ui.multiplayerRoomInput?.value || ""}`.toUpperCase().replace(/[^A-Z0-9]/g, "");
+      if (ui.multiplayerRoomInput) {
+        ui.multiplayerRoomInput.value = room;
+      }
+      if (!NETPLAY_ROOM_RE.test(room)) {
+        setMultiplayerMenuStatus("Enter a valid 6-character room code.", true);
+        return;
+      }
+      beginNetplayLobby(room);
+    });
+  }
+
+  if (ui.multiplayerRoomInput) {
+    ui.multiplayerRoomInput.addEventListener("input", () => {
+      ui.multiplayerRoomInput.value = `${ui.multiplayerRoomInput.value || ""}`
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, "")
+        .slice(0, 6);
+    });
+    ui.multiplayerRoomInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        if (ui.multiplayerJoinBtn) {
+          ui.multiplayerJoinBtn.click();
+        }
+      }
+    });
+  }
+
+  if (ui.multiplayerCopyCodeBtn) {
+    ui.multiplayerCopyCodeBtn.addEventListener("click", () => {
+      copyMultiplayerRoomCode();
+    });
+  }
+
+  if (ui.multiplayerStartBtn) {
+    ui.multiplayerStartBtn.addEventListener("click", () => {
+      startNetplayMatch();
+    });
+  }
+
+  if (ui.multiplayerLeaveBtn) {
+    ui.multiplayerLeaveBtn.addEventListener("click", () => {
+      stopNetplaySession();
+    });
+  }
+
+  if (ui.multiplayerBackBtn) {
+    ui.multiplayerBackBtn.addEventListener("click", () => {
+      if (isNetplayEnabled()) {
+        stopNetplaySession();
+      }
+      setMenuView("main");
     });
   }
 
