@@ -83,6 +83,34 @@
       touch-action: none;
     }
 
+    #hud-underlay {
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 100%;
+      bottom: 0;
+      z-index: 5;
+      pointer-events: none;
+      display: none;
+      background-color: #f8f8f5;
+      background-image:
+        repeating-linear-gradient(
+          to bottom,
+          transparent 0px,
+          transparent 33px,
+          rgba(66, 133, 244, 0.18) 33px,
+          rgba(66, 133, 244, 0.18) 34px
+        ),
+        linear-gradient(
+          to right,
+          transparent calc(var(--paper-margin-x) - 1px),
+          rgba(220, 38, 38, 0.22) calc(var(--paper-margin-x) - 1px),
+          rgba(220, 38, 38, 0.22) calc(var(--paper-margin-x) + 1px),
+          transparent calc(var(--paper-margin-x) + 1px)
+        );
+      background-position: 0 22px, 0 0;
+    }
+
     .menu-screen {
       position: fixed;
       inset: 0;
@@ -1566,6 +1594,7 @@
 <body>
   <div id="paper-bg" aria-hidden="true"></div>
   <canvas id="game"></canvas>
+  <div id="hud-underlay" aria-hidden="true"></div>
 
   <div class="menu-screen" id="menu-screen">
     <div class="menu-card main-menu-card" id="main-menu-card">
@@ -1869,7 +1898,8 @@
     devModeToggle: document.getElementById("dev-mode-toggle"),
     devModeValue: document.getElementById("dev-mode-value"),
     hudLayoutSelect: document.getElementById("hud-layout-select"),
-    bottomUi: document.getElementById("bottom-ui")
+    bottomUi: document.getElementById("bottom-ui"),
+    hudUnderlay: document.getElementById("hud-underlay")
   };
 
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
@@ -1955,6 +1985,7 @@
   const CAMERA_ZOOM_HOLD_DELAY_MS = 170;
   const CAMERA_ZOOM_HOLD_INTERVAL_MS = 120;
   const CAMERA_MAX_ZOOM = 1.65;
+  const TOUCH_PINCH_MIN_DISTANCE = 20;
   const MAX_POWERUPS_ON_MAP = 3;
   const DRAG_POWER_DISTANCE = 230;
   const DRAG_MIN_DISTANCE = 12;
@@ -2247,6 +2278,15 @@
     pointerId: null
   };
 
+  const touchGesture = {
+    pointers: new Map(),
+    pinchActive: false,
+    suppressAimUntilClear: false,
+    anchorDistance: 0,
+    anchorZoom: 1,
+    anchorWorldX: 0
+  };
+
   function setCameraButtonPanDir(dir) {
     const nextDir = clamp(Math.sign(dir), -1, 1);
     state.cameraButtonPanDir = nextDir;
@@ -2521,7 +2561,12 @@
   }
 
   function isMobilePointerDevice() {
-    return Boolean(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+    const coarsePointer = Boolean(
+      window.matchMedia &&
+      (window.matchMedia("(any-pointer: coarse)").matches || window.matchMedia("(pointer: coarse)").matches)
+    );
+    const touchCapable = Number(navigator.maxTouchPoints || 0) > 0 || "ontouchstart" in window;
+    return coarsePointer || touchCapable;
   }
 
   function getWorldRenderYOffset() {
@@ -2591,6 +2636,22 @@
     const cushion = mobileLandscape ? 3 : 8;
     const capRatio = mobileLandscape ? 0.5 : 0.56;
     return clamp(Math.ceil(reserve + cushion), 0, Math.floor(canvas.height * capRatio));
+  }
+
+  function syncHudUnderlay() {
+    if (!ui.hudUnderlay) {
+      return;
+    }
+    const reserve = getHudBottomReservePx();
+    const visible = reserve > 0 && document.body.classList.contains("in-game");
+    if (!visible) {
+      ui.hudUnderlay.style.display = "none";
+      ui.hudUnderlay.style.top = "100%";
+      return;
+    }
+    const top = clamp(canvas.height - reserve, 0, canvas.height);
+    ui.hudUnderlay.style.display = "block";
+    ui.hudUnderlay.style.top = `${top}px`;
   }
 
   if (ui.powerSlider) {
@@ -5124,6 +5185,7 @@
       pointer.x = canvas.width * 0.5;
       pointer.y = canvas.height * 0.5;
     }
+    syncHudUnderlay();
   }
 
   function getViewportSize() {
@@ -6183,6 +6245,107 @@
     pointer.x = event.clientX - rect.left;
     pointer.y = event.clientY - rect.top;
     pointer.initialized = true;
+  }
+
+  function isTouchPointerEvent(event) {
+    return event.pointerType === "touch";
+  }
+
+  function trackTouchPointer(event) {
+    if (!isTouchPointerEvent(event)) {
+      return false;
+    }
+    const rect = canvas.getBoundingClientRect();
+    touchGesture.pointers.set(event.pointerId, {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top
+    });
+    return true;
+  }
+
+  function untrackTouchPointer(pointerId) {
+    touchGesture.pointers.delete(pointerId);
+    if (touchGesture.pointers.size === 0) {
+      touchGesture.suppressAimUntilClear = false;
+    }
+  }
+
+  function shouldHandlePinchGesture() {
+    return state.phase !== "menu" && state.phase !== "paused" && state.phase !== "draw_map";
+  }
+
+  function getTouchPair() {
+    if (touchGesture.pointers.size < 2) {
+      return null;
+    }
+    const values = Array.from(touchGesture.pointers.values());
+    return [values[0], values[1]];
+  }
+
+  function cancelAimDragCapture() {
+    if (!aimDrag.active) {
+      return;
+    }
+    const id = aimDrag.pointerId;
+    setAimDragActive(false);
+    if (id !== null && canvas.releasePointerCapture && canvas.hasPointerCapture && canvas.hasPointerCapture(id)) {
+      canvas.releasePointerCapture(id);
+    }
+  }
+
+  function startPinchGesture() {
+    if (!shouldHandlePinchGesture()) {
+      return false;
+    }
+    const pair = getTouchPair();
+    if (!pair) {
+      return false;
+    }
+    cancelAimDragCapture();
+    const [a, b] = pair;
+    const midX = (a.x + b.x) * 0.5;
+    const midY = (a.y + b.y) * 0.5;
+    const dist = Math.hypot(a.x - b.x, a.y - b.y);
+    touchGesture.pinchActive = true;
+    touchGesture.suppressAimUntilClear = true;
+    touchGesture.anchorDistance = Math.max(TOUCH_PINCH_MIN_DISTANCE, dist);
+    touchGesture.anchorZoom = Math.max(0.001, state.cameraZoom || 1);
+    touchGesture.anchorWorldX = screenToWorldX(midX);
+    state.cameraManualMode = true;
+    // Keep shared pointer position in sync for edge look fallback when gesture ends.
+    pointer.x = midX;
+    pointer.y = midY;
+    pointer.initialized = true;
+    return true;
+  }
+
+  function updatePinchGesture() {
+    if (!touchGesture.pinchActive) {
+      return false;
+    }
+    const pair = getTouchPair();
+    if (!pair) {
+      touchGesture.pinchActive = false;
+      return false;
+    }
+    const [a, b] = pair;
+    const midX = (a.x + b.x) * 0.5;
+    const midY = (a.y + b.y) * 0.5;
+    const dist = Math.max(TOUCH_PINCH_MIN_DISTANCE, Math.hypot(a.x - b.x, a.y - b.y));
+    const zoomRatio = dist / Math.max(TOUCH_PINCH_MIN_DISTANCE, touchGesture.anchorDistance);
+    const nextZoom = clampCameraZoom(touchGesture.anchorZoom * zoomRatio);
+    state.cameraZoom = nextZoom;
+    state.cameraX = clampCamera(touchGesture.anchorWorldX - midX / Math.max(0.001, nextZoom));
+    pointer.x = midX;
+    pointer.y = midY;
+    pointer.initialized = true;
+    return true;
+  }
+
+  function endPinchGestureIfNeeded() {
+    if (touchGesture.pinchActive && touchGesture.pointers.size < 2) {
+      touchGesture.pinchActive = false;
+    }
   }
 
   function applyDragAimToActiveTank(worldX, worldY) {
@@ -9420,6 +9583,7 @@
     }
 
     updateWeaponCardUi(active, canControl, isDrawPhase);
+    syncHudUnderlay();
   }
 
   let lastTs = performance.now();
@@ -9622,6 +9786,20 @@
     if (state.phase === "menu" || state.phase === "paused") {
       return;
     }
+    if (shouldHandlePinchGesture() && trackTouchPointer(event)) {
+      if (touchGesture.pointers.size >= 2) {
+        if (!touchGesture.pinchActive) {
+          startPinchGesture();
+        }
+        updatePinchGesture();
+        event.preventDefault();
+        return;
+      }
+      if (touchGesture.suppressAimUntilClear) {
+        event.preventDefault();
+        return;
+      }
+    }
     if (state.phase === "draw_map") {
       if (!state.drawMap.drawing) {
         state.drawMap.pointerId = event.pointerId;
@@ -9658,6 +9836,19 @@
 
   canvas.addEventListener("pointermove", (event) => {
     updatePointerFromEvent(event);
+    if (shouldHandlePinchGesture() && trackTouchPointer(event)) {
+      if (touchGesture.pointers.size >= 2 || touchGesture.pinchActive) {
+        if (!touchGesture.pinchActive) {
+          startPinchGesture();
+        }
+        updatePinchGesture();
+        event.preventDefault();
+        return;
+      }
+      if (touchGesture.suppressAimUntilClear) {
+        return;
+      }
+    }
     if (state.phase === "draw_map") {
       if (!state.drawMap.drawing) {
         return;
@@ -9682,6 +9873,15 @@
 
   canvas.addEventListener("pointerup", (event) => {
     updatePointerFromEvent(event);
+    if (isTouchPointerEvent(event)) {
+      const pinchWasActive = touchGesture.pinchActive;
+      untrackTouchPointer(event.pointerId);
+      endPinchGestureIfNeeded();
+      if (pinchWasActive || touchGesture.suppressAimUntilClear) {
+        event.preventDefault();
+        return;
+      }
+    }
     if (state.phase === "draw_map") {
       return;
     }
@@ -9708,6 +9908,14 @@
   });
 
   canvas.addEventListener("pointercancel", (event) => {
+    if (isTouchPointerEvent(event)) {
+      const pinchWasActive = touchGesture.pinchActive;
+      untrackTouchPointer(event.pointerId);
+      endPinchGestureIfNeeded();
+      if (pinchWasActive || touchGesture.suppressAimUntilClear) {
+        return;
+      }
+    }
     if (state.phase === "draw_map" && state.drawMap.pointerId === event.pointerId) {
       state.drawMap.pointerId = null;
       state.drawMap.drawing = false;
@@ -10328,13 +10536,24 @@
   bindCameraPanButton(ui.panLeftBtn, -1);
   bindCameraPanButton(ui.panRightBtn, 1);
 
-  window.addEventListener("pointerup", () => {
+  window.addEventListener("pointerup", (event) => {
+    if (isTouchPointerEvent(event)) {
+      untrackTouchPointer(event.pointerId);
+      endPinchGestureIfNeeded();
+    }
     if (state.cameraButtonPanDir !== 0) {
       setCameraButtonPanDir(0);
     }
     if (state.mobileDriveDir !== 0) {
       setMobileDriveDir(0);
     }
+  });
+  window.addEventListener("pointercancel", (event) => {
+    if (!isTouchPointerEvent(event)) {
+      return;
+    }
+    untrackTouchPointer(event.pointerId);
+    endPinchGestureIfNeeded();
   });
   window.addEventListener("pointerdown", (event) => {
     if (!ui.powerupMenu || ui.powerupMenu.classList.contains("hidden")) {
@@ -10352,6 +10571,9 @@
     setPowerupMenuOpen(false);
   });
   window.addEventListener("blur", () => {
+    touchGesture.pointers.clear();
+    touchGesture.pinchActive = false;
+    touchGesture.suppressAimUntilClear = false;
     if (state.cameraButtonPanDir !== 0) {
       setCameraButtonPanDir(0);
     }
