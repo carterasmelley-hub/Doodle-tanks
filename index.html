@@ -638,6 +638,7 @@
       padding: 8px 6px;
       border-radius: 9px;
       font-size: 19px;
+      font-weight: 900;
       line-height: 1;
       letter-spacing: 0;
     }
@@ -1277,7 +1278,8 @@
       min-height: 62px !important;
       padding: 8px 6px !important;
       border-radius: 9px !important;
-      font-size: 20px !important;
+      font-size: 24px !important;
+      font-weight: 900 !important;
       line-height: 1 !important;
     }
 
@@ -1320,7 +1322,7 @@
       .drive-btn {
         min-width: 34px !important;
         min-height: 54px !important;
-        font-size: 16px !important;
+        font-size: 20px !important;
       }
 
       #powerup-menu-btn {
@@ -1392,8 +1394,10 @@
         display: inline-flex !important;
         align-items: center;
         justify-content: center;
-        min-width: 42px !important;
-        min-height: 64px !important;
+        min-width: 50px !important;
+        min-height: 70px !important;
+        font-size: 24px !important;
+        font-weight: 900 !important;
       }
 
       .gameover-restart-btn {
@@ -1453,6 +1457,13 @@
         padding: 4px 5px !important;
       }
 
+      .drive-btn {
+        min-width: 38px !important;
+        min-height: 52px !important;
+        font-size: 20px !important;
+        font-weight: 900 !important;
+      }
+
       #powerup-menu-btn {
         min-width: 82px !important;
         min-height: 32px !important;
@@ -1498,6 +1509,13 @@
         min-width: 28px !important;
         min-height: 36px !important;
         font-size: 12px !important;
+      }
+
+      .drive-btn {
+        min-width: 34px !important;
+        min-height: 44px !important;
+        font-size: 18px !important;
+        font-weight: 900 !important;
       }
 
       #powerup-menu-btn {
@@ -1712,11 +1730,11 @@
   <div class="bottom-ui" id="bottom-ui">
     <section class="control-panel">
       <div class="action-center">
-        <button id="drive-left-btn" class="drive-btn" type="button" aria-label="Move left">+&lt;</button>
+        <button id="drive-left-btn" class="drive-btn" type="button" aria-label="Move left">&lt;</button>
         <button id="pan-left-btn" class="cam-pan-btn" type="button" aria-label="Pan left">&lt;</button>
         <button id="fire-btn" type="button">FIRE</button>
         <button id="pan-right-btn" class="cam-pan-btn" type="button" aria-label="Pan right">&gt;</button>
-        <button id="drive-right-btn" class="drive-btn" type="button" aria-label="Move right">&gt;+</button>
+        <button id="drive-right-btn" class="drive-btn" type="button" aria-label="Move right">&gt;</button>
       </div>
       <div class="utility-actions">
         <button id="powerup-menu-btn" type="button">POWERS</button>
@@ -2512,6 +2530,7 @@
       return 0;
     }
     const gameplayBottom = getGameplayBottomY();
+    const mobileLandscape = canvas.width > canvas.height;
     let focusY = WORLD_H * 0.58;
     const active = getActiveTank();
     if (active) {
@@ -2519,9 +2538,10 @@
     } else if (Array.isArray(state.surfaceY) && state.surfaceY.length) {
       focusY = state.surfaceY[Math.floor(state.surfaceY.length * 0.5)] || focusY;
     }
-    const desiredScreenY = clamp(gameplayBottom * 0.72, 170, gameplayBottom - 48);
+    const desiredRatio = mobileLandscape ? 0.64 : 0.72;
+    const desiredScreenY = clamp(gameplayBottom * desiredRatio, mobileLandscape ? 132 : 170, gameplayBottom - (mobileLandscape ? 42 : 48));
     // Allow negative offset on mobile so terrain can move up into view when HUD takes bottom space.
-    const minOffset = Math.min(0, gameplayBottom - WORLD_H * zoom - 14);
+    const minOffset = Math.min(0, gameplayBottom - WORLD_H * zoom - (mobileLandscape ? 24 : 14));
     const maxOffset = gameplayBottom * 0.46;
     return clamp(desiredScreenY - focusY * zoom, minOffset, maxOffset);
   }
@@ -2567,7 +2587,10 @@
     }
 
     // Keep a little air above HUD so terrain/tanks don't feel glued to buttons.
-    return clamp(Math.ceil(reserve + 8), 0, Math.floor(canvas.height * 0.56));
+    const mobileLandscape = canvas.width > canvas.height;
+    const cushion = mobileLandscape ? 3 : 8;
+    const capRatio = mobileLandscape ? 0.5 : 0.56;
+    return clamp(Math.ceil(reserve + cushion), 0, Math.floor(canvas.height * capRatio));
   }
 
   if (ui.powerSlider) {
