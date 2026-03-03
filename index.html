@@ -4769,9 +4769,8 @@
     state.netplay.startRequested = true;
     state.netplay.startRequestAt = performance.now();
     state.netplay.startRetryCount = 0;
-    // Start immediately on host so UI never remains stuck in menu while waiting on a network roundtrip.
-    state.netplay.started = true;
-    setupHostNetplayMatch();
+    // Wait for authoritative server start confirmation before launching gameplay locally.
+    state.netplay.started = false;
     sendNetplayStartRequest();
     setMultiplayerMenuStatus("Starting match...");
     refreshMultiplayerLobbyUi();
@@ -5843,7 +5842,8 @@
 
     let playedNetFxEvent = false;
     if (isNetplayClientMirror()) {
-      if (state.netplay.started && snapshotPhase !== "menu") {
+      if (snapshotPhase !== "menu") {
+        state.netplay.started = true;
         enterInGameShell();
       }
       const incomingSeq = Math.max(0, Number(snapshot.netFxSeq || 0));
@@ -11786,6 +11786,13 @@
       broadcastNetplaySnapshot(false, dt);
     }
 
+    if (state.phase !== "menu") {
+      if (ui.menuScreen && !ui.menuScreen.classList.contains("hidden")) {
+        ui.menuScreen.classList.add("hidden");
+      }
+      document.body.classList.add("in-game");
+    }
+
     updateCamera(dt);
     if (state.phase === "draw_map" && state.drawMap.drawing && pointer.initialized) {
       appendDrawPoint(screenToWorldX(pointer.x), screenToWorldY(pointer.y));
@@ -11883,7 +11890,7 @@
       }
     }
 
-    if (state.phase === "menu" && (event.code === "Enter" || event.code === "Space")) {
+    if (state.phase === "menu" && state.menuView === "main" && (event.code === "Enter" || event.code === "Space")) {
       event.preventDefault();
       startGame();
       return;
