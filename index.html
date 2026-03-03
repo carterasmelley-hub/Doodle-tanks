@@ -2539,7 +2539,11 @@
       wantsReconnect: false,
       matchBootstrapped: false,
       mirrorInitialized: false,
-      matchConfig: null
+      matchConfig: null,
+      startRequested: false,
+      startRequestAt: 0,
+      startRetryTimer: null,
+      startRetryCount: 0
     },
     netFxSeq: 0,
     netFxEvent: null,
@@ -4529,7 +4533,7 @@
       ui.multiplayerCopyCodeBtn.disabled = !code;
     }
     if (ui.multiplayerStartBtn) {
-      ui.multiplayerStartBtn.disabled = !(connected && isHost && players.length >= 2);
+      ui.multiplayerStartBtn.disabled = state.netplay.startRequested || !(connected && isHost && players.length >= 2);
       ui.multiplayerStartBtn.style.display = isHost ? "" : "none";
     }
     if (ui.multiplayerLeaveBtn) {
@@ -4557,6 +4561,11 @@
       return;
     }
 
+    if (state.netplay.startRequested && isHost) {
+      setMultiplayerMenuStatus(`Room ${code} • ${players.length}/4 • HOST. Starting match...`);
+      return;
+    }
+
     const role = isHost ? "HOST" : "PLAYER";
     const startHint = isHost
       ? (players.length >= 2 ? "Press START MATCH when ready." : "Need at least 2 players to start.")
@@ -4565,6 +4574,7 @@
   }
 
   function resetNetplayState() {
+    clearNetplayStartRequest();
     state.netplay.enabled = false;
     state.netplay.menuStep = "landing";
     state.netplay.room = "";
@@ -4689,6 +4699,7 @@
     state.netplay.players = [];
     state.netplay.started = false;
     state.netplay.matchBootstrapped = false;
+    clearNetplayStartRequest();
     state.netplay.wantsReconnect = true;
     state.netplay.snapshotTimer = 0;
     state.netplay.terrainSyncTimer = 0;
@@ -4755,15 +4766,15 @@
     }
     // Multiplayer uses host-selected custom settings as base, then enforces no-AI/open-lobby ownership.
     state.netplay.matchConfig = normalizeTeamConfig(getMenuConfig());
+    state.netplay.startRequested = true;
+    state.netplay.startRequestAt = performance.now();
+    state.netplay.startRetryCount = 0;
     // Start immediately on host so UI never remains stuck in menu while waiting on a network roundtrip.
     state.netplay.started = true;
     setupHostNetplayMatch();
-    sendNetplay({
-      t: "startGame",
-      room: state.netplay.room,
-      playerId: state.netplay.playerId
-    });
+    sendNetplayStartRequest();
     setMultiplayerMenuStatus("Starting match...");
+    refreshMultiplayerLobbyUi();
   }
 
   function setPairingStatus(text, isError = false) {
@@ -5279,6 +5290,51 @@
     }
     clearTimeout(state.netplay.reconnectTimer);
     state.netplay.reconnectTimer = null;
+  }
+
+  function clearNetplayStartRetryTimer() {
+    if (!state.netplay.startRetryTimer) {
+      return;
+    }
+    clearTimeout(state.netplay.startRetryTimer);
+    state.netplay.startRetryTimer = null;
+  }
+
+  function clearNetplayStartRequest() {
+    state.netplay.startRequested = false;
+    state.netplay.startRequestAt = 0;
+    state.netplay.startRetryCount = 0;
+    clearNetplayStartRetryTimer();
+  }
+
+  function sendNetplayStartRequest() {
+    if (!isNetplayEnabled() || !isNetplayHost() || !state.netplay.startRequested) {
+      return;
+    }
+    if (!state.netplay.connected) {
+      return;
+    }
+    sendNetplay({
+      t: "startGame",
+      room: state.netplay.room,
+      playerId: state.netplay.playerId
+    });
+    clearNetplayStartRetryTimer();
+    if (!state.netplay.startRequested) {
+      return;
+    }
+    if (state.netplay.startRetryCount >= 12) {
+      clearNetplayStartRequest();
+      if (isNetplayHost()) {
+        state.netplay.started = false;
+        setMultiplayerMenuStatus("Start signal timed out. Click START MATCH again.", true);
+      }
+      return;
+    }
+    state.netplay.startRetryCount += 1;
+    state.netplay.startRetryTimer = setTimeout(() => {
+      sendNetplayStartRequest();
+    }, 280);
   }
 
   function closeNetplaySocket() {
@@ -6010,6 +6066,7 @@
   }
 
   function disconnectNetplay(manual = true) {
+    clearNetplayStartRequest();
     clearNetplayReconnectTimer();
     state.netplay.wantsReconnect = false;
     state.netplay.connected = false;
@@ -6045,6 +6102,11 @@
       state.netplay.isHost = state.netplay.playerId === state.netplay.hostId;
       state.netplay.players = sanitizeNetplayPlayers(msg.players);
       state.netplay.started = Boolean(msg.started);
+      if (state.netplay.started) {
+        clearNetplayStartRequest();
+      } else if (state.netplay.startRequested && state.netplay.isHost) {
+        sendNetplayStartRequest();
+      }
       state.netplay.mirrorInitialized = false;
       refreshMultiplayerLobbyUi();
       if (state.netplay.started && state.netplay.isHost) {
@@ -6068,7 +6130,18 @@
       state.netplay.hostId = `${msg.hostId || state.netplay.hostId || ""}`.toUpperCase();
       state.netplay.isHost = state.netplay.playerId === state.netplay.hostId;
       state.netplay.players = sanitizeNetplayPlayers(msg.players);
-      state.netplay.started = Boolean(msg.started);
+      const incomingStarted = Boolean(msg.started);
+      if (incomingStarted) {
+        state.netplay.started = true;
+        clearNetplayStartRequest();
+      } else {
+        const canIgnoreFalseStart = state.netplay.startRequested &&
+          isNetplayHost() &&
+          performance.now() - Number(state.netplay.startRequestAt || 0) < 4500;
+        if (!canIgnoreFalseStart) {
+          state.netplay.started = false;
+        }
+      }
       state.netplay.mirrorInitialized = false;
       refreshMultiplayerLobbyUi();
       if (state.netplay.started && state.netplay.isHost) {
@@ -6077,6 +6150,16 @@
         state.phase = "resolving";
         enterInGameShell();
         setStatus("Waiting for host state...");
+      }
+      return;
+    }
+
+    if (msg.t === "startAck") {
+      state.netplay.started = true;
+      clearNetplayStartRequest();
+      refreshMultiplayerLobbyUi();
+      if (isNetplayHost()) {
+        setupHostNetplayMatch();
       }
       return;
     }
@@ -6099,6 +6182,7 @@
 
     if (msg.t === "gameStart") {
       state.netplay.started = true;
+      clearNetplayStartRequest();
       state.netplay.mirrorInitialized = false;
       state.netFxSeenSeq = 0;
       refreshMultiplayerLobbyUi();
@@ -6121,6 +6205,18 @@
     }
 
     if (msg.t === "err") {
+      if (state.netplay.startRequested) {
+        clearNetplayStartRequest();
+      }
+      const rawCode = `${msg.code || ""}`.toLowerCase();
+      const msgText = rawCode === "need_players"
+        ? "Need at least 2 players to start."
+        : rawCode === "host_only"
+          ? "Only host can start the match."
+          : rawCode === "room_mismatch"
+            ? "Room mismatch. Rejoin and try START MATCH again."
+            : (msg.msg || msg.code || "error");
+      setMultiplayerMenuStatus(msgText, true);
       setStatus(`Multiplayer error: ${msg.msg || msg.code || "error"}`);
     }
   }
