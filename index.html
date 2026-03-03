@@ -14,6 +14,50 @@
       --player: #00ff00;
       --enemy: #ff00ff;
       --paper-margin-x: 84px;
+      --paper-bg: #f8f8f5;
+      --paper-line: rgba(66, 133, 244, 0.18);
+      --paper-margin-line: rgba(220, 38, 38, 0.22);
+      --menu-overlay: rgba(255, 255, 255, 0.72);
+      --menu-overlay-custom: rgba(255, 255, 255, 0.56);
+      --menu-overlay-mp: rgba(255, 255, 255, 0.62);
+      --panel-bg-strong: rgba(255, 255, 255, 0.96);
+      --panel-text: #111111;
+      --panel-error: #b91c1c;
+      --canvas-ink: rgba(0, 0, 0, 0.95);
+      --canvas-muted-ink: rgba(0, 0, 0, 0.7);
+      --canvas-paper: rgba(255, 255, 255, 0.95);
+      --canvas-paper-soft: rgba(255, 255, 255, 0.92);
+      --canvas-ghost: rgba(0, 0, 0, 0.24);
+      --canvas-ghost-stroke: rgba(0, 0, 0, 0.4);
+      --canvas-terrain-stroke: #000000;
+      --canvas-crater-fill: #6a6a6a;
+      --canvas-crater-edge: #000000;
+    }
+
+    body.dark-mode {
+      --paper: #15181f;
+      --ink: #f2f4f8;
+      --void: #242832;
+      --card: rgba(18, 22, 29, 0.92);
+      --card-border: rgba(224, 231, 255, 0.56);
+      --paper-bg: #0c1016;
+      --paper-line: rgba(120, 164, 255, 0.2);
+      --paper-margin-line: rgba(255, 120, 120, 0.2);
+      --menu-overlay: rgba(8, 10, 14, 0.74);
+      --menu-overlay-custom: rgba(8, 10, 14, 0.66);
+      --menu-overlay-mp: rgba(8, 10, 14, 0.72);
+      --panel-bg-strong: rgba(17, 22, 30, 0.95);
+      --panel-text: #e8ecf4;
+      --panel-error: #ff7b7b;
+      --canvas-ink: rgba(238, 242, 255, 0.95);
+      --canvas-muted-ink: rgba(222, 228, 246, 0.78);
+      --canvas-paper: rgba(16, 20, 28, 0.93);
+      --canvas-paper-soft: rgba(20, 26, 36, 0.9);
+      --canvas-ghost: rgba(242, 246, 255, 0.34);
+      --canvas-ghost-stroke: rgba(238, 244, 255, 0.58);
+      --canvas-terrain-stroke: rgba(242, 246, 255, 0.94);
+      --canvas-crater-fill: #2e3442;
+      --canvas-crater-edge: rgba(240, 245, 255, 0.88);
     }
 
     * {
@@ -26,7 +70,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #f8f8f5;
+      background: var(--paper-bg);
       color: var(--ink);
       font-family: "Comic Sans MS", "Chalkboard SE", "Trebuchet MS", sans-serif;
       -webkit-touch-callout: none;
@@ -37,20 +81,20 @@
       inset: 0;
       z-index: 0;
       pointer-events: none;
-      background-color: #f8f8f5;
+      background-color: var(--paper-bg);
       background-image:
         repeating-linear-gradient(
           to bottom,
           transparent 0px,
           transparent 33px,
-          rgba(66, 133, 244, 0.18) 33px,
-          rgba(66, 133, 244, 0.18) 34px
+          var(--paper-line) 33px,
+          var(--paper-line) 34px
         ),
         linear-gradient(
           to right,
           transparent calc(var(--paper-margin-x) - 1px),
-          rgba(220, 38, 38, 0.22) calc(var(--paper-margin-x) - 1px),
-          rgba(220, 38, 38, 0.22) calc(var(--paper-margin-x) + 1px),
+          var(--paper-margin-line) calc(var(--paper-margin-x) - 1px),
+          var(--paper-margin-line) calc(var(--paper-margin-x) + 1px),
           transparent calc(var(--paper-margin-x) + 1px)
         );
       background-position: 0 22px, 0 0;
@@ -93,20 +137,20 @@
       z-index: 5;
       pointer-events: none;
       display: none;
-      background-color: #f8f8f5;
+      background-color: var(--paper-bg);
       background-image:
         repeating-linear-gradient(
           to bottom,
           transparent 0px,
           transparent 33px,
-          rgba(66, 133, 244, 0.18) 33px,
-          rgba(66, 133, 244, 0.18) 34px
+          var(--paper-line) 33px,
+          var(--paper-line) 34px
         ),
         linear-gradient(
           to right,
           transparent calc(var(--paper-margin-x) - 1px),
-          rgba(220, 38, 38, 0.22) calc(var(--paper-margin-x) - 1px),
-          rgba(220, 38, 38, 0.22) calc(var(--paper-margin-x) + 1px),
+          var(--paper-margin-line) calc(var(--paper-margin-x) - 1px),
+          var(--paper-margin-line) calc(var(--paper-margin-x) + 1px),
           transparent calc(var(--paper-margin-x) + 1px)
         );
       background-position: 0 22px, 0 0;
@@ -118,11 +162,11 @@
       z-index: 40;
       display: grid;
       place-items: center;
-      background: rgba(255, 255, 255, 0.72);
+      background: var(--menu-overlay);
     }
 
     body.menu-custom .menu-screen {
-      background: rgba(255, 255, 255, 0.56);
+      background: var(--menu-overlay-custom);
     }
 
     body.menu-multiplayer .menu-screen {
@@ -133,7 +177,7 @@
       gap: 12px;
       padding: 12px 10px;
       overflow: auto;
-      background: rgba(255, 255, 255, 0.62);
+      background: var(--menu-overlay-mp);
     }
 
     .menu-screen.hidden {
@@ -168,12 +212,27 @@
     }
 
     body.menu-multiplayer #mp-settings-actions {
-      display: grid !important;
+      display: none;
       margin-top: 8px;
+    }
+
+    body.menu-multiplayer.menu-multiplayer-lobby #mp-settings-actions {
+      display: grid !important;
     }
 
     body.menu-multiplayer #custom-menu-card .menu-grid {
       margin-bottom: 6px;
+    }
+
+    #mp-lobby-settings-head {
+      display: none;
+      gap: 6px;
+      margin: 2px 0 10px;
+      text-align: left;
+    }
+
+    body.menu-multiplayer.menu-multiplayer-lobby #mp-lobby-settings-head {
+      display: grid;
     }
 
     body.menu-multiplayer #human-players-field,
@@ -272,8 +331,8 @@
       font-family: inherit;
       padding: 6px 8px;
       font-size: 13px;
-      background: #ffffff;
-      color: #000000;
+      background: var(--panel-bg-strong);
+      color: var(--ink);
     }
 
     .menu-field input {
@@ -283,8 +342,8 @@
       font-family: inherit;
       padding: 7px 8px;
       font-size: 13px;
-      background: #ffffff;
-      color: #000000;
+      background: var(--panel-bg-strong);
+      color: var(--ink);
       text-transform: uppercase;
       letter-spacing: 0.06em;
     }
@@ -298,7 +357,7 @@
       margin-top: 10px;
       border: 2px solid var(--card-border);
       border-radius: 10px;
-      background: rgba(255, 255, 255, 0.96);
+      background: var(--panel-bg-strong);
       padding: 8px;
       display: grid;
       gap: 8px;
@@ -335,8 +394,8 @@
     }
 
     .power-filter-item.active {
-      background: #1f1f1f;
-      color: #ffffff;
+      background: var(--ink);
+      color: var(--paper);
     }
 
     .power-filter-item:active {
@@ -347,7 +406,7 @@
       margin-top: 10px;
       border: 2px solid var(--card-border);
       border-radius: 10px;
-      background: rgba(255, 255, 255, 0.96);
+      background: var(--panel-bg-strong);
       padding: 10px;
       display: grid;
       gap: 8px;
@@ -394,7 +453,7 @@
       letter-spacing: 0.16em;
       user-select: all;
       -webkit-user-select: all;
-      background: #ffffff;
+      background: var(--panel-bg-strong);
     }
 
     .pairing-link {
@@ -404,8 +463,8 @@
       font-family: inherit;
       padding: 7px 8px;
       font-size: 12px;
-      background: #ffffff;
-      color: #000000;
+      background: var(--panel-bg-strong);
+      color: var(--ink);
     }
 
     .pairing-status {
@@ -413,11 +472,11 @@
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 0.02em;
-      color: #111111;
+      color: var(--panel-text);
     }
 
     .pairing-status.error {
-      color: #b91c1c;
+      color: var(--panel-error);
     }
 
     .pairing-qr-wrap {
@@ -431,7 +490,7 @@
       height: auto;
       border: 2px solid var(--ink);
       border-radius: 8px;
-      background: #ffffff;
+      background: var(--panel-bg-strong);
       image-rendering: pixelated;
     }
 
@@ -469,8 +528,8 @@
       border-radius: 12px;
       font-size: 18px;
       letter-spacing: 0.06em;
-      background: rgba(255, 255, 255, 0.96);
-      border: 3px solid #000000;
+      background: var(--panel-bg-strong);
+      border: 3px solid var(--ink);
       box-shadow: 0 3px 0 rgba(0, 0, 0, 0.2);
     }
 
@@ -550,7 +609,7 @@
 
     .mini-track {
       height: 7px;
-      border: 1.5px solid #000000;
+      border: 1.5px solid var(--ink);
       border-radius: 999px;
       background: rgba(0, 0, 0, 0.1);
       overflow: hidden;
@@ -560,7 +619,7 @@
     .mini-fill {
       height: 100%;
       width: 0%;
-      background: #000000;
+      background: var(--ink);
     }
 
     .mini-value {
@@ -674,9 +733,9 @@
     }
 
     .power-btn.active {
-      background: #1f1f1f;
-      color: #ffffff;
-      box-shadow: 0 0 0 1px #000000 inset;
+      background: var(--ink);
+      color: var(--paper);
+      box-shadow: 0 0 0 1px var(--ink) inset;
     }
 
     .power-btn:active,
@@ -763,8 +822,8 @@
     }
 
     #powerup-menu-btn.active {
-      background: #1f1f1f;
-      color: #ffffff;
+      background: var(--ink);
+      color: var(--paper);
     }
 
     #fire-btn:active,
@@ -918,8 +977,8 @@
       font-weight: 700;
       letter-spacing: 0.05em;
       cursor: pointer;
-      background: #ffffff;
-      color: #000000;
+      background: var(--panel-bg-strong);
+      color: var(--ink);
       user-select: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
@@ -968,8 +1027,8 @@
       font-family: inherit;
       padding: 6px 8px;
       font-size: 13px;
-      background: #ffffff;
-      color: #000000;
+      background: var(--panel-bg-strong);
+      color: var(--ink);
     }
 
     .settings-head {
@@ -993,7 +1052,7 @@
       z-index: 50;
       display: grid;
       place-items: center;
-      background: rgba(255, 255, 255, 0.72);
+      background: var(--menu-overlay);
     }
 
     .pause-menu.hidden {
@@ -1008,7 +1067,7 @@
       text-align: left;
       font-size: 12px;
       line-height: 1.35;
-      background: #ffffff;
+      background: var(--panel-bg-strong);
     }
 
     .pause-help.hidden {
@@ -1043,6 +1102,44 @@
       overflow: hidden;
       text-overflow: ellipsis;
       pointer-events: none;
+    }
+
+    body.dark-mode .main-menu-card p,
+    body.dark-mode .menu-card p {
+      color: rgba(236, 242, 255, 0.9);
+    }
+
+    body.dark-mode #custom-menu-card,
+    body.dark-mode #multiplayer-menu-card {
+      background: rgba(16, 20, 28, 0.94);
+    }
+
+    body.dark-mode .menu-card,
+    body.dark-mode .pause-menu .menu-card,
+    body.dark-mode .pairing-panel,
+    body.dark-mode .power-filter-panel,
+    body.dark-mode .settings-panel,
+    body.dark-mode .powerup-menu,
+    body.dark-mode .control-panel,
+    body.dark-mode .turn-counter,
+    body.dark-mode .status-pill,
+    body.dark-mode .pause-map-btn,
+    body.dark-mode .gameover-restart-btn,
+    body.dark-mode .hud-mini-meters,
+    body.dark-mode .tune-drawer {
+      background: var(--card);
+      color: var(--ink);
+      border-color: var(--card-border);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.32);
+    }
+
+    body.dark-mode .power-btn:active,
+    body.dark-mode .power-btn.tap-active {
+      background: rgba(236, 242, 255, 0.16);
+    }
+
+    body.dark-mode .mini-track {
+      background: rgba(236, 242, 255, 0.18);
     }
 
     @media (max-width: 1200px) {
@@ -1678,6 +1775,13 @@
     <div class="menu-card hidden" id="custom-menu-card">
       <h1 id="custom-menu-title">CUSTOM GAME</h1>
       <p id="custom-menu-subtitle">Choose teams/settings, then pick random terrain or draw your own map.</p>
+      <div id="mp-lobby-settings-head" class="hidden">
+        <div class="menu-field full">
+          <label>ROOM CODE</label>
+          <div id="net-room-code-display-host" class="pairing-room-code">------</div>
+        </div>
+        <div id="mp-lobby-status-host" class="pairing-status">Create or join a room.</div>
+      </div>
       <div class="menu-grid">
         <div class="menu-field" id="human-players-field">
           <label for="human-players-btn">HUMAN PLAYERS</label>
@@ -1763,7 +1867,7 @@
         </div>
         <div class="menu-field full">
           <label for="power-filter-open-btn">POWER UPS</label>
-          <button id="power-filter-open-btn" type="button">EDIT ENABLED (10/10)</button>
+          <button id="power-filter-open-btn" type="button">EDIT ENABLED (11/11)</button>
         </div>
       </div>
       <section id="power-filter-panel" class="power-filter-panel hidden">
@@ -1774,6 +1878,7 @@
         <div id="power-filter-grid" class="power-filter-grid">
           <button type="button" class="power-filter-item" data-power-type="sniper">POWER SHOT</button>
           <button type="button" class="power-filter-item" data-power-type="seeker">SEEKER</button>
+          <button type="button" class="power-filter-item" data-power-type="diggerseeker">DIGGER SEEK</button>
           <button type="button" class="power-filter-item" data-power-type="roller">ROLLER</button>
           <button type="button" class="power-filter-item" data-power-type="dig">DIG</button>
           <button type="button" class="power-filter-item" data-power-type="build">BUILD</button>
@@ -1785,7 +1890,8 @@
         </div>
       </section>
       <div class="menu-actions hidden" id="mp-settings-actions">
-        <button id="mp-start-bottom-btn" type="button">START MATCH</button>
+        <button id="mp-start-btn" type="button">START MATCH</button>
+        <button id="mp-lobby-back-btn" type="button">BACK TO LOBBY</button>
       </div>
       <div class="menu-actions" id="custom-menu-actions">
         <button id="start-btn" type="button">START GAME</button>
@@ -1818,9 +1924,7 @@
         </div>
       </div>
       <div id="mp-lobby-status" class="pairing-status">Create or join a room.</div>
-      <p style="margin:6px 0 0;font-size:12px;font-weight:700;">MATCH SETTINGS BELOW (HOST CONTROLS THESE)</p>
       <div class="menu-actions">
-        <button id="mp-start-btn" type="button">START MATCH</button>
         <button id="mp-back-btn" type="button">BACK</button>
       </div>
     </div>
@@ -1867,6 +1971,10 @@
         <option value="3">3x</option>
       </select>
     </div>
+    <div class="settings-row">
+      <label for="dark-mode-toggle">DARK MODE <span id="dark-mode-value">OFF</span></label>
+      <input id="dark-mode-toggle" type="checkbox" />
+    </div>
   </section>
 
   <div class="turn-counter" id="turn-counter">TURN 1</div>
@@ -1897,6 +2005,7 @@
     <div class="powerups-row">
       <button id="sniper-btn" class="power-btn" type="button">POWER SHOT <span id="sniper-count">0</span></button>
       <button id="seeker-btn" class="power-btn" type="button">SEEKER <span id="seeker-count">0</span></button>
+      <button id="diggerseeker-btn" class="power-btn" type="button">DIGGER SEEK <span id="diggerseeker-count">0</span></button>
       <button id="roller-btn" class="power-btn" type="button">ROLLER <span id="roller-count">0</span></button>
       <button id="dig-btn" class="power-btn" type="button">DIG <span id="dig-count">0</span></button>
       <button id="build-btn" class="power-btn" type="button">BUILD <span id="build-count">0</span></button>
@@ -1930,6 +2039,8 @@
     sniperCount: document.getElementById("sniper-count"),
     seekerBtn: document.getElementById("seeker-btn"),
     seekerCount: document.getElementById("seeker-count"),
+    diggerseekerBtn: document.getElementById("diggerseeker-btn"),
+    diggerseekerCount: document.getElementById("diggerseeker-count"),
     rollerBtn: document.getElementById("roller-btn"),
     rollerCount: document.getElementById("roller-count"),
     digBtn: document.getElementById("dig-btn"),
@@ -1969,6 +2080,7 @@
     customMenuCard: document.getElementById("custom-menu-card"),
     customMenuTitle: document.getElementById("custom-menu-title"),
     customMenuSubtitle: document.getElementById("custom-menu-subtitle"),
+    multiplayerLobbyHead: document.getElementById("mp-lobby-settings-head"),
     multiplayerMenuCard: document.getElementById("multiplayer-menu-card"),
     quickStartBtn: document.getElementById("quick-start-btn"),
     openCustomBtn: document.getElementById("open-custom-btn"),
@@ -1979,12 +2091,14 @@
     multiplayerHostBtn: document.getElementById("mp-host-btn"),
     multiplayerJoinBtn: document.getElementById("mp-join-btn"),
     multiplayerStartBtn: document.getElementById("mp-start-btn"),
-    multiplayerStartBottomBtn: document.getElementById("mp-start-bottom-btn"),
+    multiplayerLobbyBackBtn: document.getElementById("mp-lobby-back-btn"),
     multiplayerCopyCodeBtn: document.getElementById("mp-copy-code-btn"),
     multiplayerLeaveBtn: document.getElementById("mp-leave-btn"),
     multiplayerRoomCodeDisplay: document.getElementById("net-room-code-display"),
+    multiplayerRoomCodeDisplayHost: document.getElementById("net-room-code-display-host"),
     multiplayerRoomInput: document.getElementById("net-room-input"),
     multiplayerStatus: document.getElementById("mp-lobby-status"),
+    multiplayerStatusHost: document.getElementById("mp-lobby-status-host"),
     multiplayerSettingsActions: document.getElementById("mp-settings-actions"),
     pauseMenu: document.getElementById("pause-menu"),
     resumeBtn: document.getElementById("resume-btn"),
@@ -2029,6 +2143,8 @@
     fxIntensityValue: document.getElementById("fx-intensity-value"),
     aimTextScaleSelect: document.getElementById("aim-text-scale-select"),
     aimTextScaleValue: document.getElementById("aim-text-scale-value"),
+    darkModeToggle: document.getElementById("dark-mode-toggle"),
+    darkModeValue: document.getElementById("dark-mode-value"),
     devModeToggle: document.getElementById("dev-mode-toggle"),
     devModeValue: document.getElementById("dev-mode-value"),
     hudLayoutSelect: document.getElementById("hud-layout-select"),
@@ -2091,6 +2207,18 @@
   const SEEKER_MIN_SPEED = 180;
   const SEEKER_LOCK_DOT = 0.16;
   const SEEKER_GUIDANCE_GAIN = 1.35;
+  const DIGGER_SEEKER_SPEED = 250;
+  const DIGGER_SEEKER_TURN_RATE = degToRad(156);
+  const DIGGER_SEEKER_TUNNEL_RADIUS = 5.6;
+  const DIGGER_SEEKER_MAX_DISTANCE = 560;
+  const DIGGER_SEEKER_BURROW_DEPTH = 14;
+  const DIGGER_SEEKER_MIN_SPEED = 120;
+  const DIGGER_SEEKER_MAX_ENERGY = 560;
+  const DIGGER_SEEKER_BASE_DRAIN = 16;
+  const DIGGER_SEEKER_UP_COST = 0.22;
+  const DIGGER_SEEKER_DOWN_GAIN = 0.12;
+  const DIGGER_SEEKER_DOWN_GRAVITY = 0;
+  const DIGGER_SEEKER_EDGE_MARGIN = 1.4;
   const ROLLER_RADIUS = 5.2;
   const ROLLER_ROLL_FRICTION = 5.8;
   const ROLLER_ROLL_SLOPE_ACCEL = 620;
@@ -2222,12 +2350,13 @@
     }
   };
 
-  const POWERUP_TYPES = ["sniper", "seeker", "roller", "dig", "build", "teleport", "earthquake", "airstrike", "laser", "health"];
+  const POWERUP_TYPES = ["sniper", "seeker", "diggerseeker", "roller", "dig", "build", "teleport", "earthquake", "airstrike", "laser", "health"];
   const POWERUP_SPAWN_MIN_Y = 56;
   const POWERUP_SPAWN_MIN_CLEARANCE = 28;
   const POWERUP_TYPE_LABELS = {
     sniper: "POWER SHOT",
     seeker: "SEEKER",
+    diggerseeker: "DIGGER SEEK",
     roller: "ROLLER",
     dig: "DIG",
     build: "BUILD",
@@ -2260,6 +2389,8 @@
     power: "sniper",
     dig: "dig",
     seeker: "seeker",
+    digger: "diggerseeker",
+    diggerseeker: "diggerseeker",
     roller: "roller",
     build: "build",
     teleport: "teleport",
@@ -2295,6 +2426,7 @@
       fxIntensity: 0.7,
       aimTextScale: 2,
       aimTextScaleUserOverride: false,
+      darkMode: false,
       devMode: false,
       hudLayout: "classic"
     },
@@ -2373,6 +2505,7 @@
     },
     netplay: {
       enabled: false,
+      menuStep: "landing",
       room: "",
       playerId: "",
       hostId: "",
@@ -2542,6 +2675,9 @@
     if (isPowerupEnabled("seeker") && (tank.powerups?.seeker || 0) > 0) {
       cycle.push("seeker");
     }
+    if (isPowerupEnabled("diggerseeker") && (tank.powerups?.diggerseeker || 0) > 0) {
+      cycle.push("diggerseeker");
+    }
     if (isPowerupEnabled("roller") && (tank.powerups?.roller || 0) > 0) {
       cycle.push("roller");
     }
@@ -2569,6 +2705,9 @@
     }
     if (shotType === "seeker") {
       return "SEEKER";
+    }
+    if (shotType === "diggerseeker") {
+      return "DIGGER SEEK";
     }
     if (shotType === "roller") {
       return "ROLLER";
@@ -2600,6 +2739,9 @@
     }
     if (shotType === "seeker") {
       return `${tank.powerups?.seeker || 0}`;
+    }
+    if (shotType === "diggerseeker") {
+      return `${tank.powerups?.diggerseeker || 0}`;
     }
     if (shotType === "roller") {
       return `${tank.powerups?.roller || 0}`;
@@ -2887,6 +3029,23 @@
     }
   }
 
+  function isDarkMode() {
+    return Boolean(state.settings.darkMode);
+  }
+
+  function setDarkMode(enabled) {
+    const next = Boolean(enabled);
+    state.settings.darkMode = next;
+    document.body.classList.toggle("dark-mode", next);
+    if (ui.darkModeToggle) {
+      ui.darkModeToggle.checked = next;
+    }
+    if (ui.darkModeValue) {
+      ui.darkModeValue.textContent = next ? "ON" : "OFF";
+    }
+    state.craterLayersDirty = true;
+  }
+
   function applyDevModePowerUps(tank) {
     if (!tank || tank.controller !== "human" || !tank.powerups) {
       return;
@@ -2896,6 +3055,9 @@
     }
     if (isPowerupEnabled("seeker")) {
       tank.powerups.seeker = Math.max(tank.powerups.seeker || 0, DEV_POWERUP_CHARGES);
+    }
+    if (isPowerupEnabled("diggerseeker")) {
+      tank.powerups.diggerseeker = Math.max(tank.powerups.diggerseeker || 0, DEV_POWERUP_CHARGES);
     }
     if (isPowerupEnabled("roller")) {
       tank.powerups.roller = Math.max(tank.powerups.roller || 0, DEV_POWERUP_CHARGES);
@@ -3950,23 +4112,31 @@
   function setMenuView(view) {
     const validView = view === "custom" || view === "multiplayer" ? view : "main";
     state.menuView = validView;
+    const multiplayerLobbyOpen = state.menuView === "multiplayer" && state.netplay.menuStep === "lobby";
     document.body.classList.toggle("menu-custom", state.menuView === "custom");
     document.body.classList.toggle("menu-multiplayer", state.menuView === "multiplayer");
+    document.body.classList.toggle("menu-multiplayer-lobby", multiplayerLobbyOpen);
     if (ui.mainMenuCard) {
       ui.mainMenuCard.classList.toggle("hidden", state.menuView !== "main");
     }
-    const showCustomConfigCard = state.menuView === "custom" || state.menuView === "multiplayer";
+    const showCustomConfigCard = state.menuView === "custom" || multiplayerLobbyOpen;
     if (ui.customMenuCard) {
       ui.customMenuCard.classList.toggle("hidden", !showCustomConfigCard);
     }
     if (ui.multiplayerMenuCard) {
-      ui.multiplayerMenuCard.classList.toggle("hidden", state.menuView !== "multiplayer");
+      ui.multiplayerMenuCard.classList.toggle("hidden", state.menuView !== "multiplayer" || multiplayerLobbyOpen);
+    }
+    if (ui.multiplayerLobbyHead) {
+      ui.multiplayerLobbyHead.classList.toggle("hidden", !multiplayerLobbyOpen);
+    }
+    if (ui.multiplayerSettingsActions) {
+      ui.multiplayerSettingsActions.classList.toggle("hidden", !multiplayerLobbyOpen);
     }
     if (ui.customMenuTitle) {
-      ui.customMenuTitle.textContent = state.menuView === "multiplayer" ? "MATCH SETTINGS" : "CUSTOM GAME";
+      ui.customMenuTitle.textContent = multiplayerLobbyOpen ? "MATCH SETTINGS" : "CUSTOM GAME";
     }
     if (ui.customMenuSubtitle) {
-      ui.customMenuSubtitle.textContent = state.menuView === "multiplayer"
+      ui.customMenuSubtitle.textContent = multiplayerLobbyOpen
         ? "Host config: set map/rules here. Lobby size decides how many players join."
         : "Choose teams/settings, then pick random terrain or draw your own map.";
     }
@@ -3979,11 +4149,7 @@
   }
 
   function updateMultiplayerConfigEditability() {
-    const inMultiplayerMenu = state.menuView === "multiplayer";
-    if (!inMultiplayerMenu) {
-      return;
-    }
-    const isEditable = !isNetplayEnabled() || isNetplayHost();
+    const inMultiplayerMenu = state.menuView === "multiplayer" && state.netplay.menuStep === "lobby";
     const controls = [
       ui.mapSizeSelect,
       ui.turnModeSelect,
@@ -3996,6 +4162,19 @@
       ui.borderBounceBtn,
       ui.powerFilterOpenBtn
     ];
+    if (!inMultiplayerMenu) {
+      for (const control of controls) {
+        if (control) {
+          control.disabled = false;
+        }
+      }
+      if (ui.powerFilterGrid) {
+        ui.powerFilterGrid.style.pointerEvents = "";
+        ui.powerFilterGrid.style.opacity = "";
+      }
+      return;
+    }
+    const isEditable = !isNetplayEnabled() || isNetplayHost();
     for (const control of controls) {
       if (control) {
         control.disabled = !isEditable;
@@ -4097,6 +4276,7 @@
       powerups: {
         sniper: 0,
         seeker: 0,
+        diggerseeker: 0,
         roller: 0,
         dig: 0,
         build: 0,
@@ -4194,11 +4374,14 @@
   }
 
   function setMultiplayerMenuStatus(text, isError = false) {
-    if (!ui.multiplayerStatus) {
-      return;
+    if (ui.multiplayerStatus) {
+      ui.multiplayerStatus.textContent = text;
+      ui.multiplayerStatus.classList.toggle("error", Boolean(isError));
     }
-    ui.multiplayerStatus.textContent = text;
-    ui.multiplayerStatus.classList.toggle("error", Boolean(isError));
+    if (ui.multiplayerStatusHost) {
+      ui.multiplayerStatusHost.textContent = text;
+      ui.multiplayerStatusHost.classList.toggle("error", Boolean(isError));
+    }
   }
 
   function makeNetplayPlayerId() {
@@ -4219,14 +4402,14 @@
     if (ui.multiplayerRoomCodeDisplay) {
       ui.multiplayerRoomCodeDisplay.textContent = code || "------";
     }
+    if (ui.multiplayerRoomCodeDisplayHost) {
+      ui.multiplayerRoomCodeDisplayHost.textContent = code || "------";
+    }
     if (ui.multiplayerCopyCodeBtn) {
       ui.multiplayerCopyCodeBtn.disabled = !code;
     }
     if (ui.multiplayerStartBtn) {
       ui.multiplayerStartBtn.disabled = !(connected && isHost && players.length >= 2);
-    }
-    if (ui.multiplayerStartBottomBtn) {
-      ui.multiplayerStartBottomBtn.disabled = !(connected && isHost && players.length >= 2);
     }
     if (ui.multiplayerLeaveBtn) {
       ui.multiplayerLeaveBtn.disabled = !state.netplay.enabled;
@@ -4262,6 +4445,7 @@
 
   function resetNetplayState() {
     state.netplay.enabled = false;
+    state.netplay.menuStep = "landing";
     state.netplay.room = "";
     state.netplay.playerId = "";
     state.netplay.hostId = "";
@@ -4377,6 +4561,7 @@
 
     stopNetplaySession(false);
     state.netplay.enabled = true;
+    state.netplay.menuStep = "lobby";
     state.netplay.room = room;
     state.netplay.playerId = makeNetplayPlayerId();
     state.netplay.hostId = "";
@@ -4392,11 +4577,14 @@
     state.netplay.matchConfig = null;
     state.netFxSeenSeq = 0;
     setStatus("Connecting to multiplayer room...");
+    setMenuView("multiplayer");
     connectNetplaySocket();
     refreshMultiplayerLobbyUi();
   }
 
   async function createAndHostMultiplayerRoom() {
+    state.netplay.menuStep = "lobby";
+    setMenuView("multiplayer");
     setMultiplayerMenuStatus("Creating room...");
     try {
       const room = await requestRoomCodeFromServer();
@@ -5106,6 +5294,7 @@
         powerups: {
           sniper: tank.powerups?.sniper || 0,
           seeker: tank.powerups?.seeker || 0,
+          diggerseeker: tank.powerups?.diggerseeker || 0,
           roller: tank.powerups?.roller || 0,
           dig: tank.powerups?.dig || 0,
           build: tank.powerups?.build || 0,
@@ -5127,7 +5316,9 @@
             ownerId: state.projectile.ownerId,
             radius: state.projectile.radius,
             active: state.projectile.active,
-            shotType: state.projectile.shotType
+            shotType: state.projectile.shotType,
+            diggerSeek: Boolean(state.projectile.diggerSeek),
+            distanceTravelled: Number(state.projectile.distanceTravelled || 0)
           }
         : null,
       simultaneousProjectiles: state.simultaneousProjectiles.map((p) => ({
@@ -5140,7 +5331,9 @@
         ownerId: p.ownerId,
         radius: p.radius,
         active: p.active,
-        shotType: p.shotType
+        shotType: p.shotType,
+        diggerSeek: Boolean(p.diggerSeek),
+        distanceTravelled: Number(p.distanceTravelled || 0)
       })),
       airstrikeDrops: state.airstrikeDrops.map((d) => ({
         x: d.x,
@@ -5347,6 +5540,7 @@
         powerups: {
           sniper: Number(tank.powerups?.sniper || 0),
           seeker: Number(tank.powerups?.seeker || 0),
+          diggerseeker: Number(tank.powerups?.diggerseeker || 0),
           roller: Number(tank.powerups?.roller || 0),
           dig: Number(tank.powerups?.dig || 0),
           build: Number(tank.powerups?.build || 0),
@@ -5380,7 +5574,9 @@
           ownerId: snapshot.projectile.ownerId,
           radius: Number(snapshot.projectile.radius || 4),
           active: Boolean(snapshot.projectile.active),
-          shotType: snapshot.projectile.shotType || "normal"
+          shotType: snapshot.projectile.shotType || "normal",
+          diggerSeek: Boolean(snapshot.projectile.diggerSeek),
+          distanceTravelled: Number(snapshot.projectile.distanceTravelled || 0)
         }
       : null;
     if (isNetplayClientMirror() && prevProjectile && nextProjectile && prevProjectile.active && nextProjectile.active) {
@@ -5408,6 +5604,8 @@
           radius: Number(p.radius || 4),
           active: Boolean(p.active),
           shotType: p.shotType || "normal",
+          diggerSeek: Boolean(p.diggerSeek),
+          distanceTravelled: Number(p.distanceTravelled || 0),
           path: []
         }))
       : [];
@@ -6725,18 +6923,20 @@
       return;
     }
 
+    const colors = getCanvasColors();
+
     craterFillCtx.clearRect(0, 0, MAX_WORLD_W, WORLD_H);
     craterEdgeCtx.clearRect(0, 0, MAX_WORLD_W, WORLD_H);
 
     if (state.craters.length > 0) {
-      craterFillCtx.fillStyle = "#6a6a6a";
+      craterFillCtx.fillStyle = colors.craterFill;
       for (const crater of state.craters) {
         craterFillCtx.beginPath();
         craterFillCtx.arc(crater.x, crater.y, crater.r, 0, TAU);
         craterFillCtx.fill();
       }
 
-      craterEdgeCtx.fillStyle = "#000000";
+      craterEdgeCtx.fillStyle = colors.craterEdge;
       for (const crater of state.craters) {
         craterEdgeCtx.beginPath();
         craterEdgeCtx.arc(crater.x, crater.y, crater.r, 0, TAU);
@@ -7587,7 +7787,7 @@
       return;
     }
     owner.powerups[type] += 1;
-    setStatus(`${owner.name} got ${type.toUpperCase()}`);
+    setStatus(`${owner.name} got ${POWERUP_TYPE_LABELS[type] || type.toUpperCase()}`);
   }
 
   function grantLootBundle(ownerId, bundle, sourceTankId = null) {
@@ -7871,6 +8071,8 @@
         radius: shot.radius,
         active: true,
         shotType: shot.shotType,
+        diggerSeek: false,
+        distanceTravelled: 0,
         path: [{ x: shot.x, y: shot.y }]
       });
     }
@@ -7942,6 +8144,10 @@
       shotType = "seeker";
       consumePowerUp(tank, "seeker");
     }
+    if (state.selectedShotType === "diggerseeker" && isPowerupEnabled("diggerseeker") && (tank.powerups.diggerseeker || 0) > 0) {
+      shotType = "diggerseeker";
+      consumePowerUp(tank, "diggerseeker");
+    }
     if (state.selectedShotType === "roller" && isPowerupEnabled("roller") && (tank.powerups.roller || 0) > 0) {
       shotType = "roller";
       consumePowerUp(tank, "roller");
@@ -7991,7 +8197,9 @@
       ownerId: tank.id,
       radius: 4,
       active: true,
-      shotType
+      shotType,
+      diggerSeek: false,
+      distanceTravelled: 0
     };
 
     state.currentShotPath = [{ x: muzzle.x, y: muzzle.y }];
@@ -8401,6 +8609,168 @@
     p.vy = Math.sin(nextAng) * nextSpeed;
   }
 
+  function traceTankCollisionSegment(x0, y0, x1, y1, ownerId) {
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    const dist = Math.hypot(dx, dy);
+    const steps = Math.max(1, Math.ceil(dist / 1.35));
+    for (let i = 1; i <= steps; i += 1) {
+      const t = i / steps;
+      const sx = x0 + dx * t;
+      const sy = y0 + dy * t;
+      const hitTank = tankAtPoint(sx, sy, ownerId);
+      if (hitTank) {
+        return { kind: "tank", x: sx, y: sy, tank: hitTank };
+      }
+    }
+    return null;
+  }
+
+  function traceDiggerSeekSegment(x0, y0, x1, y1, ownerId) {
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    const dist = Math.hypot(dx, dy);
+    const steps = Math.max(1, Math.ceil(dist / 1.2));
+    let prevX = x0;
+    let prevY = y0;
+    for (let i = 1; i <= steps; i += 1) {
+      const t = i / steps;
+      const sx = x0 + dx * t;
+      const sy = y0 + dy * t;
+
+      if (sx < 0 || sx >= state.worldW || sy < 0 || sy >= WORLD_H) {
+        return { kind: "bounds", x: clamp(prevX, 0, state.worldW - 1), y: clamp(prevY, 0, WORLD_H - 1) };
+      }
+
+      const hitTank = tankAtPoint(sx, sy, ownerId);
+      if (hitTank) {
+        return { kind: "tank", x: sx, y: sy, tank: hitTank };
+      }
+
+      const surface = supportY(sx);
+      if (sy <= surface + DIGGER_SEEKER_EDGE_MARGIN) {
+        return { kind: "edge", x: prevX, y: prevY };
+      }
+
+      prevX = sx;
+      prevY = sy;
+    }
+
+    return null;
+  }
+
+  function armDiggerSeeker(p, hitX, hitY) {
+    const target = findNearestEnemyTank(p.ownerId, hitX, hitY);
+    let dirX = Math.sign(p.vx) || 1;
+    let dirY = 0.28;
+    if (target) {
+      const tx = target.x;
+      const ty = target.y - TANK_H * 0.32;
+      const dx = tx - hitX;
+      const dy = ty - hitY;
+      const d = Math.hypot(dx, dy);
+      if (d > 0.001) {
+        dirX = dx / d;
+        // Always enter underground first, then guidance rises toward the target.
+        dirY = clamp(dy / d * 0.42 + 0.28, 0.1, 0.74);
+      }
+    }
+    const n = Math.hypot(dirX, dirY) || 1;
+    dirX /= n;
+    dirY /= n;
+
+    const speed = clamp(
+      Math.max(Math.hypot(p.vx, p.vy) * 0.86, DIGGER_SEEKER_SPEED * 0.9),
+      DIGGER_SEEKER_SPEED * 0.7,
+      MAX_POWER * 1.25
+    );
+    p.diggerSeek = true;
+    p.distanceTravelled = 0;
+    p.diggerEnergy = clamp(speed * 1.05, 220, DIGGER_SEEKER_MAX_ENERGY * 0.92);
+    p.vx = dirX * speed;
+    p.vy = dirY * speed;
+    p.px = hitX;
+    p.py = hitY;
+    p.x = clamp(hitX + dirX * DIGGER_SEEKER_BURROW_DEPTH, 0, state.worldW - 1);
+    p.y = clamp(hitY + dirY * DIGGER_SEEKER_BURROW_DEPTH, 0, WORLD_H - 1);
+    carveLaserTunnel(hitX, hitY, p.x, p.y, DIGGER_SEEKER_TUNNEL_RADIUS);
+  }
+
+  function applyDiggerSeekerGuidance(p, dt) {
+    if (!p || p.shotType !== "diggerseeker" || !p.diggerSeek) {
+      return;
+    }
+
+    const target = findNearestEnemyTank(p.ownerId, p.x, p.y);
+    if (!target) {
+      return;
+    }
+
+    const tx = target.x;
+    const targetTankY = target.y - TANK_H * 0.32;
+    const dx = tx - p.x;
+    const absDx = Math.abs(dx);
+    const forward = Math.sign(dx) || Math.sign(p.vx) || 1;
+    const localSurface = supportY(p.x);
+    const lookAhead = clamp(absDx * 0.28, 32, 112);
+    const probeX = clamp(p.x + forward * lookAhead, 0, state.worldW - 1);
+    const probeSurface = supportY(probeX);
+    const targetSurface = supportY(tx);
+    const localDepth = p.y - localSurface;
+    const desiredDepth = absDx < 70 ? clamp(8 + absDx * 0.04, 7, 14) : clamp(12 + absDx * 0.055, 14, 44);
+    const maxDepthHere = clamp(28 + absDx * 0.035, 30, 72);
+    let aimX = tx;
+    let aimY = probeSurface + desiredDepth;
+    const hasSight = hasSeekerLineOfSight(p.ownerId, p.x, p.y, target);
+    const finalApproach = absDx < 88;
+    if (localDepth > maxDepthHere) {
+      aimY = Math.min(aimY, localSurface + maxDepthHere * 0.62);
+    }
+    if (finalApproach && hasSight) {
+      aimY = targetTankY;
+    } else if (finalApproach) {
+      // Rise toward target-side surface near the end so it can arc into the tank.
+      aimY = Math.min(targetSurface + 9, p.y - 8);
+    }
+    if (localDepth < 6 && !hasSight && absDx > 42) {
+      // Prevent early surfacing before the seeker is near the target.
+      aimY = Math.max(aimY, localSurface + 12);
+    }
+    aimY = clamp(aimY, 4, WORLD_H - 4);
+    const dy = aimY - p.y;
+    const dist = Math.hypot(aimX - p.x, dy);
+    if (dist < 0.001) {
+      return;
+    }
+
+    const currentSpeed = Math.hypot(p.vx, p.vy);
+    if (!Number.isFinite(p.diggerEnergy)) {
+      p.diggerEnergy = clamp(currentSpeed, 180, DIGGER_SEEKER_MAX_ENERGY * 0.9);
+    }
+    const upSpeed = Math.max(0, -p.vy);
+    const downSpeed = Math.max(0, p.vy);
+    p.diggerEnergy -= (DIGGER_SEEKER_BASE_DRAIN + upSpeed * DIGGER_SEEKER_UP_COST) * dt;
+    p.diggerEnergy += downSpeed * DIGGER_SEEKER_DOWN_GAIN * dt;
+    p.diggerEnergy = clamp(p.diggerEnergy, 0, DIGGER_SEEKER_MAX_ENERGY);
+    const energySpeed = DIGGER_SEEKER_MIN_SPEED + p.diggerEnergy * 0.82;
+    const speed = clamp(
+      Math.max(energySpeed, currentSpeed * 0.92),
+      DIGGER_SEEKER_MIN_SPEED,
+      MAX_POWER * 1.1
+    );
+    const currentAng = Math.atan2(p.vy, p.vx);
+    const desiredAng = Math.atan2(dy, aimX - p.x);
+    const maxTurn = DIGGER_SEEKER_TURN_RATE * dt * (hasSight ? 1.12 : 1);
+    const delta = clamp(normalizeAngleRad(desiredAng - currentAng), -maxTurn, maxTurn);
+    const nextAng = currentAng + delta;
+    const blend = clamp(dt * 7.2, 0, 1);
+    const nvx = Math.cos(nextAng) * speed;
+    const nvy = Math.sin(nextAng) * speed;
+    p.vx = lerp(p.vx, nvx, blend);
+    p.vy = lerp(p.vy, nvy, blend);
+    p.vy += DIGGER_SEEKER_DOWN_GRAVITY * dt;
+  }
+
   function updateSingleProjectile(p, dt, options = {}) {
     if (!p || !p.active) {
       return;
@@ -8412,16 +8782,19 @@
     let substeps = Math.ceil((Math.abs(p.vx) + Math.abs(p.vy)) * dt / 60);
     substeps = clamp(substeps, 1, p.shotType === "sniper" ? 14 : 8);
     const sdt = dt / substeps;
+    const isDiggerSeeker = p.shotType === "diggerseeker";
 
     for (let i = 0; i < substeps; i += 1) {
       p.px = p.x;
       p.py = p.y;
 
-      if (p.shotType !== "sniper") {
+      if (p.shotType !== "sniper" && !(isDiggerSeeker && p.diggerSeek)) {
         p.vy += GRAVITY * sdt;
       }
       if (p.shotType === "seeker") {
         applySeekerGuidance(p, sdt);
+      } else if (isDiggerSeeker && p.diggerSeek) {
+        applyDiggerSeekerGuidance(p, sdt);
       }
 
       p.x += p.vx * sdt;
@@ -8455,6 +8828,87 @@
 
       path.push({ x: p.x, y: p.y });
 
+      if (isDiggerSeeker && p.diggerSeek) {
+        p.distanceTravelled += Math.hypot(p.x - p.px, p.y - p.py);
+        const tunnelHit = traceDiggerSeekSegment(p.px, p.py, p.x, p.y, p.ownerId);
+        if (tunnelHit && tunnelHit.kind === "tank") {
+          carveLaserTunnel(p.px, p.py, tunnelHit.x, tunnelHit.y, DIGGER_SEEKER_TUNNEL_RADIUS);
+          if (Array.isArray(p.path)) {
+            finalizeShotPathFromPath(p.ownerId, p.path, tunnelHit.x, tunnelHit.y);
+          } else {
+            finalizeShotPath(p.ownerId, tunnelHit.x, tunnelHit.y);
+          }
+          p.active = false;
+          if (!isSimultaneous) {
+            state.projectile = null;
+          }
+          explode(tunnelHit.x, tunnelHit.y, EXPLOSION_RADIUS, EXPLOSION_DAMAGE, { deferResolve });
+          return;
+        }
+
+        if (tunnelHit && (tunnelHit.kind === "edge" || tunnelHit.kind === "bounds")) {
+          carveLaserTunnel(p.px, p.py, tunnelHit.x, tunnelHit.y, DIGGER_SEEKER_TUNNEL_RADIUS);
+          if (Array.isArray(p.path)) {
+            finalizeShotPathFromPath(p.ownerId, p.path, tunnelHit.x, tunnelHit.y);
+          } else {
+            finalizeShotPath(p.ownerId, tunnelHit.x, tunnelHit.y);
+          }
+          p.active = false;
+          if (!isSimultaneous) {
+            state.projectile = null;
+            beginResolvePhase("Digger surfaced");
+          }
+          state.lastImpact.x = tunnelHit.x;
+          state.lastImpact.y = tunnelHit.y;
+          return;
+        }
+
+        carveLaserTunnel(p.px, p.py, p.x, p.y, DIGGER_SEEKER_TUNNEL_RADIUS);
+
+        if (Number.isFinite(p.diggerEnergy) && p.diggerEnergy <= 1.5) {
+          const endX = clamp(p.x, 0, state.worldW - 1);
+          const endY = clamp(p.y, 0, WORLD_H - 1);
+          if (Array.isArray(p.path)) {
+            finalizeShotPathFromPath(p.ownerId, p.path, endX, endY);
+          } else {
+            finalizeShotPath(p.ownerId, endX, endY);
+          }
+          p.active = false;
+          if (!isSimultaneous) {
+            state.projectile = null;
+            beginResolvePhase("Digger dissipated");
+          }
+          state.lastImpact.x = endX;
+          state.lastImpact.y = endY;
+          return;
+        }
+
+        if (
+          p.distanceTravelled >= DIGGER_SEEKER_MAX_DISTANCE ||
+          p.x < -20 ||
+          p.x > state.worldW + 20 ||
+          p.y < -20 ||
+          p.y > WORLD_H + 20
+        ) {
+          const endX = clamp(p.x, 0, state.worldW - 1);
+          const endY = clamp(p.y, 0, WORLD_H - 1);
+          if (Array.isArray(p.path)) {
+            finalizeShotPathFromPath(p.ownerId, p.path, endX, endY);
+          } else {
+            finalizeShotPath(p.ownerId, endX, endY);
+          }
+          p.active = false;
+          if (!isSimultaneous) {
+            state.projectile = null;
+            beginResolvePhase("Digger expired");
+          }
+          state.lastImpact.x = endX;
+          state.lastImpact.y = endY;
+          return;
+        }
+        continue;
+      }
+
       const hit = traceCollision(p.px, p.py, p.x, p.y, p.ownerId);
       if (hit) {
         if (hit.kind === "powerup" && hit.powerup) {
@@ -8466,6 +8920,15 @@
           p.py = hit.y;
           p.vx *= 0.96;
           p.vy *= 0.96;
+          continue;
+        }
+
+        if (isDiggerSeeker && !p.diggerSeek && hit.kind === "terrain") {
+          if (path.length > 0) {
+            path[path.length - 1] = { x: hit.x, y: hit.y };
+          }
+          armDiggerSeeker(p, hit.x, hit.y);
+          path.push({ x: p.x, y: p.y });
           continue;
         }
 
@@ -8834,7 +9297,7 @@
       sendNetplayInput("weapon", { id: type });
       if (type === "teleport") {
         state.abilityMode = "teleport_target";
-      } else if (type === "sniper" || type === "seeker" || type === "roller" || type === "dig" || type === "build" || type === "airstrike" || type === "laser") {
+      } else if (type === "sniper" || type === "seeker" || type === "diggerseeker" || type === "roller" || type === "dig" || type === "build" || type === "airstrike" || type === "laser") {
         state.selectedShotType = type;
       } else if (type === "earthquake") {
         state.selectedShotType = "normal";
@@ -8858,6 +9321,13 @@
       state.selectedShotType = state.selectedShotType === "seeker" ? "normal" : "seeker";
       clearAbilityMode();
       setStatus(state.selectedShotType === "seeker" ? "Seeker shot ready" : "Normal shot selected");
+      return true;
+    }
+
+    if (type === "diggerseeker") {
+      state.selectedShotType = state.selectedShotType === "diggerseeker" ? "normal" : "diggerseeker";
+      clearAbilityMode();
+      setStatus(state.selectedShotType === "diggerseeker" ? "Digger seeker ready" : "Normal shot selected");
       return true;
     }
 
@@ -9165,6 +9635,7 @@
       const y = y0 + dy * t;
       pushCraterStamp(x, y, radius);
     }
+    markNetplayTerrainDirty();
   }
 
   function executeLaserShot(shooter, options = {}) {
@@ -9335,6 +9806,8 @@
         value = 164;
       } else if (p.type === "seeker") {
         value = 176;
+      } else if (p.type === "diggerseeker") {
+        value = 184;
       } else if (p.type === "roller") {
         value = 168;
       } else if (p.type === "teleport") {
@@ -9403,6 +9876,18 @@
           shotType: "seeker",
           angle: shotPlan.angle,
           power: clamp(shotPlan.power * 0.9, MIN_POWER, MAX_POWER)
+        };
+      }
+    }
+
+    if (isPowerupEnabled("diggerseeker") && (aiTank.powerups.diggerseeker || 0) > 0) {
+      const hard = state.config.aiDifficulty === "hard";
+      const shouldUse = shotPlan.score > (hard ? 11 : 19) || Math.abs(target.x - aiTank.x) > 210;
+      if (shouldUse && Math.random() < (aiPreset.seekerChance || 0.4) * 0.85) {
+        return {
+          shotType: "diggerseeker",
+          angle: shotPlan.angle,
+          power: clamp(Math.max(DEFAULT_SHOT_POWER * 0.86, shotPlan.power * 0.94), MIN_POWER, MAX_POWER)
         };
       }
     }
@@ -9762,6 +10247,36 @@
     demo.particles = demo.particles.filter((p) => p.life > 0);
   }
 
+  function getCanvasColors() {
+    if (isDarkMode()) {
+      return {
+        ink: "rgba(238, 242, 255, 0.95)",
+        inkSoft: "rgba(222, 228, 246, 0.72)",
+        paper: "rgba(16, 20, 28, 0.93)",
+        paperSoft: "rgba(20, 26, 36, 0.9)",
+        ghost: "rgba(242, 246, 255, 0.34)",
+        ghostStroke: "rgba(238, 244, 255, 0.58)",
+        terrain: "rgba(242, 246, 255, 0.94)",
+        craterFill: "#2e3442",
+        craterEdge: "rgba(240, 245, 255, 0.88)",
+        statusOverlay: "rgba(8, 10, 14, 0.26)"
+      };
+    }
+
+    return {
+      ink: "rgba(0, 0, 0, 0.95)",
+      inkSoft: "rgba(0, 0, 0, 0.66)",
+      paper: "rgba(255, 255, 255, 0.95)",
+      paperSoft: "rgba(255, 255, 255, 0.92)",
+      ghost: "rgba(0, 0, 0, 0.24)",
+      ghostStroke: "rgba(0, 0, 0, 0.4)",
+      terrain: "#000000",
+      craterFill: "#6a6a6a",
+      craterEdge: "#000000",
+      statusOverlay: "rgba(255, 255, 255, 0.34)"
+    };
+  }
+
   function drawBackground() {
     // Paper is now a fixed CSS background layer; clear canvas each frame.
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -9817,10 +10332,11 @@
       return;
     }
 
+    const colors = getCanvasColors();
     drawBackground();
 
     ctx.save();
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.95)";
+    ctx.strokeStyle = colors.ink;
     ctx.lineWidth = 4;
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
@@ -9839,7 +10355,7 @@
     if (demo.projectile) {
       const p = demo.projectile;
       ctx.fillStyle = "#707070";
-      ctx.strokeStyle = "#000000";
+      ctx.strokeStyle = colors.terrain;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.radius + 1, 0, TAU);
@@ -9870,7 +10386,7 @@
     ctx.globalAlpha = 1;
 
     // Dim the demo so UI/cards remain primary.
-    ctx.fillStyle = "rgba(255, 255, 255, 0.34)";
+    ctx.fillStyle = colors.statusOverlay;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
@@ -9883,9 +10399,10 @@
     }
 
     rebuildCraterLayers();
+    const colors = getCanvasColors();
 
     ctx.save();
-    ctx.strokeStyle = "#000000";
+    ctx.strokeStyle = colors.terrain;
     ctx.lineWidth = 4;
 
     // Clip crater fill so removed mass only appears below/inside the terrain profile.
@@ -9961,14 +10478,15 @@
     const edgeBand = Math.max(18, state.worldW * 0.03);
     const bottom = getGameplayBottomY() / Math.max(0.001, state.cameraZoom || 1);
     const drawPoints = state.drawMap.ready ? state.drawMap.previewPoints : state.drawMap.points;
+    const colors = getCanvasColors();
 
     ctx.save();
-    ctx.fillStyle = "rgba(0, 0, 0, 0.06)";
+    ctx.fillStyle = isDarkMode() ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)";
     ctx.fillRect(-state.cameraX, 0, edgeBand, bottom);
     ctx.fillRect(state.worldW - edgeBand - state.cameraX, 0, edgeBand, bottom);
 
     if (drawPoints.length > 1) {
-      ctx.strokeStyle = "rgba(0, 0, 0, 0.92)";
+      ctx.strokeStyle = colors.ink;
       ctx.lineWidth = 10;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
@@ -9986,9 +10504,10 @@
     if (state.phase !== "draw_map") {
       return;
     }
+    const colors = getCanvasColors();
     ctx.save();
-    ctx.fillStyle = "rgba(255, 255, 255, 0.94)";
-    ctx.strokeStyle = "#000000";
+    ctx.fillStyle = colors.paper;
+    ctx.strokeStyle = colors.ink;
     ctx.lineWidth = 2;
     ctx.beginPath();
     const bubbleW = Math.min(430, canvas.width - 40);
@@ -9998,7 +10517,7 @@
     pathRoundedRect(ctx, bubbleX, bubbleY, bubbleW, bubbleH, 12);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = "#000000";
+    ctx.fillStyle = colors.ink;
     ctx.font = "700 14px 'Comic Sans MS', 'Trebuchet MS', sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -10013,8 +10532,9 @@
       return;
     }
 
+    const colors = getCanvasColors();
     ctx.save();
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.24)";
+    ctx.strokeStyle = colors.ghost;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(tank.lastShotPath[0].x - state.cameraX, tank.lastShotPath[0].y);
@@ -10025,8 +10545,8 @@
     ctx.stroke();
 
     if (tank.lastShotEnd) {
-      ctx.fillStyle = "rgba(90, 90, 90, 0.3)";
-      ctx.strokeStyle = "rgba(0, 0, 0, 0.4)";
+      ctx.fillStyle = isDarkMode() ? "rgba(218, 224, 240, 0.32)" : "rgba(90, 90, 90, 0.3)";
+      ctx.strokeStyle = colors.ghostStroke;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.arc(tank.lastShotEnd.x - state.cameraX, tank.lastShotEnd.y, 4, 0, TAU);
@@ -10040,7 +10560,7 @@
       const labelText = `${Math.round(tank.lastShotAngleDeg)}\u00b0 ${Math.round(tank.lastShotPowerPct)}%`;
       const scale = state.settings.aimTextScale || 2;
       const ghostFontSize = Math.round((isMobilePointerDevice() ? 10 : 7.5) * scale);
-      ctx.fillStyle = "rgba(0, 0, 0, 0.24)";
+      ctx.fillStyle = colors.ghost;
       ctx.font = `700 ${ghostFontSize}px 'Comic Sans MS', 'Trebuchet MS', sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -10060,13 +10580,14 @@
       return;
     }
 
+    const colors = getCanvasColors();
     const hint = state.rangefinderHint;
     const muzzle = getMuzzleData(tank);
 
     if (hint.path && hint.path.length > 1) {
       ctx.save();
       ctx.setLineDash([4, 4]);
-      ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
+      ctx.strokeStyle = colors.inkSoft;
       ctx.lineWidth = 1.9;
       ctx.beginPath();
       ctx.moveTo(hint.path[0].x - state.cameraX, hint.path[0].y);
@@ -10080,7 +10601,7 @@
 
     ctx.save();
     ctx.setLineDash([3, 4]);
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.58)";
+    ctx.strokeStyle = colors.inkSoft;
     ctx.lineWidth = 1.7;
     ctx.beginPath();
     ctx.moveTo(hint.x - state.cameraX, hint.y);
@@ -10088,8 +10609,8 @@
     ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.84)";
+    ctx.fillStyle = colors.paper;
+    ctx.strokeStyle = colors.ink;
     ctx.lineWidth = 1.8;
     ctx.beginPath();
     ctx.arc(hint.x - state.cameraX, hint.y, 7, 0, TAU);
@@ -10106,6 +10627,7 @@
       return;
     }
 
+    const colors = getCanvasColors();
     const hint = state.driveHint;
     const alpha = clamp(hint.life / Math.max(0.001, hint.ttl || 1), 0, 1);
     const text = hint.text || "GAS";
@@ -10116,13 +10638,13 @@
     const worldX = hint.x - state.cameraX;
     const drawX = clamp(worldX - textW * 0.5, 8, canvas.width - textW - 8);
     const drawY = clamp(hint.y - 26, 10, getGameplayBottomY() - 28);
-    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.78)";
+    ctx.fillStyle = colors.paper;
+    ctx.strokeStyle = colors.inkSoft;
     ctx.lineWidth = 1.5;
     pathRoundedRect(ctx, drawX, drawY, textW, 22, 8);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = "#000000";
+    ctx.fillStyle = colors.ink;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(text, drawX + textW * 0.5, drawY + 11);
@@ -10156,6 +10678,7 @@
     }
 
     const muzzle = getMuzzleData(tank);
+    const colors = getCanvasColors();
     const laserReady = state.selectedShotType === "laser" && (tank.powerups.laser || 0) > 0;
     if (laserReady) {
       const hit = traceLaserBeam(tank.id, muzzle.x, muzzle.y, muzzle.rad);
@@ -10168,8 +10691,8 @@
       ctx.lineTo(hit.x - state.cameraX, hit.y);
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
-      ctx.strokeStyle = "rgba(0, 0, 0, 0.72)";
+      ctx.fillStyle = colors.paperSoft;
+      ctx.strokeStyle = colors.inkSoft;
       ctx.lineWidth = 1.6;
       ctx.beginPath();
       ctx.arc(hit.x - state.cameraX, hit.y, 6, 0, TAU);
@@ -10187,7 +10710,7 @@
     let vy = -Math.sin(muzzle.rad) * (previewSniper ? Math.max(820, tank.power * 1.9) : tank.power);
 
     ctx.save();
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.66)";
+    ctx.strokeStyle = colors.inkSoft;
     ctx.lineWidth = 2;
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
@@ -10223,8 +10746,8 @@
     ctx.setLineDash([]);
 
     // Endpoint marker is attached to the simulated preview arc.
-    ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.72)";
+    ctx.fillStyle = colors.paperSoft;
+    ctx.strokeStyle = colors.inkSoft;
     ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.arc(endX - state.cameraX, endY, 6, 0, TAU);
@@ -10294,13 +10817,13 @@
         }
       }
 
-      ctx.fillStyle = "rgba(255, 255, 255, 0.94)";
-      ctx.strokeStyle = "rgba(0, 0, 0, 0.74)";
+      ctx.fillStyle = colors.paper;
+      ctx.strokeStyle = colors.inkSoft;
       ctx.lineWidth = mobileAimReadout ? 2.2 : 1.5;
       pathRoundedRect(ctx, drawX, drawY, textW, bubbleH, mobileAimReadout ? 11 : 8);
       ctx.fill();
       ctx.stroke();
-      ctx.fillStyle = "#000000";
+      ctx.fillStyle = colors.ink;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(text, drawX + textW * 0.5, drawY + bubbleH * 0.5);
@@ -10321,6 +10844,7 @@
     const worldGunRad = degToRad(clampAimDeg(tank.angle));
     const localGunRad = worldGunRad + bodyTilt;
     const bodyColor = tank.color || "#000000";
+    const colors = getCanvasColors();
 
     drawTrajectoryPreview(tank);
 
@@ -10337,13 +10861,13 @@
     ctx.closePath();
     ctx.fillStyle = bodyColor;
     ctx.fill();
-    ctx.strokeStyle = "#000000";
+    ctx.strokeStyle = colors.terrain;
     ctx.lineWidth = 2.4;
     ctx.stroke();
 
     ctx.fillStyle = bodyColor;
     ctx.fillRect(TURRET_X, TURRET_Y, TURRET_W, TURRET_H);
-    ctx.strokeStyle = "#000000";
+    ctx.strokeStyle = colors.terrain;
     ctx.lineWidth = 2.2;
     ctx.strokeRect(TURRET_X, TURRET_Y, TURRET_W, TURRET_H);
 
@@ -10357,7 +10881,7 @@
     pathRoundedRect(ctx, -BARREL_OVERLAP, -1.25, barrelLen + BARREL_OVERLAP, 2.5, 0.6);
     ctx.fillStyle = bodyColor;
     ctx.fill();
-    ctx.strokeStyle = "#000000";
+    ctx.strokeStyle = colors.terrain;
     ctx.lineWidth = 1.9;
     ctx.stroke();
     ctx.restore();
@@ -10368,21 +10892,22 @@
     const hpBarW = 36;
     const hpBarX = tx - hpBarW * 0.5;
     const hpBarY = ty - 28;
-    ctx.fillStyle = "rgba(0, 0, 0, 0.34)";
+    ctx.fillStyle = isDarkMode() ? "rgba(234, 242, 255, 0.22)" : "rgba(0, 0, 0, 0.34)";
     ctx.fillRect(hpBarX, hpBarY, hpBarW, 4);
     ctx.fillStyle = bodyColor;
     ctx.fillRect(hpBarX, hpBarY, hpBarW * hpRatio, 4);
-    ctx.strokeStyle = "#000000";
+    ctx.strokeStyle = colors.terrain;
     ctx.lineWidth = 1.1;
     ctx.strokeRect(hpBarX, hpBarY, hpBarW, 4);
 
-    ctx.fillStyle = "#000000";
+    ctx.fillStyle = colors.ink;
     ctx.font = "600 12px 'Comic Sans MS', 'Trebuchet MS', sans-serif";
     ctx.textAlign = "center";
     ctx.fillText(tank.name, tx, ty - 35);
   }
 
   function drawProjectile() {
+    const colors = getCanvasColors();
     const liveProjectiles = [];
     if (state.projectile && state.projectile.active) {
       liveProjectiles.push(state.projectile);
@@ -10397,7 +10922,7 @@
 
     for (const p of liveProjectiles) {
       ctx.fillStyle = p.shotType === "airstrike_double" ? "#6b7280" : p.shotType === "seeker" ? "#5a5a5a" : "#808080";
-      ctx.strokeStyle = "#000000";
+      ctx.strokeStyle = colors.terrain;
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.arc(p.x - state.cameraX, p.y, p.radius + 1.2, 0, TAU);
@@ -10408,7 +10933,7 @@
     if (state.activeRoller) {
       const roll = state.activeRoller;
       ctx.fillStyle = "#5a5a5a";
-      ctx.strokeStyle = "#000000";
+      ctx.strokeStyle = colors.terrain;
       ctx.lineWidth = 2.2;
       ctx.beginPath();
       ctx.arc(roll.x - state.cameraX, roll.y, roll.radius + 1.1, 0, TAU);
@@ -10435,7 +10960,7 @@
       ctx.setLineDash([]);
 
       ctx.fillStyle = "#5f5f5f";
-      ctx.strokeStyle = "#000000";
+      ctx.strokeStyle = colors.terrain;
       ctx.lineWidth = 2.2;
       ctx.beginPath();
       ctx.arc(x, drop.y, drop.radius, 0, TAU);
@@ -10534,15 +11059,16 @@
       }
     }
 
+    const colors = getCanvasColors();
     ctx.save();
     ctx.translate(canvas.width * 0.5, canvas.height * 0.2);
-    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-    ctx.strokeStyle = "#000000";
+    ctx.fillStyle = colors.paper;
+    ctx.strokeStyle = colors.ink;
     ctx.lineWidth = 3;
     ctx.fillRect(-165, -34, 330, 72);
     ctx.strokeRect(-165, -34, 330, 72);
 
-    ctx.fillStyle = "#000000";
+    ctx.fillStyle = colors.ink;
     ctx.font = "700 32px 'Comic Sans MS', 'Trebuchet MS', sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -10696,6 +11222,7 @@
 
     const sniperCount = active?.powerups?.sniper || 0;
     const seekerCount = active?.powerups?.seeker || 0;
+    const diggerseekerCount = active?.powerups?.diggerseeker || 0;
     const rollerCount = active?.powerups?.roller || 0;
     const digCount = active?.powerups?.dig || 0;
     const buildCount = active?.powerups?.build || 0;
@@ -10709,6 +11236,8 @@
     if (state.selectedShotType === "sniper" && !enabledPowers.has("sniper")) {
       state.selectedShotType = "normal";
     } else if (state.selectedShotType === "seeker" && !enabledPowers.has("seeker")) {
+      state.selectedShotType = "normal";
+    } else if (state.selectedShotType === "diggerseeker" && !enabledPowers.has("diggerseeker")) {
       state.selectedShotType = "normal";
     } else if (state.selectedShotType === "roller" && !enabledPowers.has("roller")) {
       state.selectedShotType = "normal";
@@ -10730,6 +11259,9 @@
     }
     if (ui.seekerCount) {
       ui.seekerCount.textContent = `${seekerCount}`;
+    }
+    if (ui.diggerseekerCount) {
+      ui.diggerseekerCount.textContent = `${diggerseekerCount}`;
     }
     if (ui.rollerCount) {
       ui.rollerCount.textContent = `${rollerCount}`;
@@ -10762,6 +11294,11 @@
       ui.seekerBtn.style.display = enabledPowers.has("seeker") ? "" : "none";
       ui.seekerBtn.disabled = isDrawPhase || !canControl || !enabledPowers.has("seeker") || (!hasUnlimitedPowers && seekerCount <= 0);
       ui.seekerBtn.classList.toggle("active", state.selectedShotType === "seeker");
+    }
+    if (ui.diggerseekerBtn) {
+      ui.diggerseekerBtn.style.display = enabledPowers.has("diggerseeker") ? "" : "none";
+      ui.diggerseekerBtn.disabled = isDrawPhase || !canControl || !enabledPowers.has("diggerseeker") || (!hasUnlimitedPowers && diggerseekerCount <= 0);
+      ui.diggerseekerBtn.classList.toggle("active", state.selectedShotType === "diggerseeker");
     }
     if (ui.rollerBtn) {
       ui.rollerBtn.style.display = enabledPowers.has("roller") ? "" : "none";
@@ -11561,6 +12098,7 @@
 
   bindPowerupPickerButton(ui.sniperBtn, "sniper");
   bindPowerupPickerButton(ui.seekerBtn, "seeker");
+  bindPowerupPickerButton(ui.diggerseekerBtn, "diggerseeker");
   bindPowerupPickerButton(ui.rollerBtn, "roller");
   bindPowerupPickerButton(ui.digBtn, "dig");
   bindPowerupPickerButton(ui.buildBtn, "build");
@@ -11615,6 +12153,7 @@
 
   if (ui.openMultiplayerBtn) {
     ui.openMultiplayerBtn.addEventListener("click", () => {
+      state.netplay.menuStep = isNetplayEnabled() ? "lobby" : "landing";
       setMenuView("multiplayer");
       syncMenuControls();
       refreshMultiplayerLobbyUi();
@@ -11670,9 +12209,11 @@
     });
   }
 
-  if (ui.multiplayerStartBottomBtn) {
-    ui.multiplayerStartBottomBtn.addEventListener("click", () => {
-      startNetplayMatch();
+  if (ui.multiplayerLobbyBackBtn) {
+    ui.multiplayerLobbyBackBtn.addEventListener("click", () => {
+      state.netplay.menuStep = "landing";
+      setMenuView("multiplayer");
+      refreshMultiplayerLobbyUi();
     });
   }
 
@@ -11687,6 +12228,7 @@
       if (isNetplayEnabled()) {
         stopNetplaySession();
       }
+      state.netplay.menuStep = "landing";
       setMenuView("main");
     });
   }
@@ -11996,6 +12538,14 @@
     });
   }
 
+  if (ui.darkModeToggle) {
+    ui.darkModeToggle.addEventListener("change", () => {
+      setDarkMode(ui.darkModeToggle.checked);
+      setStatus(state.settings.darkMode ? "Dark mode enabled" : "Dark mode disabled");
+      updateUi();
+    });
+  }
+
   if (ui.hudLayoutSelect) {
     ui.hudLayoutSelect.addEventListener("change", () => {
       setHudLayout(ui.hudLayoutSelect.value);
@@ -12029,6 +12579,7 @@
   setFxIntensity(state.settings.fxIntensity);
   setAimTextScale(state.settings.aimTextScale);
   setDevMode(state.settings.devMode);
+  setDarkMode(state.settings.darkMode);
   resize();
   openMenu();
   requestAnimationFrame(tick);
