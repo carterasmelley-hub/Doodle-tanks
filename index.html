@@ -5227,6 +5227,9 @@
       state.netplay.connected = true;
       state.netplay.connecting = false;
       state.netplay.reconnectAttempts = 0;
+      if (NETPLAY_ROOM_RE.test(`${msg.room || ""}`.toUpperCase())) {
+        state.netplay.room = `${msg.room}`.toUpperCase();
+      }
       state.netplay.hostId = `${msg.hostId || state.netplay.hostId || ""}`.toUpperCase();
       state.netplay.isHost = state.netplay.playerId === state.netplay.hostId;
       state.netplay.players = sanitizeNetplayPlayers(msg.players);
@@ -5247,6 +5250,9 @@
     }
 
     if (msg.t === "lobbyState") {
+      if (NETPLAY_ROOM_RE.test(`${msg.room || ""}`.toUpperCase())) {
+        state.netplay.room = `${msg.room}`.toUpperCase();
+      }
       state.netplay.hostId = `${msg.hostId || state.netplay.hostId || ""}`.toUpperCase();
       state.netplay.isHost = state.netplay.playerId === state.netplay.hostId;
       state.netplay.players = sanitizeNetplayPlayers(msg.players);
