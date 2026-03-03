@@ -1114,7 +1114,7 @@
       background: rgba(16, 20, 28, 0.94);
     }
 
-    body.dark-mode .menu-card,
+    body.dark-mode .menu-card:not(.main-menu-card),
     body.dark-mode .pause-menu .menu-card,
     body.dark-mode .pairing-panel,
     body.dark-mode .power-filter-panel,
@@ -1131,6 +1131,11 @@
       color: var(--ink);
       border-color: var(--card-border);
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.32);
+    }
+
+    body.dark-mode .main-menu-card {
+      background: transparent;
+      box-shadow: none;
     }
 
     body.dark-mode .power-btn:active,
@@ -2196,6 +2201,7 @@
 
   const EXPLOSION_RADIUS = 34;
   const EXPLOSION_DAMAGE = 90;
+  const DIGGER_SEEKER_DAMAGE = 74;
   const AIRSTRIKE_DROP_SPACING = 34;
   const AIRSTRIKE_DROP_DELAY = 0.1;
   const AIRSTRIKE_DROP_SPEED = 560;
@@ -2207,18 +2213,26 @@
   const SEEKER_MIN_SPEED = 180;
   const SEEKER_LOCK_DOT = 0.16;
   const SEEKER_GUIDANCE_GAIN = 1.35;
-  const DIGGER_SEEKER_SPEED = 250;
-  const DIGGER_SEEKER_TURN_RATE = degToRad(156);
+  const DIGGER_SEEKER_SPEED = 220;
+  const DIGGER_SEEKER_TURN_RATE = degToRad(210);
   const DIGGER_SEEKER_TUNNEL_RADIUS = 5.6;
-  const DIGGER_SEEKER_MAX_DISTANCE = 560;
+  const DIGGER_SEEKER_MAX_DISTANCE = 980;
   const DIGGER_SEEKER_BURROW_DEPTH = 14;
-  const DIGGER_SEEKER_MIN_SPEED = 120;
-  const DIGGER_SEEKER_MAX_ENERGY = 560;
-  const DIGGER_SEEKER_BASE_DRAIN = 16;
-  const DIGGER_SEEKER_UP_COST = 0.22;
+  const DIGGER_SEEKER_MIN_SPEED = 95;
+  const DIGGER_SEEKER_MAX_ENERGY = 860;
+  const DIGGER_SEEKER_BASE_DRAIN = 9;
+  const DIGGER_SEEKER_UP_COST = 0.11;
   const DIGGER_SEEKER_DOWN_GAIN = 0.12;
   const DIGGER_SEEKER_DOWN_GRAVITY = 0;
   const DIGGER_SEEKER_EDGE_MARGIN = 1.4;
+  const DIGGER_SEEKER_SEEK_RANGE = 760;
+  const DIGGER_SEEKER_MIN_UNDER_DEPTH = 7;
+  const DIGGER_SEEKER_ENTRY_LOCK_DISTANCE = 42;
+  const DIGGER_SEEKER_ENTRY_EXTRA_DEPTH = 10;
+  const DIGGER_AIR_SEEK_TURN_RATE = degToRad(186);
+  const DIGGER_AIR_SEEK_RANGE = 980;
+  const DIGGER_AIR_SEEK_MIN_SPEED = 170;
+  const DIGGER_AIR_SEEK_MAX_SPEED = 360;
   const ROLLER_RADIUS = 5.2;
   const ROLLER_ROLL_FRICTION = 5.8;
   const ROLLER_ROLL_SLOPE_ACCEL = 620;
@@ -2400,6 +2414,7 @@
     double: "airstrike",
     laser: "laser"
   };
+  const DARK_MODE_STORAGE_KEY = "doodle_tanks.dark_mode";
 
   const keys = new Set();
 
@@ -3036,6 +3051,9 @@
   function setDarkMode(enabled) {
     const next = Boolean(enabled);
     state.settings.darkMode = next;
+    try {
+      window.localStorage.setItem(DARK_MODE_STORAGE_KEY, next ? "1" : "0");
+    } catch (_) {}
     document.body.classList.toggle("dark-mode", next);
     if (ui.darkModeToggle) {
       ui.darkModeToggle.checked = next;
@@ -3044,6 +3062,17 @@
       ui.darkModeValue.textContent = next ? "ON" : "OFF";
     }
     state.craterLayersDirty = true;
+  }
+
+  function loadPersistedSettings() {
+    try {
+      const rawDarkMode = window.localStorage.getItem(DARK_MODE_STORAGE_KEY);
+      if (rawDarkMode === "1") {
+        state.settings.darkMode = true;
+      } else if (rawDarkMode === "0") {
+        state.settings.darkMode = false;
+      }
+    } catch (_) {}
   }
 
   function applyDevModePowerUps(tank) {
@@ -3095,7 +3124,18 @@
       for (const tank of state.tanks) {
         applyDevModePowerUps(tank);
       }
+    } else {
+      for (const tank of state.tanks) {
+        if (tank?.powerups) {
+          tank.powerups.diggerseeker = 0;
+        }
+      }
+      if (state.selectedShotType === "diggerseeker") {
+        state.selectedShotType = "normal";
+      }
     }
+    updatePowerFilterUi();
+    updateUi();
   }
 
   function getMaxHp() {
@@ -3553,6 +3593,63 @@
     sub.stop(now + len + 0.05);
   }
 
+  function playCannonFireSound(powerNorm = 0.5) {
+    const ac = ensureAudio();
+    if (!ac || !state.audioMaster || !state.audioNoiseBuffer) {
+      return;
+    }
+
+    const p = clamp(Number(powerNorm) || 0.5, 0, 1);
+    const s = 0.82 + p * 0.66;
+    const now = ac.currentTime;
+
+    const noise = ac.createBufferSource();
+    noise.buffer = state.audioNoiseBuffer;
+    noise.loop = true;
+    const noiseHigh = ac.createBiquadFilter();
+    noiseHigh.type = "highpass";
+    noiseHigh.frequency.setValueAtTime(220, now);
+    const noiseLow = ac.createBiquadFilter();
+    noiseLow.type = "lowpass";
+    noiseLow.frequency.setValueAtTime(2600 + 420 * s, now);
+    const noiseGain = ac.createGain();
+    noiseGain.gain.setValueAtTime(0.0001, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.125 * s, now + 0.006);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.11);
+    noise.connect(noiseHigh);
+    noiseHigh.connect(noiseLow);
+    noiseLow.connect(noiseGain);
+    noiseGain.connect(state.audioMaster);
+
+    const body = ac.createOscillator();
+    body.type = "triangle";
+    body.frequency.setValueAtTime(190 + 40 * s, now);
+    body.frequency.exponentialRampToValueAtTime(72, now + 0.13);
+    const bodyGain = ac.createGain();
+    bodyGain.gain.setValueAtTime(0.0001, now);
+    bodyGain.gain.exponentialRampToValueAtTime(0.178 * s, now + 0.01);
+    bodyGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+    body.connect(bodyGain);
+    bodyGain.connect(state.audioMaster);
+
+    const crack = ac.createOscillator();
+    crack.type = "square";
+    crack.frequency.setValueAtTime(980 + 320 * s, now);
+    crack.frequency.exponentialRampToValueAtTime(250, now + 0.05);
+    const crackGain = ac.createGain();
+    crackGain.gain.setValueAtTime(0.078 * s, now);
+    crackGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+    crack.connect(crackGain);
+    crackGain.connect(state.audioMaster);
+
+    noise.start(now);
+    body.start(now);
+    crack.start(now);
+    noise.stop(now + 0.13);
+    body.stop(now + 0.17);
+    crack.stop(now + 0.07);
+  }
+
   function getAiTeamBounds(humanPlayers) {
     const humans = clamp(Number(humanPlayers || 1), 1, 4);
     const maxAiTeams = clamp(4 - humans, 0, 3);
@@ -3584,9 +3681,20 @@
     return next;
   }
 
+  function isPowerupRuntimeAvailable(type) {
+    if (!POWERUP_TYPES.includes(type)) {
+      return false;
+    }
+    // Digger seek is dev-only for now while behavior tuning continues.
+    if (type === "diggerseeker" && !state.settings.devMode) {
+      return false;
+    }
+    return true;
+  }
+
   function getEnabledPowerupTypes() {
     const cfg = normalizeTeamConfig(state.config);
-    return POWERUP_TYPES.filter((type) => cfg.enabledPowerups.includes(type));
+    return POWERUP_TYPES.filter((type) => cfg.enabledPowerups.includes(type) && isPowerupRuntimeAvailable(type));
   }
 
   function isPowerupEnabled(type) {
@@ -3602,6 +3710,7 @@
 
   function updatePowerFilterUi() {
     const enabled = new Set(getEnabledPowerupTypes());
+    const runtimeCount = POWERUP_TYPES.filter((type) => isPowerupRuntimeAvailable(type)).length;
     if (ui.powerFilterGrid) {
       const items = ui.powerFilterGrid.querySelectorAll("[data-power-type]");
       items.forEach((item) => {
@@ -3609,16 +3718,27 @@
         if (!type) {
           return;
         }
-        item.classList.toggle("active", enabled.has(type));
+        const runtimeEnabled = isPowerupRuntimeAvailable(type);
+        item.toggleAttribute("disabled", !runtimeEnabled);
+        item.classList.toggle("active", runtimeEnabled && enabled.has(type));
+        if (!runtimeEnabled && type === "diggerseeker") {
+          item.title = "Dev Mode only";
+        } else {
+          item.title = "";
+        }
       });
     }
     if (ui.powerFilterOpenBtn) {
-      ui.powerFilterOpenBtn.textContent = `EDIT ENABLED (${enabled.size}/${POWERUP_TYPES.length})`;
+      ui.powerFilterOpenBtn.textContent = `EDIT ENABLED (${enabled.size}/${runtimeCount})`;
     }
   }
 
   function togglePowerupEnabled(type) {
     if (!POWERUP_TYPES.includes(type)) {
+      return;
+    }
+    if (!isPowerupRuntimeAvailable(type)) {
+      setStatus("Digger seeker is Dev Mode only");
       return;
     }
     const enabled = new Set(getEnabledPowerupTypes());
@@ -4410,6 +4530,7 @@
     }
     if (ui.multiplayerStartBtn) {
       ui.multiplayerStartBtn.disabled = !(connected && isHost && players.length >= 2);
+      ui.multiplayerStartBtn.style.display = isHost ? "" : "none";
     }
     if (ui.multiplayerLeaveBtn) {
       ui.multiplayerLeaveBtn.disabled = !state.netplay.enabled;
@@ -4634,6 +4755,9 @@
     }
     // Multiplayer uses host-selected custom settings as base, then enforces no-AI/open-lobby ownership.
     state.netplay.matchConfig = normalizeTeamConfig(getMenuConfig());
+    // Start immediately on host so UI never remains stuck in menu while waiting on a network roundtrip.
+    state.netplay.started = true;
+    setupHostNetplayMatch();
     sendNetplay({
       t: "startGame",
       room: state.netplay.room,
@@ -5318,6 +5442,8 @@
             active: state.projectile.active,
             shotType: state.projectile.shotType,
             diggerSeek: Boolean(state.projectile.diggerSeek),
+            diggerCanBurrow: Boolean(state.projectile.diggerCanBurrow),
+            diggerAirSeek: Boolean(state.projectile.diggerAirSeek),
             distanceTravelled: Number(state.projectile.distanceTravelled || 0)
           }
         : null,
@@ -5333,6 +5459,8 @@
         active: p.active,
         shotType: p.shotType,
         diggerSeek: Boolean(p.diggerSeek),
+        diggerCanBurrow: Boolean(p.diggerCanBurrow),
+        diggerAirSeek: Boolean(p.diggerAirSeek),
         distanceTravelled: Number(p.distanceTravelled || 0)
       })),
       airstrikeDrops: state.airstrikeDrops.map((d) => ({
@@ -5576,6 +5704,8 @@
           active: Boolean(snapshot.projectile.active),
           shotType: snapshot.projectile.shotType || "normal",
           diggerSeek: Boolean(snapshot.projectile.diggerSeek),
+          diggerCanBurrow: Boolean(snapshot.projectile.diggerCanBurrow),
+          diggerAirSeek: Boolean(snapshot.projectile.diggerAirSeek),
           distanceTravelled: Number(snapshot.projectile.distanceTravelled || 0)
         }
       : null;
@@ -5605,6 +5735,8 @@
           active: Boolean(p.active),
           shotType: p.shotType || "normal",
           diggerSeek: Boolean(p.diggerSeek),
+          diggerCanBurrow: Boolean(p.diggerCanBurrow),
+          diggerAirSeek: Boolean(p.diggerAirSeek),
           distanceTravelled: Number(p.distanceTravelled || 0),
           path: []
         }))
@@ -5655,6 +5787,9 @@
 
     let playedNetFxEvent = false;
     if (isNetplayClientMirror()) {
+      if (state.netplay.started && snapshotPhase !== "menu") {
+        enterInGameShell();
+      }
       const incomingSeq = Math.max(0, Number(snapshot.netFxSeq || 0));
       if (incomingSeq > state.netFxSeenSeq) {
         state.netFxSeenSeq = incomingSeq;
@@ -5664,20 +5799,24 @@
           const fxRadius = Math.max(4, Number(snapshot.netFxEvent.radius || EXPLOSION_RADIUS));
           const fxStyle = `${snapshot.netFxEvent.style || snapshot.netFxEvent.kind || "normal"}`;
           const fxStrength = clamp(Number(snapshot.netFxEvent.strength || 1), 0.5, 1.7);
-          state.bursts.push({
-            x: fxX,
-            y: fxY,
-            life: 0.55,
-            ttl: 0.55,
-            radius: fxRadius,
-            seed: Math.random() * 1000,
-            style: fxStyle
-          });
-          if (state.bursts.length > MAX_BURSTS) {
-            state.bursts.shift();
+          if ((snapshot.netFxEvent.kind || "") === "cannon") {
+            playCannonFireSound(clamp((fxStrength - 0.75) / 0.95, 0, 1));
+          } else {
+            state.bursts.push({
+              x: fxX,
+              y: fxY,
+              life: 0.55,
+              ttl: 0.55,
+              radius: fxRadius,
+              seed: Math.random() * 1000,
+              style: fxStyle
+            });
+            if (state.bursts.length > MAX_BURSTS) {
+              state.bursts.shift();
+            }
+            startScreenShake(0.2 + fxRadius * 0.0025, 2.4 + fxRadius * 0.04);
+            playExplosionSound(fxStrength);
           }
-          startScreenShake(0.2 + fxRadius * 0.0025, 2.4 + fxRadius * 0.04);
-          playExplosionSound(fxStrength);
           playedNetFxEvent = true;
         }
       }
@@ -5709,7 +5848,7 @@
           state.bursts.shift();
         }
         startScreenShake(0.2 + baseRadius * 0.0025, 2.2 + baseRadius * 0.042);
-        playExplosionSound(shotType === "dig" ? 0.88 : 1.02);
+        // Keep fallback visual-only; authoritative net FX events handle synced audio timing.
       }
 
       if (!state.netplay.mirrorInitialized && state.tanks.length > 0) {
@@ -8072,8 +8211,20 @@
         active: true,
         shotType: shot.shotType,
         diggerSeek: false,
+        diggerCanBurrow: shot.shotType === "diggerseeker",
+        diggerAirSeek: false,
         distanceTravelled: 0,
         path: [{ x: shot.x, y: shot.y }]
+      });
+      const shotNorm = clamp((Math.abs(shot.power) - MIN_POWER) / Math.max(1, MAX_POWER - MIN_POWER), 0, 1);
+      playCannonFireSound(shotNorm);
+      emitNetplayFxEvent({
+        kind: "cannon",
+        x: shot.x,
+        y: shot.y,
+        radius: 1,
+        strength: clamp(0.78 + shotNorm * 0.95, 0.5, 1.7),
+        style: "cannon"
       });
     }
 
@@ -8199,8 +8350,20 @@
       active: true,
       shotType,
       diggerSeek: false,
+      diggerCanBurrow: shotType === "diggerseeker",
+      diggerAirSeek: false,
       distanceTravelled: 0
     };
+    const shotNorm = clamp((Math.abs(launchSpeed) - MIN_POWER) / Math.max(1, MAX_POWER - MIN_POWER), 0, 1);
+    playCannonFireSound(shotNorm);
+    emitNetplayFxEvent({
+      kind: "cannon",
+      x: muzzle.x,
+      y: muzzle.y,
+      radius: 1,
+      strength: clamp(0.78 + shotNorm * 0.95, 0.5, 1.7),
+      style: "cannon"
+    });
 
     state.currentShotPath = [{ x: muzzle.x, y: muzzle.y }];
     state.phase = "projectile";
@@ -8536,6 +8699,45 @@
     return best;
   }
 
+  function estimateDiggerRouteCost(fromX, fromY, targetX, targetY) {
+    const absDx = Math.abs(targetX - fromX);
+    const climb = Math.max(0, fromY - targetY);
+    const drop = Math.max(0, targetY - fromY);
+    return absDx * 0.76 + climb * 1.18 + Math.max(0, drop * 0.14);
+  }
+
+  function findDiggerSeekTarget(ownerId, x, y, energy = Number.POSITIVE_INFINITY) {
+    const owner = getTankById(ownerId);
+    if (!owner) {
+      return null;
+    }
+    let best = null;
+    let bestScore = Number.POSITIVE_INFINITY;
+    for (const tank of state.tanks) {
+      if (!tank.alive || tank.team === owner.team) {
+        continue;
+      }
+      const tx = tank.x;
+      const ty = tank.y - TANK_H * 0.32;
+      if (Math.abs(tx - x) > DIGGER_SEEKER_SEEK_RANGE) {
+        continue;
+      }
+      const routeCost = estimateDiggerRouteCost(x, y, tx, ty);
+      const energyBudget = Number.isFinite(energy)
+        ? Math.max(0, energy) * 1.5 + 90
+        : Number.POSITIVE_INFINITY;
+      if (routeCost > energyBudget) {
+        continue;
+      }
+      const score = routeCost + Math.abs(tx - x) * 0.22;
+      if (score < bestScore) {
+        bestScore = score;
+        best = tank;
+      }
+    }
+    return best;
+  }
+
   function hasSeekerLineOfSight(ownerId, x0, y0, target) {
     if (!target) {
       return false;
@@ -8660,7 +8862,7 @@
   }
 
   function armDiggerSeeker(p, hitX, hitY) {
-    const target = findNearestEnemyTank(p.ownerId, hitX, hitY);
+    const target = findDiggerSeekTarget(p.ownerId, hitX, hitY, p.diggerEnergy);
     let dirX = Math.sign(p.vx) || 1;
     let dirY = 0.28;
     if (target) {
@@ -8672,7 +8874,7 @@
       if (d > 0.001) {
         dirX = dx / d;
         // Always enter underground first, then guidance rises toward the target.
-        dirY = clamp(dy / d * 0.42 + 0.28, 0.1, 0.74);
+        dirY = clamp(dy / d * 0.42 + 0.36, 0.24, 0.78);
       }
     }
     const n = Math.hypot(dirX, dirY) || 1;
@@ -8680,19 +8882,22 @@
     dirY /= n;
 
     const speed = clamp(
-      Math.max(Math.hypot(p.vx, p.vy) * 0.86, DIGGER_SEEKER_SPEED * 0.9),
-      DIGGER_SEEKER_SPEED * 0.7,
-      MAX_POWER * 1.25
+      Math.max(Math.hypot(p.vx, p.vy) * 0.46, DIGGER_SEEKER_SPEED * 0.66),
+      DIGGER_SEEKER_MIN_SPEED,
+      DIGGER_SEEKER_SPEED * 0.96
     );
     p.diggerSeek = true;
+    p.diggerCanBurrow = false;
+    p.diggerAirSeek = false;
     p.distanceTravelled = 0;
-    p.diggerEnergy = clamp(speed * 1.05, 220, DIGGER_SEEKER_MAX_ENERGY * 0.92);
+    p.diggerEnergy = clamp(speed * 1.35, 300, DIGGER_SEEKER_MAX_ENERGY * 0.94);
     p.vx = dirX * speed;
     p.vy = dirY * speed;
     p.px = hitX;
     p.py = hitY;
     p.x = clamp(hitX + dirX * DIGGER_SEEKER_BURROW_DEPTH, 0, state.worldW - 1);
     p.y = clamp(hitY + dirY * DIGGER_SEEKER_BURROW_DEPTH, 0, WORLD_H - 1);
+    p.y = Math.max(p.y, supportY(p.x) + DIGGER_SEEKER_MIN_UNDER_DEPTH);
     carveLaserTunnel(hitX, hitY, p.x, p.y, DIGGER_SEEKER_TUNNEL_RADIUS);
   }
 
@@ -8701,7 +8906,7 @@
       return;
     }
 
-    const target = findNearestEnemyTank(p.ownerId, p.x, p.y);
+    const target = findDiggerSeekTarget(p.ownerId, p.x, p.y, p.diggerEnergy);
     if (!target) {
       return;
     }
@@ -8745,30 +8950,69 @@
 
     const currentSpeed = Math.hypot(p.vx, p.vy);
     if (!Number.isFinite(p.diggerEnergy)) {
-      p.diggerEnergy = clamp(currentSpeed, 180, DIGGER_SEEKER_MAX_ENERGY * 0.9);
+      p.diggerEnergy = clamp(currentSpeed * 1.2, 220, DIGGER_SEEKER_MAX_ENERGY * 0.9);
     }
     const upSpeed = Math.max(0, -p.vy);
     const downSpeed = Math.max(0, p.vy);
     p.diggerEnergy -= (DIGGER_SEEKER_BASE_DRAIN + upSpeed * DIGGER_SEEKER_UP_COST) * dt;
     p.diggerEnergy += downSpeed * DIGGER_SEEKER_DOWN_GAIN * dt;
     p.diggerEnergy = clamp(p.diggerEnergy, 0, DIGGER_SEEKER_MAX_ENERGY);
-    const energySpeed = DIGGER_SEEKER_MIN_SPEED + p.diggerEnergy * 0.82;
+    const energyT = clamp(p.diggerEnergy / DIGGER_SEEKER_MAX_ENERGY, 0, 1);
+    const cruiseSpeed = lerp(DIGGER_SEEKER_MIN_SPEED + 16, DIGGER_SEEKER_SPEED * 0.96, energyT);
     const speed = clamp(
-      Math.max(energySpeed, currentSpeed * 0.92),
+      lerp(currentSpeed, cruiseSpeed, clamp(dt * 3.2, 0, 1)),
       DIGGER_SEEKER_MIN_SPEED,
-      MAX_POWER * 1.1
+      DIGGER_SEEKER_SPEED * 1.06
     );
     const currentAng = Math.atan2(p.vy, p.vx);
     const desiredAng = Math.atan2(dy, aimX - p.x);
-    const maxTurn = DIGGER_SEEKER_TURN_RATE * dt * (hasSight ? 1.12 : 1);
+    const maxTurn = DIGGER_SEEKER_TURN_RATE * dt * (hasSight ? 1.28 : 1.12);
     const delta = clamp(normalizeAngleRad(desiredAng - currentAng), -maxTurn, maxTurn);
     const nextAng = currentAng + delta;
-    const blend = clamp(dt * 7.2, 0, 1);
+    const blend = clamp(dt * 9.8, 0, 1);
     const nvx = Math.cos(nextAng) * speed;
     const nvy = Math.sin(nextAng) * speed;
     p.vx = lerp(p.vx, nvx, blend);
     p.vy = lerp(p.vy, nvy, blend);
     p.vy += DIGGER_SEEKER_DOWN_GRAVITY * dt;
+  }
+
+  function applyDiggerAirSeekGuidance(p, dt) {
+    if (!p || p.shotType !== "diggerseeker" || !p.diggerAirSeek) {
+      return;
+    }
+    const target = findNearestEnemyTank(p.ownerId, p.x, p.y);
+    if (!target) {
+      return;
+    }
+
+    const tx = target.x;
+    const ty = target.y - TANK_H * 0.32;
+    const dx = tx - p.x;
+    const dy = ty - p.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 0.001 || dist > DIGGER_AIR_SEEK_RANGE) {
+      return;
+    }
+
+    const speed = Math.hypot(p.vx, p.vy);
+    if (!Number.isFinite(speed) || speed < 0.001) {
+      return;
+    }
+    const currentAng = Math.atan2(p.vy, p.vx);
+    const desiredAng = Math.atan2(dy, dx);
+    const distT = 1 - clamp(dist / DIGGER_AIR_SEEK_RANGE, 0, 1);
+    const turnScale = 0.85 + distT * 0.65;
+    const maxTurn = DIGGER_AIR_SEEK_TURN_RATE * dt * turnScale;
+    const delta = clamp(normalizeAngleRad(desiredAng - currentAng), -maxTurn, maxTurn);
+    const nextAng = currentAng + delta;
+
+    const speedTarget = clamp(speed + 44 * dt, DIGGER_AIR_SEEK_MIN_SPEED, DIGGER_AIR_SEEK_MAX_SPEED);
+    const nvx = Math.cos(nextAng) * speedTarget;
+    const nvy = Math.sin(nextAng) * speedTarget;
+    const blend = clamp(dt * 8.8, 0, 1);
+    p.vx = lerp(p.vx, nvx, blend);
+    p.vy = lerp(p.vy, nvy, blend);
   }
 
   function updateSingleProjectile(p, dt, options = {}) {
@@ -8795,6 +9039,8 @@
         applySeekerGuidance(p, sdt);
       } else if (isDiggerSeeker && p.diggerSeek) {
         applyDiggerSeekerGuidance(p, sdt);
+      } else if (isDiggerSeeker && p.diggerAirSeek) {
+        applyDiggerAirSeekGuidance(p, sdt);
       }
 
       p.x += p.vx * sdt;
@@ -8842,11 +9088,53 @@
           if (!isSimultaneous) {
             state.projectile = null;
           }
-          explode(tunnelHit.x, tunnelHit.y, EXPLOSION_RADIUS, EXPLOSION_DAMAGE, { deferResolve });
+          explode(tunnelHit.x, tunnelHit.y, EXPLOSION_RADIUS, DIGGER_SEEKER_DAMAGE, { deferResolve });
           return;
         }
 
-        if (tunnelHit && (tunnelHit.kind === "edge" || tunnelHit.kind === "bounds")) {
+        if (tunnelHit && tunnelHit.kind === "edge") {
+          if (p.distanceTravelled < DIGGER_SEEKER_ENTRY_LOCK_DISTANCE) {
+            const forcedDepthY = supportY(p.x) + DIGGER_SEEKER_MIN_UNDER_DEPTH + DIGGER_SEEKER_ENTRY_EXTRA_DEPTH;
+            p.y = clamp(Math.max(p.y, forcedDepthY), 0, WORLD_H - 1);
+            if (p.vy < 48) {
+              p.vy = 48;
+            }
+            carveLaserTunnel(p.px, p.py, p.x, p.y, DIGGER_SEEKER_TUNNEL_RADIUS);
+            continue;
+          }
+          carveLaserTunnel(p.px, p.py, tunnelHit.x, tunnelHit.y, DIGGER_SEEKER_TUNNEL_RADIUS);
+
+          const seekTarget = findNearestEnemyTank(p.ownerId, tunnelHit.x, tunnelHit.y);
+          const surfaceY = supportY(tunnelHit.x);
+          const launchY = Math.max(1, surfaceY - 2.2);
+          const launchX = clamp(tunnelHit.x, 0, state.worldW - 1);
+          const launchSpeed = clamp(Math.hypot(p.vx, p.vy) * 0.92 + 42, 165, 335);
+          let outRad = Math.atan2(-0.35, Math.sign(p.vx) || 1);
+          if (seekTarget) {
+            const tx = seekTarget.x;
+            const ty = seekTarget.y - TANK_H * 0.32;
+            const desired = Math.atan2(ty - launchY, tx - launchX);
+            const dirX = Math.sign(Math.cos(desired)) || Math.sign(p.vx) || 1;
+            outRad = desired;
+            if (Math.sin(outRad) > -0.12) {
+              outRad = Math.atan2(-0.32, dirX);
+            }
+          }
+
+          p.diggerSeek = false;
+          p.diggerCanBurrow = false;
+          p.diggerAirSeek = true;
+          p.px = launchX;
+          p.py = launchY;
+          p.x = launchX;
+          p.y = launchY;
+          p.vx = Math.cos(outRad) * launchSpeed;
+          p.vy = Math.sin(outRad) * launchSpeed;
+          path.push({ x: p.x, y: p.y });
+          continue;
+        }
+
+        if (tunnelHit && tunnelHit.kind === "bounds") {
           carveLaserTunnel(p.px, p.py, tunnelHit.x, tunnelHit.y, DIGGER_SEEKER_TUNNEL_RADIUS);
           if (Array.isArray(p.path)) {
             finalizeShotPathFromPath(p.ownerId, p.path, tunnelHit.x, tunnelHit.y);
@@ -8856,7 +9144,7 @@
           p.active = false;
           if (!isSimultaneous) {
             state.projectile = null;
-            beginResolvePhase("Digger surfaced");
+            beginResolvePhase("Digger expired");
           }
           state.lastImpact.x = tunnelHit.x;
           state.lastImpact.y = tunnelHit.y;
@@ -8923,7 +9211,7 @@
           continue;
         }
 
-        if (isDiggerSeeker && !p.diggerSeek && hit.kind === "terrain") {
+        if (isDiggerSeeker && !p.diggerSeek && p.diggerCanBurrow && hit.kind === "terrain") {
           if (path.length > 0) {
             path[path.length - 1] = { x: hit.x, y: hit.y };
           }
@@ -8972,6 +9260,10 @@
             return;
           }
           explode(hit.x, hit.y, EXPLOSION_RADIUS, EXPLOSION_DAMAGE, { deferResolve });
+          return;
+        }
+        if (p.shotType === "diggerseeker") {
+          explode(hit.x, hit.y, EXPLOSION_RADIUS, DIGGER_SEEKER_DAMAGE, { deferResolve });
           return;
         }
         explode(hit.x, hit.y, EXPLOSION_RADIUS, EXPLOSION_DAMAGE, { deferResolve });
@@ -12574,6 +12866,7 @@
     };
   }
 
+  loadPersistedSettings();
   syncMenuControls();
   setHudLayout(getHudLayout());
   setFxIntensity(state.settings.fxIntensity);
