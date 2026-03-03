@@ -11455,6 +11455,27 @@
     });
   }
 
+  // Debug hooks for browser console checks (multiplayer troubleshooting).
+  if (typeof window !== "undefined") {
+    // Intentionally exposed for live debugging on hosted builds.
+    window.state = state;
+    window.__doodleDebug = {
+      getState: () => state,
+      getNetplay: () => ({
+        enabled: Boolean(state.netplay?.enabled),
+        connected: Boolean(state.netplay?.connected),
+        connecting: Boolean(state.netplay?.connecting),
+        room: state.netplay?.room || "",
+        playerId: state.netplay?.playerId || "",
+        hostId: state.netplay?.hostId || "",
+        isHost: Boolean(state.netplay?.isHost),
+        started: Boolean(state.netplay?.started),
+        players: Array.isArray(state.netplay?.players) ? state.netplay.players.slice() : []
+      }),
+      getWsUrl: () => getNetplayWsUrl()
+    };
+  }
+
   syncMenuControls();
   setHudLayout(getHudLayout());
   setFxIntensity(state.settings.fxIntensity);
