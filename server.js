@@ -12,8 +12,10 @@ const ROOM_IDLE_MS = 10 * 60 * 1000;
 const CLEANUP_MS = 60 * 1000;
 const HEARTBEAT_MS = 30000;
 const MAX_PLAYERS_PER_ROOM = 4;
-const MAX_MSG_PER_SEC = 60;
-const MAX_MSG_SIZE = 8 * 1024;
+// Multiplayer gameplay can emit frequent aim updates and large snapshots.
+// Keep limits protective but high enough for real matches.
+const MAX_MSG_PER_SEC = 240;
+const MAX_MSG_SIZE = 512 * 1024;
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
