@@ -2194,7 +2194,7 @@
   const MULTI_RECONNECT_MAX_MS = 4500;
   const NETPLAY_ROOM_RE = /^[A-Z0-9]{6}$/;
   const NETPLAY_PLAYER_RE = /^[A-Z0-9]{8,20}$/;
-  const NETPLAY_SNAPSHOT_INTERVAL = 0.05;
+  const NETPLAY_SNAPSHOT_INTERVAL = 0.033;
   const NETPLAY_TERRAIN_SYNC_INTERVAL = 0.55;
   const NETPLAY_FULL_SYNC_INTERVAL = 1.4;
   const NETPLAY_RECONNECT_BASE_MS = 800;
@@ -2336,8 +2336,13 @@
       reconnectTimer: null,
       reconnectAttempts: 0,
       wantsReconnect: false,
-      matchBootstrapped: false
+      matchBootstrapped: false,
+      mirrorInitialized: false,
+      matchConfig: null
     },
+    netFxSeq: 0,
+    netFxEvent: null,
+    netFxSeenSeq: 0,
     blockFireUntil: 0,
     suppressNextFireInput: false,
     blockTeleportUntil: 0,
@@ -3576,8 +3581,11 @@
     }
   }
 
-  function applyMenuConfig() {
-    state.config = normalizeTeamConfig(getMenuConfig());
+  function applyMenuConfig(configOverride = null) {
+    const nextConfig = configOverride && typeof configOverride === "object"
+      ? normalizeTeamConfig(configOverride)
+      : normalizeTeamConfig(getMenuConfig());
+    state.config = nextConfig;
     const preset = MAP_PRESETS[state.config.mapSize] || MAP_PRESETS[DEFAULT_MAP_SIZE];
     state.worldW = preset.width;
     if (!state.settings.aimTextScaleUserOverride) {
@@ -4143,6 +4151,9 @@
     state.netplay.terrainSyncTimer = 0;
     state.netplay.fullSyncTimer = 0;
     state.netplay.terrainNeedsSync = true;
+    state.netplay.mirrorInitialized = false;
+    state.netplay.matchConfig = null;
+    state.netFxSeenSeq = 0;
   }
 
   function stopNetplaySession(manual = true) {
@@ -4255,6 +4266,9 @@
     state.netplay.terrainSyncTimer = 0;
     state.netplay.fullSyncTimer = 0;
     state.netplay.terrainNeedsSync = true;
+    state.netplay.mirrorInitialized = false;
+    state.netplay.matchConfig = null;
+    state.netFxSeenSeq = 0;
     setStatus("Connecting to multiplayer room...");
     connectNetplaySocket();
     refreshMultiplayerLobbyUi();
@@ -4308,6 +4322,8 @@
       setMultiplayerMenuStatus("Need at least 2 players in room.", true);
       return;
     }
+    // Multiplayer uses host-selected custom settings as base, then enforces no-AI/open-lobby ownership.
+    state.netplay.matchConfig = normalizeTeamConfig(getMenuConfig());
     sendNetplay({
       t: "startGame",
       room: state.netplay.room,
@@ -4429,6 +4445,52 @@
       return;
     }
     state.netplay.terrainNeedsSync = true;
+  }
+
+  function emitNetplayFxEvent(event) {
+    if (!isNetplayEnabled() || !isNetplayHost() || !event || typeof event !== "object") {
+      return;
+    }
+    state.netFxSeq += 1;
+    state.netFxEvent = {
+      kind: `${event.kind || "explode"}`,
+      x: Number(event.x || 0),
+      y: Number(event.y || 0),
+      radius: Math.max(0, Number(event.radius || 0)),
+      strength: clamp(Number(event.strength || 1), 0.5, 1.7),
+      style: `${event.style || "normal"}`
+    };
+    // Push an immediate host snapshot on FX so remote clients get
+    // impact visuals/sound in sync instead of waiting for the next tick.
+    if (state.netplay.connected) {
+      broadcastNetplaySnapshot(true, 0);
+    }
+  }
+
+  function applyNetplayConfigFromSnapshot(rawConfig) {
+    if (!rawConfig || typeof rawConfig !== "object") {
+      return;
+    }
+    const merged = normalizeTeamConfig({
+      ...state.config,
+      mapSize: MAP_PRESETS[rawConfig.mapSize] ? rawConfig.mapSize : state.config.mapSize,
+      terrainMode: TERRAIN_MODE_ORDER.includes(rawConfig.terrainMode) ? rawConfig.terrainMode : state.config.terrainMode,
+      damageMode: DAMAGE_MODE_ORDER.includes(rawConfig.damageMode) ? rawConfig.damageMode : state.config.damageMode,
+      turnMode: TURN_MODE_ORDER.includes(rawConfig.turnMode) ? rawConfig.turnMode : state.config.turnMode,
+      mapSource: MAP_SOURCE_ORDER.includes(rawConfig.mapSource) ? rawConfig.mapSource : state.config.mapSource,
+      spawnMode: SPAWN_MODE_ORDER.includes(rawConfig.spawnMode) ? rawConfig.spawnMode : state.config.spawnMode,
+      lootDropOnKo: rawConfig.lootDropOnKo !== false,
+      borderBounce: Boolean(rawConfig.borderBounce),
+      enabledPowerups: Array.isArray(rawConfig.enabledPowerups) ? rawConfig.enabledPowerups : state.config.enabledPowerups,
+      maxHealth: clamp(Number(rawConfig.maxHealth || state.config.maxHealth || DEFAULT_MAX_HP), MIN_CONFIG_HP, MAX_CONFIG_HP),
+      humanPlayers: clamp(Number(rawConfig.humanPlayers || state.config.humanPlayers || 1), 1, 4),
+      playerCount: clamp(Number(rawConfig.playerCount || state.config.playerCount || 1), 1, 4),
+      enemyCount: clamp(Number(rawConfig.enemyCount || state.config.enemyCount || 0), 0, 3),
+      aiDifficulty: AI_PRESETS[rawConfig.aiDifficulty] ? rawConfig.aiDifficulty : state.config.aiDifficulty
+    });
+    state.config = merged;
+    const preset = MAP_PRESETS[state.config.mapSize] || MAP_PRESETS[DEFAULT_MAP_SIZE];
+    state.worldW = preset.width;
   }
 
   function sampleNetplayPath(path, maxPoints = 64) {
@@ -4862,7 +4924,18 @@
       config: {
         mapSize: state.config.mapSize,
         terrainMode: state.config.terrainMode,
-        damageMode: state.config.damageMode
+        damageMode: state.config.damageMode,
+        turnMode: state.config.turnMode,
+        mapSource: state.config.mapSource,
+        spawnMode: state.config.spawnMode,
+        maxHealth: state.config.maxHealth,
+        lootDropOnKo: state.config.lootDropOnKo !== false,
+        borderBounce: Boolean(state.config.borderBounce),
+        enabledPowerups: Array.isArray(state.config.enabledPowerups) ? state.config.enabledPowerups.slice() : POWERUP_TYPES.slice(),
+        humanPlayers: clamp(Number(state.config.humanPlayers || 1), 1, 4),
+        playerCount: clamp(Number(state.config.playerCount || 1), 1, 4),
+        enemyCount: clamp(Number(state.config.enemyCount || 0), 0, 3),
+        aiDifficulty: AI_PRESETS[state.config.aiDifficulty] ? state.config.aiDifficulty : "normal"
       },
       turnCounter: state.turnCounter,
       turnsIntoRound: state.turnsIntoRound,
@@ -4870,6 +4943,17 @@
       statusText: state.statusText,
       selectedShotType: state.selectedShotType,
       abilityMode: state.abilityMode,
+      netFxSeq: state.netFxSeq,
+      netFxEvent: state.netFxEvent
+        ? {
+            kind: state.netFxEvent.kind,
+            x: state.netFxEvent.x,
+            y: state.netFxEvent.y,
+            radius: state.netFxEvent.radius,
+            strength: state.netFxEvent.strength,
+            style: state.netFxEvent.style
+          }
+        : null,
       lastImpact: { x: state.lastImpact.x, y: state.lastImpact.y },
       teams: state.teams.map((team) => ({
         id: team.id,
@@ -5049,6 +5133,7 @@
     const prevLastImpactY = state.lastImpact.y;
     const prevActiveTankId = state.tanks[state.activeIndex]?.id ?? null;
     const snapshotPhase = typeof snapshot.phase === "string" ? snapshot.phase : state.phase;
+    applyNetplayConfigFromSnapshot(snapshot.config);
     const worldW = clamp(Number(snapshot.worldW || state.worldW), MAP_PRESETS.small.width, MAX_WORLD_W);
     state.worldW = worldW;
 
@@ -5077,12 +5162,13 @@
     }
 
     if (Array.isArray(snapshot.teams)) {
+      const prevTeamById = new Map(state.teams.map((team) => [team.id, team]));
       state.teams = snapshot.teams.map((team) => ({
         id: team.id,
         name: team.name,
         color: team.color,
         controller: team.controller,
-        netOwnerId: team.netOwnerId || null
+        netOwnerId: team.netOwnerId || prevTeamById.get(team.id)?.netOwnerId || null
       }));
     }
 
@@ -5098,6 +5184,9 @@
           incomingOwner === state.netplay.playerId;
         const resolvedAngle = keepLocalAimInputs && Number.isFinite(prev?.angle) ? prev.angle : Number(tank.angle || 0);
         const resolvedPower = keepLocalAimInputs && Number.isFinite(prev?.power) ? prev.power : Number(tank.power || DEFAULT_SHOT_POWER);
+        const resolvedX = keepLocalAimInputs && Number.isFinite(prev?.x) ? prev.x : Number(tank.x || 0);
+        const resolvedY = keepLocalAimInputs && Number.isFinite(prev?.y) ? prev.y : Number(tank.y || 0);
+        const resolvedTilt = keepLocalAimInputs && Number.isFinite(prev?.tilt) ? prev.tilt : Number(tank.tilt || 0);
         return {
         id: tank.id,
         name: tank.name,
@@ -5105,8 +5194,8 @@
         teamName: tank.teamName || tank.team,
         controller: tank.controller || "human",
         color: tank.color || "#000000",
-        x: Number(tank.x || 0),
-        y: Number(tank.y || 0),
+        x: resolvedX,
+        y: resolvedY,
         vx: Number(tank.vx || 0),
         vy: Number(tank.vy || 0),
         angle: resolvedAngle,
@@ -5114,9 +5203,9 @@
         moveRemaining: Number(tank.moveRemaining || 0),
         hp: Number(tank.hp || 0),
         alive: Boolean(tank.alive),
-        tilt: Number(tank.tilt || 0),
+        tilt: resolvedTilt,
         teamSlot: Number(tank.teamSlot || 0),
-        netOwnerId: tank.netOwnerId || null,
+        netOwnerId: incomingOwner,
         lastShotPath: Array.isArray(tank.lastShotPath)
           ? tank.lastShotPath.slice()
           : Array.isArray(prev?.lastShotPath)
@@ -5175,9 +5264,12 @@
     if (isNetplayClientMirror() && prevProjectile && nextProjectile && prevProjectile.active && nextProjectile.active) {
       const sameProjectile = prevProjectile.ownerId === nextProjectile.ownerId && prevProjectile.shotType === nextProjectile.shotType;
       if (sameProjectile) {
-        const blend = 0.62;
-        nextProjectile.x = lerp(prevProjectile.x, nextProjectile.x, blend);
-        nextProjectile.y = lerp(prevProjectile.y, nextProjectile.y, blend);
+        const delta = Math.hypot(nextProjectile.x - prevProjectile.x, nextProjectile.y - prevProjectile.y);
+        if (delta < 420) {
+          const blend = 0.42;
+          nextProjectile.x = lerp(prevProjectile.x, nextProjectile.x, blend);
+          nextProjectile.y = lerp(prevProjectile.y, nextProjectile.y, blend);
+        }
       }
     }
     state.projectile = nextProjectile;
@@ -5241,10 +5333,40 @@
       y: Number(snapshot.lastImpact?.y || state.lastImpact.y || WORLD_H * 0.5)
     };
 
+    let playedNetFxEvent = false;
+    if (isNetplayClientMirror()) {
+      const incomingSeq = Math.max(0, Number(snapshot.netFxSeq || 0));
+      if (incomingSeq > state.netFxSeenSeq) {
+        state.netFxSeenSeq = incomingSeq;
+        if (snapshot.netFxEvent && typeof snapshot.netFxEvent === "object") {
+          const fxX = Number(snapshot.netFxEvent.x || state.lastImpact.x);
+          const fxY = Number(snapshot.netFxEvent.y || state.lastImpact.y);
+          const fxRadius = Math.max(4, Number(snapshot.netFxEvent.radius || EXPLOSION_RADIUS));
+          const fxStyle = `${snapshot.netFxEvent.style || snapshot.netFxEvent.kind || "normal"}`;
+          const fxStrength = clamp(Number(snapshot.netFxEvent.strength || 1), 0.5, 1.7);
+          state.bursts.push({
+            x: fxX,
+            y: fxY,
+            life: 0.55,
+            ttl: 0.55,
+            radius: fxRadius,
+            seed: Math.random() * 1000,
+            style: fxStyle
+          });
+          if (state.bursts.length > MAX_BURSTS) {
+            state.bursts.shift();
+          }
+          startScreenShake(0.2 + fxRadius * 0.0025, 2.4 + fxRadius * 0.04);
+          playExplosionSound(fxStrength);
+          playedNetFxEvent = true;
+        }
+      }
+    }
+
     if (isNetplayClientMirror()) {
       const hadProjectile = Boolean(prevProjectile && prevProjectile.active);
       const hasProjectile = Boolean(state.projectile && state.projectile.active);
-      if (hadProjectile && !hasProjectile) {
+      if (hadProjectile && !hasProjectile && !playedNetFxEvent) {
         const shotType = prevProjectile.shotType || "normal";
         const style = shotType === "dig" ? "dig" : shotType === "build" ? "build" : "normal";
         const baseRadius = shotType === "dig" ? EXPLOSION_RADIUS * 1.18 : shotType === "build" ? BUILD_RADIUS * 1.25 : EXPLOSION_RADIUS;
@@ -5268,6 +5390,19 @@
         }
         startScreenShake(0.2 + baseRadius * 0.0025, 2.2 + baseRadius * 0.042);
         playExplosionSound(shotType === "dig" ? 0.88 : 1.02);
+      }
+
+      if (!state.netplay.mirrorInitialized && state.tanks.length > 0) {
+        const activeTank = state.tanks[state.activeIndex] || state.tanks.find((tank) => tank.alive) || state.tanks[0];
+        if (activeTank) {
+          const targetZoom = clampCameraZoom(getConfiguredMapZoom());
+          state.cameraZoom = targetZoom;
+          state.cameraX = clampCamera(activeTank.x - getCameraViewWidth() * 0.5);
+          state.cameraLookX = 0;
+          state.cameraPanY = 0;
+          state.cameraManualMode = false;
+          state.netplay.mirrorInitialized = true;
+        }
       }
     }
     setStatus(snapshot.statusText || state.statusText || "Multiplayer");
@@ -5377,21 +5512,28 @@
 
     const owners = getNetplayOwnerOrder();
     const humanPlayers = clamp(owners.length || 1, 1, 4);
+    const hostBase = normalizeTeamConfig(state.netplay.matchConfig || getMenuConfig() || state.config);
+    const preset = MAP_PRESETS[hostBase.mapSize] || MAP_PRESETS[DEFAULT_MAP_SIZE];
+    const hasDrawnMap = Array.isArray(state.customSurfaceY) && state.customSurfaceY.length === preset.width;
+    const mapSource = hostBase.mapSource === "drawn" && hasDrawnMap ? "drawn" : "random";
     state.config = normalizeTeamConfig({
-      ...state.config,
+      ...hostBase,
       humanPlayers,
       playerCount: 1,
       enemyCount: 0,
-      turnMode: "classic",
-      mapSource: "random",
-      spawnMode: "lanes",
-      lootDropOnKo: true,
-      borderBounce: false
+      aiDifficulty: "normal",
+      mapSource
     });
-    applyMenuConfig();
-    state.customSurfaceY = null;
+    applyMenuConfig(state.config);
+    if (state.config.mapSource !== "drawn") {
+      state.customSurfaceY = null;
+    }
     resetMatch();
     state.netplay.matchBootstrapped = true;
+    state.netplay.mirrorInitialized = false;
+    state.netFxSeq = 0;
+    state.netFxEvent = null;
+    state.netFxSeenSeq = 0;
     setStatus("Multiplayer match started");
     broadcastNetplaySnapshot(true, 0);
   }
@@ -5414,6 +5556,7 @@
     state.netplay.connected = false;
     state.netplay.connecting = false;
     state.netplay.matchBootstrapped = false;
+    state.netplay.mirrorInitialized = false;
     closeNetplaySocket();
     if (manual) {
       setStatus("Disconnected from multiplayer");
@@ -5443,6 +5586,7 @@
       state.netplay.isHost = state.netplay.playerId === state.netplay.hostId;
       state.netplay.players = sanitizeNetplayPlayers(msg.players);
       state.netplay.started = Boolean(msg.started);
+      state.netplay.mirrorInitialized = false;
       refreshMultiplayerLobbyUi();
       if (state.netplay.started && state.netplay.isHost) {
         setupHostNetplayMatch();
@@ -5466,6 +5610,7 @@
       state.netplay.isHost = state.netplay.playerId === state.netplay.hostId;
       state.netplay.players = sanitizeNetplayPlayers(msg.players);
       state.netplay.started = Boolean(msg.started);
+      state.netplay.mirrorInitialized = false;
       refreshMultiplayerLobbyUi();
       if (state.netplay.started && state.netplay.isHost) {
         setupHostNetplayMatch();
@@ -5495,6 +5640,8 @@
 
     if (msg.t === "gameStart") {
       state.netplay.started = true;
+      state.netplay.mirrorInitialized = false;
+      state.netFxSeenSeq = 0;
       refreshMultiplayerLobbyUi();
       if (isNetplayHost()) {
         setupHostNetplayMatch();
@@ -6697,6 +6844,12 @@
     state.turnCounter = 1;
     state.turnsIntoRound = 0;
     state.lastImpact = { x: state.worldW * 0.5, y: WORLD_H * 0.5 };
+    if (isNetplayHost()) {
+      state.netFxSeq = 0;
+      state.netFxEvent = null;
+    } else {
+      state.netFxSeenSeq = 0;
+    }
     setPowerupMenuOpen(false);
     setCameraZoom(getConfiguredMapZoom(), false);
     state.cameraX = clampCamera(state.tanks[0].x - getCameraViewWidth() * 0.5);
@@ -7511,11 +7664,27 @@
       }
       startScreenShake(0.22, 4.8);
       playExplosionSound(1.12);
+      emitNetplayFxEvent({
+        kind: "quake",
+        x: state.lastImpact.x,
+        y: state.lastImpact.y,
+        radius: EXPLOSION_RADIUS * 1.2,
+        strength: 1.12,
+        style: "quake"
+      });
       return;
     }
 
     startScreenShake(0.22, 4.8);
     playExplosionSound(1.12);
+    emitNetplayFxEvent({
+      kind: "quake",
+      x: state.lastImpact.x,
+      y: state.lastImpact.y,
+      radius: EXPLOSION_RADIUS * 1.2,
+      strength: 1.12,
+      style: "quake"
+    });
     setStatus("Earthquake reshaped terrain");
   }
 
@@ -7607,6 +7776,9 @@
     }
     const tank = getActiveTank();
     if (!tank || !tank.alive) {
+      return;
+    }
+    if (!fromRemote && tank.controller === "human" && !isPlayerTurn()) {
       return;
     }
     if (isNetplayEnabled() && tank.controller === "human" && !isLocalTankOwner(tank) && !fromRemote) {
@@ -7786,7 +7958,16 @@
 
     startScreenShake(0.22 + radius * 0.003, visualStyle === "dig" ? 1.9 + radius * 0.03 : 2.6 + radius * 0.055);
     if (playSoundFx) {
-      playExplosionSound(0.8 + effectiveMaxDamage / 120);
+      const strength = 0.8 + effectiveMaxDamage / 120;
+      playExplosionSound(strength);
+      emitNetplayFxEvent({
+        kind: visualStyle === "build" ? "build" : "explode",
+        x: ix,
+        y: iy,
+        radius: radius * (0.95 + fx * 0.7),
+        strength,
+        style: visualStyle
+      });
     }
 
     if (!deferResolve) {
@@ -7903,6 +8084,14 @@
       state.bursts.shift();
     }
     playExplosionSound(0.72);
+    emitNetplayFxEvent({
+      kind: "build",
+      x: ix,
+      y: iy,
+      radius: radius * 1.22,
+      strength: 0.72,
+      style: "build"
+    });
     startScreenShake(0.16, 2.1);
     markNetplayTerrainDirty();
   }
@@ -8898,6 +9087,14 @@
 
     startScreenShake(0.32, 8.4);
     playExplosionSound(1.35);
+    emitNetplayFxEvent({
+      kind: "laser",
+      x: hitX,
+      y: hitY,
+      radius: LASER_TUNNEL_RADIUS * 1.5,
+      strength: 1.35,
+      style: "laser"
+    });
     setStatus(hit.kind === "tank" ? `${shooter.name} hit ${hit.tank.name} with LASER` : `${shooter.name} fired LASER`);
     if (!deferResolve) {
       state.phase = "resolving";
@@ -10596,12 +10793,36 @@
     window.visualViewport.addEventListener("scroll", resize);
   }
 
+  function isTextEntryTarget(target) {
+    if (!(target instanceof Element)) {
+      return false;
+    }
+    if (target.isContentEditable) {
+      return true;
+    }
+    const tag = target.tagName;
+    if (tag === "TEXTAREA" || tag === "SELECT") {
+      return true;
+    }
+    if (tag !== "INPUT") {
+      return false;
+    }
+    const input = target;
+    const type = `${input.getAttribute("type") || "text"}`.toLowerCase();
+    return !["button", "submit", "reset", "checkbox", "radio", "range", "color", "file"].includes(type);
+  }
+
   window.addEventListener("keydown", (event) => {
     ensureAudio();
+    const typingInField = isTextEntryTarget(event.target) || isTextEntryTarget(document.activeElement);
 
-    if (event.code === "KeyP") {
+    if (event.code === "KeyP" && !typingInField) {
       event.preventDefault();
       togglePause();
+      return;
+    }
+
+    if (typingInField) {
       return;
     }
 
