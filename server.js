@@ -219,13 +219,15 @@ function handleStartGame(ws, msg) {
     return;
   }
 
-  if (!ROOM_RE.test(`${msg.room || ""}`.toUpperCase())) {
-    sendJson(ws, { t: "err", code: "invalid_room", msg: "invalid_room" });
+  const requestedRoom = `${msg.room || room.code || ""}`.toUpperCase();
+  if (!ROOM_RE.test(requestedRoom) || requestedRoom !== room.code) {
+    sendJson(ws, { t: "err", code: "room_mismatch", msg: "room_mismatch" });
     return;
   }
 
   room.started = true;
   touchRoom(room);
+  sendJson(ws, { t: "startAck", room: room.code });
   broadcastRoom(room, { t: "gameStart", room: room.code });
   broadcastLobbyState(room);
 }
