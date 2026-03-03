@@ -2195,6 +2195,8 @@
   const NETPLAY_ROOM_RE = /^[A-Z0-9]{6}$/;
   const NETPLAY_PLAYER_RE = /^[A-Z0-9]{8,20}$/;
   const NETPLAY_SNAPSHOT_INTERVAL = 0.085;
+  const NETPLAY_TERRAIN_SYNC_INTERVAL = 0.55;
+  const NETPLAY_FULL_SYNC_INTERVAL = 1.4;
   const NETPLAY_RECONNECT_BASE_MS = 800;
   const NETPLAY_RECONNECT_MAX_MS = 5000;
   const CONTROLLER_WEAPON_MAP = {
@@ -2328,6 +2330,9 @@
       socket: null,
       players: [],
       snapshotTimer: 0,
+      terrainSyncTimer: 0,
+      fullSyncTimer: 0,
+      terrainNeedsSync: true,
       reconnectTimer: null,
       reconnectAttempts: 0,
       wantsReconnect: false,
@@ -4135,6 +4140,9 @@
     state.netplay.matchBootstrapped = false;
     state.netplay.isHost = false;
     state.netplay.snapshotTimer = 0;
+    state.netplay.terrainSyncTimer = 0;
+    state.netplay.fullSyncTimer = 0;
+    state.netplay.terrainNeedsSync = true;
   }
 
   function stopNetplaySession(manual = true) {
@@ -4244,6 +4252,9 @@
     state.netplay.matchBootstrapped = false;
     state.netplay.wantsReconnect = true;
     state.netplay.snapshotTimer = 0;
+    state.netplay.terrainSyncTimer = 0;
+    state.netplay.fullSyncTimer = 0;
+    state.netplay.terrainNeedsSync = true;
     setStatus("Connecting to multiplayer room...");
     connectNetplaySocket();
     refreshMultiplayerLobbyUi();
@@ -4411,6 +4422,28 @@
     const url = new URL("controller.html", location.href);
     url.searchParams.set("room", room);
     return url.toString();
+  }
+
+  function markNetplayTerrainDirty() {
+    if (!isNetplayEnabled() || !isNetplayHost()) {
+      return;
+    }
+    state.netplay.terrainNeedsSync = true;
+  }
+
+  function sampleNetplayPath(path, maxPoints = 64) {
+    if (!Array.isArray(path) || path.length <= 0) {
+      return [];
+    }
+    if (path.length <= maxPoints) {
+      return path.slice();
+    }
+    const out = [];
+    const step = (path.length - 1) / (maxPoints - 1);
+    for (let i = 0; i < maxPoints; i += 1) {
+      out.push(path[Math.round(i * step)]);
+    }
+    return out;
   }
 
   function clearMultiplayerReconnectTimer() {
@@ -4822,8 +4855,8 @@
     return [];
   }
 
-  function buildNetplaySnapshot() {
-    return {
+  function buildNetplaySnapshot({ includeTerrain = false, includeHistory = false } = {}) {
+    const snapshot = {
       phase: state.phase,
       worldW: state.worldW,
       config: {
@@ -4838,8 +4871,6 @@
       selectedShotType: state.selectedShotType,
       abilityMode: state.abilityMode,
       lastImpact: { x: state.lastImpact.x, y: state.lastImpact.y },
-      surfaceY: state.surfaceY.slice(0, state.worldW),
-      craters: state.craters.map((c) => ({ x: c.x, y: c.y, r: c.r })),
       teams: state.teams.map((team) => ({
         id: team.id,
         name: team.name,
@@ -4866,10 +4897,6 @@
         alive: tank.alive,
         tilt: tank.tilt,
         netOwnerId: tank.netOwnerId || null,
-        lastShotPath: Array.isArray(tank.lastShotPath) ? tank.lastShotPath.slice() : [],
-        lastShotEnd: tank.lastShotEnd ? { x: tank.lastShotEnd.x, y: tank.lastShotEnd.y } : null,
-        lastShotAngleDeg: tank.lastShotAngleDeg,
-        lastShotPowerPct: tank.lastShotPowerPct,
         powerups: {
           sniper: tank.powerups?.sniper || 0,
           seeker: tank.powerups?.seeker || 0,
@@ -4932,8 +4959,28 @@
             active: state.activeFlare.active
           }
         : null,
-      currentShotPath: Array.isArray(state.currentShotPath) ? state.currentShotPath.slice() : []
+      currentShotPath: includeHistory ? sampleNetplayPath(state.currentShotPath, 72) : []
     };
+
+    if (includeTerrain) {
+      snapshot.surfaceY = state.surfaceY.slice(0, state.worldW);
+      snapshot.craters = state.craters.map((c) => ({ x: c.x, y: c.y, r: c.r }));
+    }
+
+    if (includeHistory) {
+      snapshot.tanks = snapshot.tanks.map((tankPacket) => {
+        const src = state.tanks.find((t) => t.id === tankPacket.id);
+        return {
+          ...tankPacket,
+          lastShotPath: sampleNetplayPath(src?.lastShotPath, 84),
+          lastShotEnd: src?.lastShotEnd ? { x: src.lastShotEnd.x, y: src.lastShotEnd.y } : null,
+          lastShotAngleDeg: src?.lastShotAngleDeg ?? null,
+          lastShotPowerPct: src?.lastShotPowerPct ?? null
+        };
+      });
+    }
+
+    return snapshot;
   }
 
   function applyNetplaySnapshot(snapshot) {
@@ -4947,25 +4994,25 @@
       state.surfaceY = snapshot.surfaceY.slice(0, worldW).map((y) => clamp(Number(y) || 0, 0, WORLD_H - 1));
     }
 
-    state.craters = Array.isArray(snapshot.craters)
-      ? snapshot.craters.map((c) => {
-          const x = clamp(Number(c?.x || 0), 0, state.worldW - 1);
-          const y = clamp(Number(c?.y || 0), 0, WORLD_H - 1);
-          const r = Math.max(2, Number(c?.r || 2));
-          return {
-            x,
-            y,
-            r,
-            r2: r * r,
-            minX: x - r,
-            maxX: x + r,
-            minY: y - r,
-            maxY: y + r
-          };
-        })
-      : [];
-    rebuildVoidMaskFromCraters();
-    state.craterLayersDirty = true;
+    if (Array.isArray(snapshot.craters)) {
+      state.craters = snapshot.craters.map((c) => {
+        const x = clamp(Number(c?.x || 0), 0, state.worldW - 1);
+        const y = clamp(Number(c?.y || 0), 0, WORLD_H - 1);
+        const r = Math.max(2, Number(c?.r || 2));
+        return {
+          x,
+          y,
+          r,
+          r2: r * r,
+          minX: x - r,
+          maxX: x + r,
+          minY: y - r,
+          maxY: y + r
+        };
+      });
+      rebuildVoidMaskFromCraters();
+      state.craterLayersDirty = true;
+    }
 
     if (Array.isArray(snapshot.teams)) {
       state.teams = snapshot.teams.map((team) => ({
@@ -4978,7 +5025,10 @@
     }
 
     if (Array.isArray(snapshot.tanks)) {
-      state.tanks = snapshot.tanks.map((tank) => ({
+      const prevTankById = new Map(state.tanks.map((tank) => [tank.id, tank]));
+      state.tanks = snapshot.tanks.map((tank) => {
+        const prev = prevTankById.get(tank.id);
+        return {
         id: tank.id,
         name: tank.name,
         team: tank.team,
@@ -4997,10 +5047,22 @@
         tilt: Number(tank.tilt || 0),
         teamSlot: Number(tank.teamSlot || 0),
         netOwnerId: tank.netOwnerId || null,
-        lastShotPath: Array.isArray(tank.lastShotPath) ? tank.lastShotPath.slice() : [],
-        lastShotEnd: tank.lastShotEnd ? { x: Number(tank.lastShotEnd.x), y: Number(tank.lastShotEnd.y) } : null,
-        lastShotAngleDeg: tank.lastShotAngleDeg == null ? null : Number(tank.lastShotAngleDeg),
-        lastShotPowerPct: tank.lastShotPowerPct == null ? null : Number(tank.lastShotPowerPct),
+        lastShotPath: Array.isArray(tank.lastShotPath)
+          ? tank.lastShotPath.slice()
+          : Array.isArray(prev?.lastShotPath)
+            ? prev.lastShotPath.slice()
+            : [],
+        lastShotEnd: tank.lastShotEnd
+          ? { x: Number(tank.lastShotEnd.x), y: Number(tank.lastShotEnd.y) }
+          : prev?.lastShotEnd
+            ? { x: Number(prev.lastShotEnd.x), y: Number(prev.lastShotEnd.y) }
+            : null,
+        lastShotAngleDeg: tank.lastShotAngleDeg == null
+          ? (prev?.lastShotAngleDeg ?? null)
+          : Number(tank.lastShotAngleDeg),
+        lastShotPowerPct: tank.lastShotPowerPct == null
+          ? (prev?.lastShotPowerPct ?? null)
+          : Number(tank.lastShotPowerPct),
         powerups: {
           sniper: Number(tank.powerups?.sniper || 0),
           seeker: Number(tank.powerups?.seeker || 0),
@@ -5012,7 +5074,8 @@
           airstrike: Number(tank.powerups?.airstrike || 0),
           laser: Number(tank.powerups?.laser || 0)
         }
-      }));
+      };
+      });
     }
 
     state.powerUps = Array.isArray(snapshot.powerUps)
@@ -5085,7 +5148,9 @@
         }
       : null;
 
-    state.currentShotPath = Array.isArray(snapshot.currentShotPath) ? snapshot.currentShotPath.slice() : [];
+    if (Array.isArray(snapshot.currentShotPath)) {
+      state.currentShotPath = snapshot.currentShotPath.slice();
+    }
     state.phase = typeof snapshot.phase === "string" ? snapshot.phase : state.phase;
     state.activeIndex = clamp(Number(snapshot.activeIndex || 0), 0, Math.max(0, state.tanks.length - 1));
     state.turnCounter = Math.max(1, Number(snapshot.turnCounter || state.turnCounter || 1));
@@ -5169,15 +5234,26 @@
       return;
     }
     state.netplay.snapshotTimer += dt;
+    state.netplay.terrainSyncTimer += dt;
+    state.netplay.fullSyncTimer += dt;
     if (!force && state.netplay.snapshotTimer < NETPLAY_SNAPSHOT_INTERVAL) {
       return;
     }
     state.netplay.snapshotTimer = 0;
+    const includeTerrain = force || state.netplay.terrainNeedsSync || state.netplay.terrainSyncTimer >= NETPLAY_TERRAIN_SYNC_INTERVAL;
+    const includeHistory = force || state.netplay.fullSyncTimer >= NETPLAY_FULL_SYNC_INTERVAL;
+    if (includeTerrain) {
+      state.netplay.terrainSyncTimer = 0;
+      state.netplay.terrainNeedsSync = false;
+    }
+    if (includeHistory) {
+      state.netplay.fullSyncTimer = 0;
+    }
     sendNetplay({
       t: "state",
       room: state.netplay.room,
       playerId: state.netplay.playerId,
-      snapshot: buildNetplaySnapshot()
+      snapshot: buildNetplaySnapshot({ includeTerrain, includeHistory })
     });
   }
 
@@ -5416,6 +5492,9 @@
     state.netplay.matchBootstrapped = false;
     state.netplay.wantsReconnect = true;
     state.netplay.snapshotTimer = 0;
+    state.netplay.terrainSyncTimer = 0;
+    state.netplay.fullSyncTimer = 0;
+    state.netplay.terrainNeedsSync = true;
 
     state.surfaceY = new Array(state.worldW).fill(Math.round(WORLD_H * 0.62));
     clearCraterState();
@@ -6154,6 +6233,7 @@
     craterFillCtx.clearRect(0, 0, MAX_WORLD_W, WORLD_H);
     craterEdgeCtx.clearRect(0, 0, MAX_WORLD_W, WORLD_H);
     state.craterLayersDirty = false;
+    markNetplayTerrainDirty();
   }
 
   function stampVoidMaskCircle(crater) {
@@ -6212,6 +6292,7 @@
     cappedStamp(ix - radius * 0.52 + rand(-radius * 0.1, radius * 0.1), cupY + radius * 0.2, radius * 0.36);
     cappedStamp(ix + radius * 0.52 + rand(-radius * 0.1, radius * 0.1), cupY + radius * 0.2, radius * 0.36);
     cappedStamp(ix + rand(-radius * 0.24, radius * 0.24), cupY + radius * 0.76, radius * 0.3);
+    markNetplayTerrainDirty();
   }
 
   function isVoidAt(x, y) {
@@ -7296,6 +7377,7 @@
       tank.vy = 0;
       tank.tilt = getTankTiltTarget(tank);
     }
+    markNetplayTerrainDirty();
   }
 
   function updateQuakePending(dt) {
@@ -7623,6 +7705,7 @@
     });
     rebuildVoidMaskFromCraters();
     state.craterLayersDirty = true;
+    markNetplayTerrainDirty();
   }
 
   function pushTankOutsideBuild(ix, tank, radius) {
@@ -7708,6 +7791,7 @@
     }
     playExplosionSound(0.72);
     startScreenShake(0.16, 2.1);
+    markNetplayTerrainDirty();
   }
 
   function spawnFollowupAirstrike(ownerId, x) {
