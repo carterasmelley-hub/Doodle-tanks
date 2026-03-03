@@ -2189,6 +2189,7 @@
   const EARTHQUAKE_EROSION_PASSES = 8;
   const MULTI_ROOM_CODE_RE = /^[A-Z0-9]{6}$/;
   const MULTI_WS_PATH = "/ws";
+  const MULTI_BACKEND_HTTP_ORIGIN = "https://doodle-tanks.onrender.com";
   const MULTI_RECONNECT_BASE_MS = 700;
   const MULTI_RECONNECT_MAX_MS = 4500;
   const NETPLAY_ROOM_RE = /^[A-Z0-9]{6}$/;
@@ -4369,8 +4370,35 @@
     if (location.protocol === "file:") {
       return "";
     }
-    const wsProto = location.protocol === "https:" ? "wss:" : "ws:";
-    return `${wsProto}//${location.host}${MULTI_WS_PATH}`;
+    const params = new URLSearchParams(location.search);
+    const overrideRaw = `${params.get("server") || ""}`.trim();
+    let baseOrigin = "";
+
+    if (overrideRaw) {
+      try {
+        baseOrigin = new URL(overrideRaw).origin;
+      } catch (_err) {
+        baseOrigin = "";
+      }
+    }
+
+    if (!baseOrigin) {
+      if (location.hostname.endsWith("github.io")) {
+        baseOrigin = MULTI_BACKEND_HTTP_ORIGIN;
+      } else {
+        baseOrigin = location.origin;
+      }
+    }
+
+    try {
+      const wsUrl = new URL(MULTI_WS_PATH, baseOrigin);
+      wsUrl.protocol = wsUrl.protocol === "https:" ? "wss:" : "ws:";
+      wsUrl.search = "";
+      wsUrl.hash = "";
+      return wsUrl.toString();
+    } catch (_err) {
+      return "";
+    }
   }
 
   function buildControllerJoinLink(room) {
@@ -4703,11 +4731,7 @@
   }
 
   function getNetplayWsUrl() {
-    if (location.protocol === "file:") {
-      return "";
-    }
-    const wsProto = location.protocol === "https:" ? "wss:" : "ws:";
-    return `${wsProto}//${location.host}${MULTI_WS_PATH}`;
+    return getMultiplayerWsUrl();
   }
 
   function isLocalTankOwner(tank) {
