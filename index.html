@@ -5047,6 +5047,8 @@
     const prevProjectile = state.projectile && state.projectile.active ? { ...state.projectile } : null;
     const prevLastImpactX = state.lastImpact.x;
     const prevLastImpactY = state.lastImpact.y;
+    const prevActiveTankId = state.tanks[state.activeIndex]?.id ?? null;
+    const snapshotPhase = typeof snapshot.phase === "string" ? snapshot.phase : state.phase;
     const worldW = clamp(Number(snapshot.worldW || state.worldW), MAP_PRESETS.small.width, MAX_WORLD_W);
     state.worldW = worldW;
 
@@ -5088,6 +5090,14 @@
       const prevTankById = new Map(state.tanks.map((tank) => [tank.id, tank]));
       state.tanks = snapshot.tanks.map((tank) => {
         const prev = prevTankById.get(tank.id);
+        const incomingOwner = tank.netOwnerId || prev?.netOwnerId || null;
+        const keepLocalAimInputs = isNetplayClientMirror() &&
+          snapshotPhase === "aim" &&
+          aimDrag.active &&
+          tank.id === prevActiveTankId &&
+          incomingOwner === state.netplay.playerId;
+        const resolvedAngle = keepLocalAimInputs && Number.isFinite(prev?.angle) ? prev.angle : Number(tank.angle || 0);
+        const resolvedPower = keepLocalAimInputs && Number.isFinite(prev?.power) ? prev.power : Number(tank.power || DEFAULT_SHOT_POWER);
         return {
         id: tank.id,
         name: tank.name,
@@ -5099,8 +5109,8 @@
         y: Number(tank.y || 0),
         vx: Number(tank.vx || 0),
         vy: Number(tank.vy || 0),
-        angle: Number(tank.angle || 0),
-        power: Number(tank.power || DEFAULT_SHOT_POWER),
+        angle: resolvedAngle,
+        power: resolvedPower,
         moveRemaining: Number(tank.moveRemaining || 0),
         hp: Number(tank.hp || 0),
         alive: Boolean(tank.alive),
@@ -5148,7 +5158,7 @@
         }))
       : [];
 
-    state.projectile = snapshot.projectile
+    const nextProjectile = snapshot.projectile
       ? {
           x: Number(snapshot.projectile.x || 0),
           y: Number(snapshot.projectile.y || 0),
@@ -5162,6 +5172,15 @@
           shotType: snapshot.projectile.shotType || "normal"
         }
       : null;
+    if (isNetplayClientMirror() && prevProjectile && nextProjectile && prevProjectile.active && nextProjectile.active) {
+      const sameProjectile = prevProjectile.ownerId === nextProjectile.ownerId && prevProjectile.shotType === nextProjectile.shotType;
+      if (sameProjectile) {
+        const blend = 0.62;
+        nextProjectile.x = lerp(prevProjectile.x, nextProjectile.x, blend);
+        nextProjectile.y = lerp(prevProjectile.y, nextProjectile.y, blend);
+      }
+    }
+    state.projectile = nextProjectile;
 
     state.simultaneousProjectiles = Array.isArray(snapshot.simultaneousProjectiles)
       ? snapshot.simultaneousProjectiles.map((p) => ({
@@ -5226,28 +5245,29 @@
       const hadProjectile = Boolean(prevProjectile && prevProjectile.active);
       const hasProjectile = Boolean(state.projectile && state.projectile.active);
       if (hadProjectile && !hasProjectile) {
+        const shotType = prevProjectile.shotType || "normal";
+        const style = shotType === "dig" ? "dig" : shotType === "build" ? "build" : "normal";
+        const baseRadius = shotType === "dig" ? EXPLOSION_RADIUS * 1.18 : shotType === "build" ? BUILD_RADIUS * 1.25 : EXPLOSION_RADIUS;
+        const fx = state.settings.fxIntensity;
         const dx = state.lastImpact.x - prevLastImpactX;
         const dy = state.lastImpact.y - prevLastImpactY;
-        if (dx * dx + dy * dy > 4) {
-          const shotType = prevProjectile.shotType || "normal";
-          const style = shotType === "dig" ? "dig" : shotType === "build" ? "build" : "normal";
-          const baseRadius = shotType === "dig" ? EXPLOSION_RADIUS * 1.18 : shotType === "build" ? BUILD_RADIUS * 1.25 : EXPLOSION_RADIUS;
-          const fx = state.settings.fxIntensity;
-          state.bursts.push({
-            x: state.lastImpact.x,
-            y: state.lastImpact.y,
-            life: 0.55,
-            ttl: 0.55,
-            radius: baseRadius * (0.9 + fx * 0.55),
-            seed: Math.random() * 1000,
-            style
-          });
-          if (state.bursts.length > MAX_BURSTS) {
-            state.bursts.shift();
-          }
-          startScreenShake(0.2 + baseRadius * 0.0025, 2.2 + baseRadius * 0.042);
-          playExplosionSound(shotType === "dig" ? 0.88 : 1.02);
+        const hasFreshImpact = dx * dx + dy * dy > 4;
+        const burstX = hasFreshImpact ? state.lastImpact.x : prevProjectile.x;
+        const burstY = hasFreshImpact ? state.lastImpact.y : prevProjectile.y;
+        state.bursts.push({
+          x: burstX,
+          y: burstY,
+          life: 0.55,
+          ttl: 0.55,
+          radius: baseRadius * (0.9 + fx * 0.55),
+          seed: Math.random() * 1000,
+          style
+        });
+        if (state.bursts.length > MAX_BURSTS) {
+          state.bursts.shift();
         }
+        startScreenShake(0.2 + baseRadius * 0.0025, 2.2 + baseRadius * 0.042);
+        playExplosionSound(shotType === "dig" ? 0.88 : 1.02);
       }
     }
     setStatus(snapshot.statusText || state.statusText || "Multiplayer");
@@ -5309,7 +5329,7 @@
     }
 
     if (action === "fire") {
-      fireActiveTank();
+      fireActiveTank({ fromRemote: true });
       return;
     }
 
@@ -7576,7 +7596,8 @@
     }
   }
 
-  function fireActiveTank() {
+  function fireActiveTank(options = {}) {
+    const fromRemote = Boolean(options.fromRemote);
     if (performance.now() < (state.blockFireUntil || 0)) {
       return;
     }
@@ -7588,7 +7609,7 @@
     if (!tank || !tank.alive) {
       return;
     }
-    if (isNetplayEnabled() && tank.controller === "human" && !isLocalTankOwner(tank)) {
+    if (isNetplayEnabled() && tank.controller === "human" && !isLocalTankOwner(tank) && !fromRemote) {
       return;
     }
     if (isNetplayClientMirror() && tank.controller === "human" && isLocalTankOwner(tank)) {
