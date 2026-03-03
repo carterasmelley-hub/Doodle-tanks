@@ -163,8 +163,13 @@
       max-height: none;
     }
 
-    body.menu-multiplayer #custom-menu-card .menu-actions {
+    body.menu-multiplayer #custom-menu-actions {
       display: none;
+    }
+
+    body.menu-multiplayer #mp-settings-actions {
+      display: grid !important;
+      margin-top: 8px;
     }
 
     body.menu-multiplayer #custom-menu-card .menu-grid {
@@ -239,6 +244,10 @@
       display: grid;
       gap: 8px;
       margin-top: 6px;
+    }
+
+    #mp-settings-actions {
+      display: none;
     }
 
     .menu-field {
@@ -1775,7 +1784,10 @@
           <button type="button" class="power-filter-item" data-power-type="health">HEALTH</button>
         </div>
       </section>
-      <div class="menu-actions">
+      <div class="menu-actions hidden" id="mp-settings-actions">
+        <button id="mp-start-bottom-btn" type="button">START MATCH</button>
+      </div>
+      <div class="menu-actions" id="custom-menu-actions">
         <button id="start-btn" type="button">START GAME</button>
         <button id="back-main-btn" type="button">BACK</button>
       </div>
@@ -1967,11 +1979,13 @@
     multiplayerHostBtn: document.getElementById("mp-host-btn"),
     multiplayerJoinBtn: document.getElementById("mp-join-btn"),
     multiplayerStartBtn: document.getElementById("mp-start-btn"),
+    multiplayerStartBottomBtn: document.getElementById("mp-start-bottom-btn"),
     multiplayerCopyCodeBtn: document.getElementById("mp-copy-code-btn"),
     multiplayerLeaveBtn: document.getElementById("mp-leave-btn"),
     multiplayerRoomCodeDisplay: document.getElementById("net-room-code-display"),
     multiplayerRoomInput: document.getElementById("net-room-input"),
     multiplayerStatus: document.getElementById("mp-lobby-status"),
+    multiplayerSettingsActions: document.getElementById("mp-settings-actions"),
     pauseMenu: document.getElementById("pause-menu"),
     resumeBtn: document.getElementById("resume-btn"),
     pauseRestartBtn: document.getElementById("pause-restart-btn"),
@@ -2777,17 +2791,28 @@
       return 0;
     }
 
+    const canvasRect = canvas.getBoundingClientRect?.();
+    if (!canvasRect || !Number.isFinite(canvasRect.top) || !Number.isFinite(canvasRect.bottom) || canvasRect.height <= 0) {
+      return 0;
+    }
+
     let reserve = 0;
     const bottomRect = ui.bottomUi?.getBoundingClientRect?.();
     if (bottomRect && Number.isFinite(bottomRect.top) && Number.isFinite(bottomRect.height) && bottomRect.height > 0) {
-      reserve = Math.max(reserve, canvas.height - bottomRect.top);
+      const overlap = canvasRect.bottom - bottomRect.top;
+      if (Number.isFinite(overlap) && overlap > 0) {
+        reserve = Math.max(reserve, overlap);
+      }
     }
 
     const menuOpen = ui.powerupMenu && !ui.powerupMenu.classList.contains("hidden");
     if (menuOpen) {
       const powerRect = ui.powerupMenu.getBoundingClientRect();
       if (Number.isFinite(powerRect.top) && Number.isFinite(powerRect.height) && powerRect.height > 0) {
-        reserve = Math.max(reserve, canvas.height - powerRect.top);
+        const overlap = canvasRect.bottom - powerRect.top;
+        if (Number.isFinite(overlap) && overlap > 0) {
+          reserve = Math.max(reserve, overlap);
+        }
       }
     }
 
@@ -2799,7 +2824,11 @@
     const mobileLandscape = canvas.width > canvas.height;
     const cushion = mobileLandscape ? 3 : 8;
     const capRatio = mobileLandscape ? 0.5 : 0.56;
-    return clamp(Math.ceil(reserve + cushion), 0, Math.floor(canvas.height * capRatio));
+    const capped = clamp(Math.ceil(reserve + cushion), 0, Math.floor(canvasRect.height * capRatio));
+    if (canvasRect.height <= 0 || canvas.height <= 0) {
+      return 0;
+    }
+    return Math.round(capped * (canvas.height / canvasRect.height));
   }
 
   function syncHudUnderlay() {
@@ -2813,7 +2842,14 @@
       ui.hudUnderlay.style.top = "100%";
       return;
     }
-    const top = clamp(canvas.height - reserve, 0, canvas.height);
+    const canvasRect = canvas.getBoundingClientRect?.();
+    if (!canvasRect || !Number.isFinite(canvasRect.top) || !Number.isFinite(canvasRect.height) || canvasRect.height <= 0) {
+      ui.hudUnderlay.style.display = "none";
+      ui.hudUnderlay.style.top = "100%";
+      return;
+    }
+    const reservePx = (reserve / Math.max(1, canvas.height)) * canvasRect.height;
+    const top = clamp(canvasRect.bottom - reservePx, canvasRect.top, canvasRect.bottom);
     ui.hudUnderlay.style.display = "block";
     ui.hudUnderlay.style.top = `${top}px`;
   }
@@ -4188,6 +4224,9 @@
     }
     if (ui.multiplayerStartBtn) {
       ui.multiplayerStartBtn.disabled = !(connected && isHost && players.length >= 2);
+    }
+    if (ui.multiplayerStartBottomBtn) {
+      ui.multiplayerStartBottomBtn.disabled = !(connected && isHost && players.length >= 2);
     }
     if (ui.multiplayerLeaveBtn) {
       ui.multiplayerLeaveBtn.disabled = !state.netplay.enabled;
@@ -11627,6 +11666,12 @@
 
   if (ui.multiplayerStartBtn) {
     ui.multiplayerStartBtn.addEventListener("click", () => {
+      startNetplayMatch();
+    });
+  }
+
+  if (ui.multiplayerStartBottomBtn) {
+    ui.multiplayerStartBottomBtn.addEventListener("click", () => {
       startNetplayMatch();
     });
   }
