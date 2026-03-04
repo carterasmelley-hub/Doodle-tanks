@@ -54,6 +54,7 @@ function createRoom() {
       const room = {
         code,
         players: new Map(),
+        roster: new Set(),
         hostId: "",
         started: false,
         lastActivity: nowMs()
@@ -164,7 +165,7 @@ function handleJoinGame(ws, msg) {
     return;
   }
 
-  if (room.started && !room.players.has(playerId)) {
+  if (room.started && !room.players.has(playerId) && !room.roster.has(playerId)) {
     sendJson(ws, { t: "err", code: "match_started", msg: "match_started" });
     return;
   }
@@ -184,6 +185,7 @@ function handleJoinGame(ws, msg) {
   }
 
   room.players.set(playerId, ws);
+  room.roster.add(playerId);
   if (!room.hostId || !room.players.has(room.hostId)) {
     room.hostId = playerId;
   }
@@ -226,6 +228,7 @@ function handleStartGame(ws, msg) {
   }
 
   room.started = true;
+  room.roster = new Set(room.players.keys());
   touchRoom(room);
   sendJson(ws, { t: "startAck", room: room.code });
   broadcastRoom(room, { t: "gameStart", room: room.code });
