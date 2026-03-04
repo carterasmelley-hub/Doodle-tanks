@@ -6215,6 +6215,8 @@
           ? "Only host can start the match."
           : rawCode === "room_mismatch"
             ? "Room mismatch. Rejoin and try START MATCH again."
+            : rawCode === "match_started"
+              ? "Match already started. Rejoin from the same room before it starts."
             : (msg.msg || msg.code || "error");
       setMultiplayerMenuStatus(msgText, true);
       setStatus(`Multiplayer error: ${msg.msg || msg.code || "error"}`);
@@ -6460,6 +6462,15 @@
     demo.shooterIndex = Math.random() < 0.5 ? 0 : 1;
   }
 
+  function forceHideMenuOverlay() {
+    if (ui.menuScreen) {
+      ui.menuScreen.classList.add("hidden");
+      ui.menuScreen.style.display = "none";
+      ui.menuScreen.style.pointerEvents = "none";
+    }
+    document.body.classList.add("in-game");
+  }
+
   function openMenu() {
     if (isNetplayEnabled()) {
       stopNetplaySession(false);
@@ -6504,6 +6515,8 @@
     state.turnCounter = 1;
     state.turnsIntoRound = 0;
     keys.clear();
+    ui.menuScreen.style.display = "";
+    ui.menuScreen.style.pointerEvents = "";
     ui.menuScreen.classList.remove("hidden");
     if (ui.pauseMenu) {
       ui.pauseMenu.classList.add("hidden");
@@ -6524,8 +6537,7 @@
       ui.pauseMenu.classList.add("hidden");
     }
     state.pauseFromPhase = null;
-    ui.menuScreen.classList.add("hidden");
-    document.body.classList.add("in-game");
+    forceHideMenuOverlay();
   }
 
   function launchMatchSession() {
@@ -11787,10 +11799,7 @@
     }
 
     if (state.phase !== "menu") {
-      if (ui.menuScreen && !ui.menuScreen.classList.contains("hidden")) {
-        ui.menuScreen.classList.add("hidden");
-      }
-      document.body.classList.add("in-game");
+      forceHideMenuOverlay();
     }
 
     updateCamera(dt);
